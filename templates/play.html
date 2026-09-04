@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Râzî'nin Kazanı</title>
+  <style>
+    :root { color-scheme: dark; --ink: #f5ecd7; --muted: #b9ae9a; --panel: #211c1a; --gold: #e0b95e; --green: #63c997; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 18px; color: var(--ink); background: radial-gradient(circle at 15% 0%, #714524 0, transparent 32%), radial-gradient(circle at 100% 100%, #284438 0, transparent 35%), linear-gradient(145deg, #171313, #33231c); font-family: Georgia, serif; }
+    main { width: min(520px, 100%); animation: arrive .55s ease-out both; }
+    h1 { margin: 0 0 6px; font-size: clamp(2rem, 9vw, 3.2rem); letter-spacing: 0; }
+    p { margin: 0 0 16px; color: var(--muted); font-size: 1.1rem; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .seal { color: var(--gold); font-size: .78rem; letter-spacing: .12em; }
+    .status { min-height: 36px; display: flex; align-items: center; gap: 9px; margin-bottom: 14px; padding: 10px 12px; border: 1px solid #725234; border-radius: 8px; color: #e7c878; background: #211c1acc; transition: color 0.3s, border-color 0.3s; }
+    .status::before { content: ''; width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 14px var(--gold); transition: background 0.3s, box-shadow 0.3s; }
+    .status.ready { color: #8df0c3; border-color: #4b8969; }
+    .status.ready::before { background: var(--green); box-shadow: 0 0 14px var(--green); }
+    .status.error { color: #f48b7d; border-color: #8c4238; }
+    .status.error::before { background: #d75f4b; box-shadow: 0 0 14px #d75f4b; }
+    .buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .buttons.disabled button { opacity: 0.4; pointer-events: none; filter: grayscale(60%); transform: scale(0.98); box-shadow: none; }
+    button { position: relative; min-height: 132px; overflow: hidden; border: 1px solid #ffffff33; border-radius: 12px; color: #fff8e8; font: 700 1.25rem Georgia, serif; cursor: pointer; box-shadow: inset 0 -6px 0 #0004, inset 0 2px 8px #ffffff33, 0 8px 22px #0004; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); text-shadow: 0 2px 4px #0006; }
+    button::after { content: ''; position: absolute; inset: 0; border: 1px solid #fff5; border-radius: 12px; pointer-events: none; opacity: 0.5; }
+    button:active { transform: translateY(4px) scale(.98); filter: brightness(1.2); box-shadow: inset 0 -2px 0 #0005, 0 3px 8px #0004; }
+    button.pressed { animation: pulse .28s ease-out; }
+    .symbol { display: block; margin-bottom: 9px; font-size: 2.1rem; font-weight: 400; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+    #resetButton { display: none; width: 100%; min-height: 54px; margin-top: 14px; background: #9b5c3e; border-radius: 8px; }
+    .sulfur { background: linear-gradient(135deg, #d8a029, #a87611); } .mercury { background: linear-gradient(135deg, #627889, #3f515e); }
+    .antimony { background: linear-gradient(135deg, #86605a, #5a3c37); } .salt { background: linear-gradient(135deg, #86947d, #5a6652); }
+    .iron { background: linear-gradient(135deg, #907668, #604a3f); } .copper { background: linear-gradient(135deg, #cf774e, #9a4c28); }
+    .phosphorus { background: linear-gradient(135deg, #5fac72, #397a48); } .arsenic { background: linear-gradient(135deg, #9073b1, #624880); }
+    @keyframes arrive { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 50% { transform: translateY(2px) scale(.96); filter: brightness(1.3); } }
+    @media (min-width: 440px) { .buttons { grid-template-columns: repeat(4, 1fr); } button { min-height: 170px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topline"><h1>Râzî'nin Kazanı</h1><span class="seal">MİRAS / 01</span></div>
+    <p>Oda: <strong>{{ room_id }}</strong></p>
+    <div class="status" id="status">Bağlanıyor...</div>
+    <div class="buttons">
+      <button class="sulfur" data-button="kukurt"><span class="symbol">✦</span>Kükürt</button>
+      <button class="mercury" data-button="civa"><span class="symbol">◈</span>Cıva</button>
+      <button class="antimony" data-button="antimon"><span class="symbol">◇</span>Antimon</button>
+      <button class="salt" data-button="tuz"><span class="symbol">✧</span>Tuz</button>
+      <button class="iron" data-button="demir"><span class="symbol">⬢</span>Demir</button>
+      <button class="copper" data-button="bakir"><span class="symbol">◉</span>Bakır</button>
+      <button class="phosphorus" data-button="fosfor"><span class="symbol">☼</span>Fosfor</button>
+      <button class="arsenic" data-button="arsenik"><span class="symbol">⬡</span>Arsenik</button>
+    </div>
+    <button id="resetButton" data-button="reset">↻ Yeni Oyunu Başlat</button>
+  </main>
+  <script>
+    const roomId = {{ room_id|tojson }};
+    const status = document.getElementById('status');
+    const buttonsContainer = document.querySelector('.buttons');
+    const resetButton = document.getElementById('resetButton');
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
+    
+    // Start with disabled buttons
+    buttonsContainer.classList.add('disabled');
+    
+    socket.addEventListener('open', () => {
+      status.textContent = 'Râzî bekleniyor...';
+      status.className = 'status';
+    });
+    socket.addEventListener('close', () => {
+      status.textContent = 'Bağlantı kesildi. Sayfayı yenile.';
+      status.className = 'status error';
+      buttonsContainer.classList.add('disabled');
+    });
+    socket.addEventListener('message', event => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'round_started') {
+        status.textContent = 'Râzî hazırlanıyor... (İzle)';
+        status.className = 'status';
+        buttonsContainer.classList.add('disabled');
+        resetButton.style.display = 'none';
+      }
+      if (message.type === 'player_turn') {
+        status.textContent = 'Sıra Sende! Malzemeleri seç.';
+        status.className = 'status ready';
+        buttonsContainer.classList.remove('disabled');
+      }
+      if (message.type === 'game_over') {
+        status.textContent = `Oyun bitti: ${message.message || 'Kazan patladı.'}`;
+        status.className = 'status error';
+        buttonsContainer.classList.add('disabled');
+        resetButton.style.display = 'block';
+      }
+    });
+    document.querySelectorAll('.buttons button, #resetButton').forEach(button => button.addEventListener('click', () => {
+      button.classList.remove('pressed');
+      void button.offsetWidth;
+      button.classList.add('pressed');
+      if (navigator.vibrate) navigator.vibrate(18);
+      if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ button: button.dataset.button }));
+    }));
+  </script>
+</body>
+</html>
