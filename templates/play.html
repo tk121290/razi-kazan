@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ebû Bekir er-Râzî'nin Kazanı</title>
   <style>
-    /* ── Değişkenler ─────────────────────────────────────────────────────── */
+    /* ── Değişkenler ── */
     :root {
       color-scheme: dark;
       --bg:      #110d0b;
@@ -21,10 +21,8 @@
       --red-lt:  #eb6a5a;
     }
 
-    /* ── Reset ───────────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Genel ───────────────────────────────────────────────────────────── */
     body {
       min-height: 100dvh;
       background:
@@ -36,29 +34,27 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 16px 12px 24px;
-      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      padding: 14px 10px 20px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
 
-    /* ── Üst bar ─────────────────────────────────────────────────────────── */
     header {
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .logo {
-      font-size: clamp(1.05rem, 4.5vw, 1.5rem);
+      font-size: clamp(1.0rem, 4.2vw, 1.35rem);
       color: var(--gold);
       line-height: 1.2;
-      letter-spacing: -0.01em;
     }
     .logo small {
       display: block;
-      font-size: .7em;
+      font-size: .68em;
       color: var(--muted);
       font-style: italic;
     }
@@ -73,52 +69,48 @@
       display: block;
       font-size: .6rem;
       color: var(--muted);
-      letter-spacing: .05em;
     }
 
-    /* ── Durum çubuğu ────────────────────────────────────────────────────── */
     .status-wrap {
       width: 100%;
-      max-width: 520px;
-      margin-bottom: 10px;
+      max-width: 540px;
+      margin-bottom: 8px;
     }
     .status {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 14px;
+      padding: 9px 12px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: #211810cc;
-      font-size: .9rem;
+      font-size: .88rem;
       color: var(--gold);
       transition: color .3s, border-color .3s;
     }
     .status::before {
       content: '';
-      flex: 0 0 9px;
-      width: 9px; height: 9px;
+      flex: 0 0 8px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--gold);
-      box-shadow: 0 0 10px var(--gold);
-      transition: background .3s, box-shadow .3s;
+      box-shadow: 0 0 8px var(--gold);
     }
     .status.ready   { color: var(--green-lt); border-color: #3d7054; }
-    .status.ready::before { background: var(--green); box-shadow: 0 0 12px var(--green); }
+    .status.ready::before { background: var(--green); box-shadow: 0 0 10px var(--green); }
     .status.error   { color: var(--red-lt);   border-color: #7a3228; }
-    .status.error::before { background: var(--red); box-shadow: 0 0 12px var(--red); }
+    .status.error::before { background: var(--red); box-shadow: 0 0 10px var(--red); }
 
-    /* ── Geri sayım çubuğu ───────────────────────────────────────────────── */
     .timer-wrap {
       width: 100%;
-      max-width: 520px;
-      margin-bottom: 10px;
+      max-width: 540px;
+      margin-bottom: 8px;
       display: none;
     }
     .timer-wrap.visible { display: flex; align-items: center; gap: 8px; }
     .timer-bar-bg {
       flex: 1;
-      height: 8px;
+      height: 7px;
       background: #2e1e10;
       border-radius: 4px;
       overflow: hidden;
@@ -133,211 +125,220 @@
     .timer-bar-fill.warn  { background: var(--gold); }
     .timer-bar-fill.urgent { background: var(--red); }
     .timer-label {
-      font-size: .75rem;
+      font-size: .72rem;
       color: var(--muted);
-      min-width: 28px;
+      min-width: 26px;
       text-align: right;
     }
 
-    /* ── Butonlar ────────────────────────────────────────────────────────── */
-    .buttons {
+    main {
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Buton Izgarası ── */
+    .buttons-container {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .buttons {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      flex: 1;
+      gap: 8px;
+    }
+    .buttons.many-cols {
+      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
     }
     .buttons.disabled button {
       opacity: .35;
       pointer-events: none;
-      filter: grayscale(55%);
-      transform: scale(.97);
-      box-shadow: none;
+      filter: grayscale(50%);
+      transform: scale(.98);
     }
-    button {
+
+    button.mat-btn {
       position: relative;
-      min-height: 120px;
+      min-height: 85px;
       overflow: hidden;
-      border: 1px solid #ffffff22;
-      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
       color: #fff8e8;
-      font: 700 1.1rem Georgia, serif;
+      font: 700 .95rem Georgia, serif;
       cursor: pointer;
-      box-shadow:
-        inset 0 -5px 0 #0005,
-        inset 0 2px 8px #ffffff22,
-        0 6px 18px #0004;
-      transition: all .18s cubic-bezier(.4,0,.2,1);
-      text-shadow: 0 2px 5px #0007;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform .12s, filter .12s;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 4px;
     }
-    /* Cam parlaması */
-    button::before {
+    button.mat-btn::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(160deg, #ffffff18 0%, transparent 55%);
-      border-radius: 14px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.15) 0%, transparent 60%);
       pointer-events: none;
     }
-    button::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border: 1px solid #ffffff33;
-      border-radius: 14px;
-      pointer-events: none;
+    button.mat-btn:active {
+      transform: translateY(2px) scale(.97);
+      filter: brightness(1.2);
     }
-    button:active {
-      transform: translateY(4px) scale(.97);
-      filter: brightness(1.18);
-      box-shadow: inset 0 -1px 0 #0006, 0 2px 6px #0004;
+    button.mat-btn.pressed {
+      animation: btn-press .2s ease-out;
     }
-    button.pressed { animation: btn-press .22s ease-out; }
-    button.hidden  { visibility: hidden; pointer-events: none; }
+    @keyframes btn-press {
+      40% { transform: translateY(2px) scale(.95); filter: brightness(1.25); }
+    }
 
     .symbol {
       display: block;
-      font-size: 2rem;
+      font-size: 1.6rem;
       font-weight: 400;
-      text-shadow: 0 0 12px rgba(255,255,255,.45);
-      margin-bottom: 6px;
+      margin-bottom: 3px;
+      text-shadow: 0 0 10px rgba(255,255,255,0.4);
     }
-    .mat-name { font-size: .95rem; letter-spacing: .04em; }
+    .mat-name {
+      font-size: .85rem;
+      letter-spacing: .02em;
+      text-align: center;
+    }
 
-    /* ── Renk temaları ───────────────────────────────────────────────────── */
-    .sulfur    { background: linear-gradient(140deg, #c8941e, #8a5c0a); }
-    .mercury   { background: linear-gradient(140deg, #5c7282, #3a4d58); }
-    .antimony  { background: linear-gradient(140deg, #7c5850, #50322e); }
-    .salt      { background: linear-gradient(140deg, #7a8870, #50604a); }
-    .iron      { background: linear-gradient(140deg, #846054, #543830); }
-    .copper    { background: linear-gradient(140deg, #c26840, #8a3c18); }
-    .phosphorus{ background: linear-gradient(140deg, #4a9e60, #2a6838); }
-    .arsenic   { background: linear-gradient(140deg, #8060a8, #503070); }
-
-    /* ── Sıfırlama butonu ────────────────────────────────────────────────── */
     #resetBtn {
       display: none;
       width: 100%;
-      max-width: 520px;
-      min-height: 52px;
-      margin-top: 12px;
+      min-height: 48px;
+      margin-top: 10px;
       background: linear-gradient(135deg, #8a4430, #5e2818);
       border: 1px solid #c06040;
       border-radius: 10px;
-      font-size: 1rem;
-      letter-spacing: .06em;
+      font-size: .95rem;
       color: #fde8d8;
+      cursor: pointer;
     }
     #resetBtn.visible { display: block; }
 
-    /* ── Kilitsiz malzeme göstergesi ─────────────────────────────────────── */
     .unlocked-note {
       font-size: .68rem;
       color: var(--muted);
       text-align: center;
       margin-top: 6px;
-      display: none;
-    }
-    .unlocked-note.visible { display: block; }
-
-    /* ── Animasyonlar ────────────────────────────────────────────────────── */
-    @keyframes btn-press {
-      40% { transform: translateY(3px) scale(.96); filter: brightness(1.25); }
-    }
-    @keyframes arrive {
-      from { opacity: 0; transform: translateY(14px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    main { animation: arrive .5s ease-out both; display: contents; }
-
-    /* ── Büyük ekranlar ──────────────────────────────────────────────────── */
-    @media (min-width: 440px) {
-      .buttons { grid-template-columns: repeat(4, 1fr); }
-      button   { min-height: 156px; }
-    }
-    @media (min-width: 700px) {
-      body { padding-top: 32px; }
     }
   </style>
 </head>
 <body>
+<header>
+  <div class="logo">
+    Ebû Bekir er-Râzî
+    <small>Simya & Tıp Ayini</small>
+  </div>
+  <div class="room-badge">
+    <span>ODA</span>
+    <strong id="roomCode">{{ room_id }}</strong>
+  </div>
+</header>
+
+<div class="status-wrap">
+  <div class="status" id="status">Bağlantı kuruluyor…</div>
+</div>
+
+<div class="timer-wrap" id="timerWrap">
+  <div class="timer-bar-bg">
+    <div class="timer-bar-fill" id="timerFill"></div>
+  </div>
+  <div class="timer-label" id="timerLabel">--</div>
+</div>
+
 <main>
-  <header>
-    <div class="logo">
-      Ebû Bekir er-Râzî'nin Kazanı
-      <small>Hafıza ve Dikkat Ayini</small>
+  <div class="buttons-container">
+    <div class="buttons disabled" id="buttonsGrid">
+      <!-- Dinamik yüklenecek butonlar -->
     </div>
-    <div class="room-badge">
-      <span>ODA</span>
-      {{ room_id }}
-    </div>
-  </header>
-
-  <div class="status-wrap">
-    <div class="status" id="status">Bağlanıyor…</div>
   </div>
-
-  <div class="timer-wrap" id="timerWrap">
-    <div class="timer-bar-bg">
-      <div class="timer-bar-fill" id="timerFill"></div>
-    </div>
-    <div class="timer-label" id="timerLabel">—</div>
-  </div>
-
-  <div class="buttons disabled" id="buttons">
-    <button class="sulfur"     data-button="kukurt"   data-class="sulfur">    <span class="symbol">✦</span><span class="mat-name">Kükürt</span></button>
-    <button class="mercury"    data-button="civa"      data-class="mercury">   <span class="symbol">◈</span><span class="mat-name">Cıva</span></button>
-    <button class="antimony"   data-button="antimon"   data-class="antimony">  <span class="symbol">◇</span><span class="mat-name">Antimon</span></button>
-    <button class="salt"       data-button="tuz"       data-class="salt">      <span class="symbol">✧</span><span class="mat-name">Tuz</span></button>
-    <button class="iron"       data-button="demir"     data-class="iron">      <span class="symbol">⬢</span><span class="mat-name">Demir</span></button>
-    <button class="copper"     data-button="bakir"     data-class="copper">    <span class="symbol">◉</span><span class="mat-name">Bakır</span></button>
-    <button class="phosphorus" data-button="fosfor"    data-class="phosphorus"><span class="symbol">☼</span><span class="mat-name">Fosfor</span></button>
-    <button class="arsenic"    data-button="arsenik"   data-class="arsenic">   <span class="symbol">⬡</span><span class="mat-name">Arsenik</span></button>
-  </div>
-
-  <p class="unlocked-note" id="unlockedNote"></p>
-
-  <button id="resetBtn" data-button="reset">↻ &nbsp;Yeni Oyun Başlat</button>
+  <div class="unlocked-note" id="unlockedNote"></div>
+  <button id="resetBtn">↻ &nbsp;Yeni Oyun Başlat</button>
 </main>
 
 <script>
-  const roomId      = {{ room_id|tojson }};
-  const statusEl    = document.getElementById('status');
-  const buttonsEl   = document.getElementById('buttons');
-  const timerWrap   = document.getElementById('timerWrap');
-  const timerFill   = document.getElementById('timerFill');
-  const timerLabel  = document.getElementById('timerLabel');
-  const resetBtn    = document.getElementById('resetBtn');
-  const unlockedNote= document.getElementById('unlockedNote');
-  const allButtons  = document.querySelectorAll('.buttons button');
+  const roomId       = {{ room_id|tojson }};
+  const statusEl     = document.getElementById('status');
+  const gridEl       = document.getElementById('buttonsGrid');
+  const timerWrap    = document.getElementById('timerWrap');
+  const timerFill    = document.getElementById('timerFill');
+  const timerLabel   = document.getElementById('timerLabel');
+  const resetBtn     = document.getElementById('resetBtn');
+  const unlockedNote = document.getElementById('unlockedNote');
 
-  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  const socket   = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
+  let elementsMap = {};
+  let unlockedList = [];
+  let timerTotal   = 0;
 
-  // Varsayılan — tüm butonlar gizli değil, devre dışı
-  buttonsEl.classList.add('disabled');
-
-  /* ── Kilidi açık malzemeleri göster ───────────────────────────────────── */
-  function applyUnlocked(unlocked) {
-    allButtons.forEach(btn => {
-      const mat = btn.dataset.button;
-      if (unlocked && !unlocked.includes(mat)) {
-        btn.classList.add('hidden');
-      } else {
-        btn.classList.remove('hidden');
-      }
+  // 30 Element verisini sunucudan çek
+  fetch('/razi_elements.json')
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(el => { elementsMap[el.id] = el; });
+      renderButtons();
+    })
+    .catch(err => {
+      console.warn("Elementler yüklenirken hata:", err);
+      // Fallback 8 element
+      const defaultIds = ["civa", "kukurt", "tuz", "demir", "bakir", "kursun", "kalay", "antimon"];
+      defaultIds.forEach(id => {
+        elementsMap[id] = { id: id, name: id.toUpperCase(), symbol: "☿", color: [140, 140, 160] };
+      });
+      renderButtons();
     });
-    if (unlocked && unlocked.length < 8) {
-      unlockedNote.textContent = `${unlocked.length} malzeme açık`;
-      unlockedNote.classList.add('visible');
+
+  function renderButtons() {
+    gridEl.innerHTML = '';
+    const activeIds = unlockedList.length > 0 ? unlockedList : Object.keys(elementsMap).slice(0, 8);
+    
+    if (activeIds.length > 8) {
+      gridEl.classList.add('many-cols');
     } else {
-      unlockedNote.classList.remove('visible');
+      gridEl.classList.remove('many-cols');
+    }
+
+    activeIds.forEach(id => {
+      const el = elementsMap[id] || { id: id, name: id, symbol: "🜔", color: [120, 110, 100] };
+      const btn = document.createElement('button');
+      btn.className = 'mat-btn';
+      btn.dataset.button = el.id;
+
+      const r = el.color[0], g = el.color[1], b = el.color[2];
+      const r2 = Math.floor(r * 0.6), g2 = Math.floor(g * 0.6), b2 = Math.floor(b * 0.6);
+      btn.style.background = `linear-gradient(140deg, rgb(${r},${g},${b}), rgb(${r2},${g2},${b2}))`;
+
+      btn.innerHTML = `
+        <span class="symbol">${el.symbol}</span>
+        <span class="mat-name">${el.name}</span>
+      `;
+
+      btn.addEventListener('click', () => sendButton(el.id, btn));
+      gridEl.appendChild(btn);
+    });
+
+    unlockedNote.textContent = `${activeIds.length} / 30 element açık`;
+  }
+
+  function sendButton(matId, btn) {
+    if (gridEl.classList.contains('disabled')) return;
+    btn.classList.remove('pressed');
+    void btn.offsetWidth;
+    btn.classList.add('pressed');
+    if (navigator.vibrate) navigator.vibrate(22);
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ button: matId }));
     }
   }
 
-  /* ── Timer ─────────────────────────────────────────────────────────────── */
-  let timerTotal = 0;
   function updateTimer(remaining, total) {
     timerTotal = total || timerTotal;
     const ratio = timerTotal > 0 ? remaining / timerTotal : 0;
@@ -349,7 +350,10 @@
     timerWrap.classList.add('visible');
   }
 
-  /* ── WebSocket olayları ─────────────────────────────────────────────────── */
+  // WebSocket
+  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+  const socket   = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
+
   socket.addEventListener('open', () => {
     statusEl.textContent = 'Ebû Bekir er-Râzî bekleniyor…';
     statusEl.className   = 'status';
@@ -358,7 +362,7 @@
   socket.addEventListener('close', () => {
     statusEl.textContent = 'Bağlantı kesildi — sayfayı yenileyin.';
     statusEl.className   = 'status error';
-    buttonsEl.classList.add('disabled');
+    gridEl.classList.add('disabled');
     timerWrap.classList.remove('visible');
   });
 
@@ -368,17 +372,19 @@
     if (msg.type === 'round_started') {
       statusEl.textContent = 'Ebû Bekir er-Râzî hazırlanıyor… (İzle)';
       statusEl.className   = 'status';
-      buttonsEl.classList.add('disabled');
+      gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
       resetBtn.classList.remove('visible');
-      resetBtn.style.display = 'none';
-      applyUnlocked(msg.unlocked || null);
+      if (msg.unlocked && Array.isArray(msg.unlocked)) {
+        unlockedList = msg.unlocked;
+        renderButtons();
+      }
     }
 
     if (msg.type === 'player_turn') {
       statusEl.textContent = 'Sıra Sende! Malzemeleri seç.';
       statusEl.className   = 'status ready';
-      buttonsEl.classList.remove('disabled');
+      gridEl.classList.remove('disabled');
       timerTotal = msg.total || 0;
       updateTimer(timerTotal, timerTotal);
     }
@@ -388,28 +394,13 @@
     }
 
     if (msg.type === 'game_over') {
-      statusEl.textContent = `Oyun bitti: ${msg.message || 'Kazan patladı.'}`;
+      statusEl.textContent = `Oyun bitti: ${msg.message || 'Kazan taştı.'}`;
       statusEl.className   = 'status error';
-      buttonsEl.classList.add('disabled');
+      gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
-      resetBtn.style.display = 'block';
       resetBtn.classList.add('visible');
-      // Titreşim — uzun pattern
       if (navigator.vibrate) navigator.vibrate([80, 40, 80, 40, 200]);
     }
-  });
-
-  /* ── Buton tıklamaları ─────────────────────────────────────────────────── */
-  document.querySelectorAll('.buttons button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.classList.remove('pressed');
-      void btn.offsetWidth;
-      btn.classList.add('pressed');
-      if (navigator.vibrate) navigator.vibrate(22);
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ button: btn.dataset.button }));
-      }
-    });
   });
 
   resetBtn.addEventListener('click', () => {
@@ -418,7 +409,6 @@
       socket.send(JSON.stringify({ button: 'reset' }));
     }
     resetBtn.classList.remove('visible');
-    resetBtn.style.display = 'none';
   });
 </script>
 </body>

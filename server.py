@@ -9,7 +9,7 @@ from typing import Any
 
 import aiosqlite
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -102,6 +102,14 @@ async def play(request: Request, room_id: str) -> HTMLResponse:
         name="play.html",
         context={"room_id": room_id.upper()},
     )
+
+
+@app.get("/razi_elements.json")
+async def get_razi_elements():
+    path = Path(__file__).parent / "razi_elements.json"
+    if path.exists():
+        return FileResponse(path, media_type="application/json")
+    return {"error": "not found"}
 
 
 # ── Liderlik Tablosu ──────────────────────────────────────────────────────────

@@ -51,37 +51,31 @@ WIDTH, HEIGHT = 1100, 700
 # Contain modunda 1100×599 render + 50px top-offset → floor_y ≈ 589
 BG_FLOOR_PCT = 0.95   # Kalibrasyonu buradan ayarla (büyüt → aşağı, küçült → yukarı)
 
-MATERIALS = ("civa", "kukurt", "antimon", "tuz", "demir", "bakir", "fosfor", "arsenik")
-MATERIAL_NAMES = {
-    "civa": "Cıva",
-    "kukurt": "Kükürt",
-    "antimon": "Antimon",
-    "tuz": "Tuz",
-    "demir": "Demir",
-    "bakir": "Bakır",
-    "fosfor": "Fosfor",
-    "arsenik": "Arsenik",
-}
-MATERIAL_SYMBOLS = {
-    "civa": "☿",
-    "kukurt": "🜍",
-    "antimon": "♁",
-    "tuz": "🜔",
-    "demir": "♂",
-    "bakir": "♀",
-    "fosfor": "☼",
-    "arsenik": "☠",
-}
-MATERIAL_NOTES = {
-    "civa":    "Câbir ibn Hayyân cıvayı 'metaller anası' sayardı. Buharlaşması onu eter ile madde arasında görürdü.",
-    "kukurt":  "Kükürt-cıva teorisi: tüm metallerin bu iki ilkeden oluştuğunu savundu er-Râzî.",
-    "antimon": "Ortaçağ eczacılığında antimon gözkapağı boyası olarak kullanıldı; sürme taşı adıyla bilinir.",
-    "tuz":     "Paracelsus'un üçüncü ilkesi. Râzî tuz kristallerini saflığın simgesi sayardı.",
-    "demir":   "Râzî metalleri yedi gezegene eşler; demir Mars'a aitti ve kılıç yaparken okunurdu.",
-    "bakir":   "Venüs gezegeniyle özdeşleştirilen bakır, antik bronz çağından beri 'kutsal metal'di.",
-    "fosfor":  "Fosfor Arapçada 'ışık taşıyan' demektir. Karanlıkta parlayan ilk element olarak şaşkınlık yarattı.",
-    "arsenik": "Orpiment (As₂S₃) altın sarısı rengiyle boyacıların ve simyacıların gözdesi oldu.",
-}
+# ─── 30 Tarihi Simya Elementi ────────────────────────────────────────────────
+def _load_elements():
+    json_path = Path(__file__).parent / "razi_elements.json"
+    if json_path.exists():
+        try:
+            items = json.loads(json_path.read_text(encoding="utf-8"))
+            mats = tuple(it["id"] for it in items)
+            names = {it["id"]: it["name"] for it in items}
+            symbols = {it["id"]: it["symbol"] for it in items}
+            notes = {it["id"]: it.get("fact", "") for it in items}
+            colors = {it["id"]: tuple(it["color"]) for it in items}
+            colors_lt = {it["id"]: tuple(it.get("color_lt", [min(255, c + 45) for c in it["color"]])) for it in items}
+            return mats, names, symbols, notes, colors, colors_lt
+        except Exception as e:
+            print("razi_elements.json yüklenemedi:", e)
+    # Fallback
+    mats = ("civa", "kukurt", "antimon", "tuz", "demir", "bakir", "fosfor", "arsenik")
+    names = {m: m.capitalize() for m in mats}
+    symbols = {m: "🜔" for m in mats}
+    notes = {m: "" for m in mats}
+    colors = {m: (150, 150, 150) for m in mats}
+    colors_lt = {m: (200, 200, 200) for m in mats}
+    return mats, names, symbols, notes, colors, colors_lt
+
+MATERIALS, MATERIAL_NAMES, MATERIAL_SYMBOLS, MATERIAL_NOTES, COLORS, COLORS_LT = _load_elements()
 
 # ─── Renk Paleti ──────────────────────────────────────────────────────────────
 BG       = (17, 13, 12)          # çok koyu zemin
@@ -98,17 +92,6 @@ RED      = (200, 75, 60)         # hata kırmızısı
 RED_LT   = (235, 110, 90)
 SHADOW   = (0, 0, 0)
 
-COLORS = {
-    "civa":    (105, 155, 185),
-    "kukurt":  (210, 158, 40),
-    "antimon": (140, 95, 85),
-    "tuz":     (155, 175, 145),
-    "demir":   (140, 108, 92),
-    "bakir":   (185, 95, 55),
-    "fosfor":  (95, 195, 120),
-    "arsenik": (148, 115, 185),
-}
-COLORS_LT = {k: tuple(min(255, c + 50) for c in v) for k, v in COLORS.items()}
 
 
 class GameState(Enum):
@@ -431,36 +414,11 @@ class VoiceEngine:
 
     def __init__(self) -> None:
         self.enabled  = False
-        self._queue:  queue.Queue[str | None] = queue.Queue()
-        self._channel: pygame.mixer.Channel | None = None
-        try:
-            import edge_tts as _edge_tts  # noqa
-            self._edge_tts = _edge_tts
-            pygame.mixer.set_num_channels(max(8, pygame.mixer.get_num_channels()))
-            self._channel  = pygame.mixer.Channel(self.CHANNEL)
-            self.enabled   = True
-            worker = threading.Thread(target=self._worker, daemon=True)
-            worker.start()
-            print("VoiceEngine: edge-tts aktif.")
-        except ImportError:
-            print("VoiceEngine: edge-tts bulunamadı — ses devre dışı.")
-        except Exception as e:
-            print(f"VoiceEngine: Başlatma hatası — {e}")
+        # Kullanıcı isteği doğrultusunda sesli konuşma (TTS) iptal edildi;
+        # Râzî'nin tüm diyalogları konuşma balonunda gösterilir.
 
     def speak(self, text: str, interrupt: bool = False) -> None:
-        """Metni sıraya ekle. interrupt=True ise kuyruğu temizler."""
-        if not self.enabled:
-            return
-        if interrupt:
-            # Mevcut kuyruğu boşalt
-            while not self._queue.empty():
-                try:
-                    self._queue.get_nowait()
-                except queue.Empty:
-                    break
-            if self._channel:
-                self._channel.stop()
-        self._queue.put(text)
+        pass
 
     def _worker(self) -> None:
         """Arkaplan thread: kuyruktaki metinleri TTS'e çevirir ve çalar."""
@@ -526,8 +484,23 @@ class Game:
             columns=6,
             rows=1,
         )
+        # Sade simya kazanı (normal ateş ve duman)
         self.anim_forge = SpriteAnimation(
-            "assets/PNG/Forge.png", 64, 96, scale=5, decorator=decorate_forge
+            "assets/PNG/cauldron_clean/cauldron_normal_spritesheet.png",
+            frame_width=180,
+            frame_height=240,
+            scale=1.0,
+            columns=6,
+            rows=1,
+        )
+        # Hata anında aşırı alevlenme ve duman patlaması
+        self.anim_forge_surge = SpriteAnimation(
+            "assets/PNG/cauldron_clean/cauldron_surge_spritesheet.png",
+            frame_width=180,
+            frame_height=240,
+            scale=1.0,
+            columns=6,
+            rows=1,
         )
 
         # ── Ses ──────────────────────────────────────────────────────────────
@@ -549,6 +522,15 @@ class Game:
         self.phase_cursor  = 0
         self.last_message  = "Telefon bağlanması bekleniyor"
         self.round_success = False
+
+        # Konuşma balonu & Alev patlaması & Bilgi kartları
+        self.bubble_text     = ""
+        self.bubble_started  = 0.0
+        self.bubble_duration = 0.0
+        self.fire_surge_until= 0.0
+        self.info_card_mat   = None
+        self.info_card_until = 0.0
+        self.last_unlocked_count = 4
 
         # Parçacıklar
         self.particles: list[dict] = []
@@ -636,6 +618,12 @@ class Game:
 
     # ── Oyun geçişleri ───────────────────────────────────────────────────────
 
+    def speak_bubble(self, text: str, duration: float = 4.0) -> None:
+        """Râzî'nin başı üzerindeki konuşma balonunda metin gösterir."""
+        self.bubble_text     = text
+        self.bubble_started  = time.monotonic()
+        self.bubble_duration = duration
+
     def _start_rhazi_turn(self) -> None:
         self.round_success = False
         self.sequence      = [random.choice(self.material_pool) for _ in range(self.sequence_length)]
@@ -644,11 +632,24 @@ class Game:
         self.state         = GameState.RHAZI_TURN
         self.last_message  = "Ebû Bekir er-Râzî malzemeleri hazırlıyor..."
         self._spawn_particles(530, 385, GOLD, 18)
-        # Kilidi açık malzemeleri telefona bildir
+
+        # Kilidi açık malzemeleri telefona bildir (30 elemente kadar)
         unlocked = list(self.material_pool)
         self.network.send({"type": "round_started", "unlocked": unlocked})
-        # Sesli anlatım
-        self.voice.speak("Dikkat et, malzemeleri sırayla ezberle.", interrupt=True)
+
+        # Yeni element açıldı mı veya bilgi kartı gösterimi
+        if len(unlocked) > getattr(self, "last_unlocked_count", 0):
+            new_mat = unlocked[-1]
+            self.info_card_mat = new_mat
+            self.info_card_until = time.monotonic() + 6.0
+            self.last_unlocked_count = len(unlocked)
+            self.speak_bubble(f"Seviye {self.level}! Yeni malzeme: {MATERIAL_NAMES.get(new_mat, new_mat)}", duration=3.5)
+        elif random.random() < 0.4:
+            self.info_card_mat = random.choice(unlocked)
+            self.info_card_until = time.monotonic() + 5.0
+            self.speak_bubble(f"Seviye {self.level}. Sırayı dikkatle takip et!", duration=3.0)
+        else:
+            self.speak_bubble(f"Seviye {self.level}. Malzemeleri dikkatle izle!", duration=3.0)
 
     def _reset_game(self) -> None:
         self.level        = 1
@@ -679,20 +680,31 @@ class Game:
 
     @property
     def sequence_length(self) -> int:
-        return min(3 + (self.level - 1) // 2, 12)
+        # 100 seviyeye yayılan hafıza dengesi: Seviye 1'de 3, Seviye 100'de 13 element
+        return min(13, 3 + int((self.level - 1) ** 0.51))
 
     @property
     def material_pool(self) -> tuple[str, ...]:
-        unlocked = min(4 + (self.level - 1) // 2, len(MATERIALS))
-        return MATERIALS[:unlocked]
+        # 30 simya elementi 100 seviyeye dengeli dağıtılır:
+        # Seviye 1: 4 element, Seviye 100: 30 elementin tamamı açılır.
+        count = min(len(MATERIALS), 4 + (self.level - 1) * (len(MATERIALS) - 4) // 99)
+        return tuple(MATERIALS[:count])
 
     @property
     def reveal_duration(self) -> float:
-        return max(0.38, 1.5 - (self.level - 1) * 0.1)
+        # Râzî'nin fırlatma animasyon ritmine uygun yumuşak geçişli süre (1.4s -> 0.7s)
+        return max(0.70, 1.40 - (self.level - 1) * 0.007)
 
     @property
     def player_duration(self) -> float:
-        return max(5.0, len(self.sequence) * 2.5 - (self.level - 1) * 0.2)
+        # Her 3 elementte bir orantılı süre artışı (hem dizi uzunluğu hem buton arama desteği):
+        seq_len = len(self.sequence) if self.sequence else self.sequence_length
+        pool_size = len(self.material_pool)
+        base_time = 5.0
+        seq_time = seq_len * 2.0
+        seq_bonus = (seq_len // 3) * 3.0
+        pool_bonus = max(0, (pool_size - 4) // 3) * 1.0
+        return max(12.0, base_time + seq_time + seq_bonus + pool_bonus)
 
     # ── Güncelleme ───────────────────────────────────────────────────────────
 
@@ -727,12 +739,12 @@ class Game:
                     "total": round(self.player_duration, 1),
                 })
 
-        # Gemini ipucu — arka plandan gelen sonucu al
+        # Gemini ipucu — arka plandan gelen sonucu konuşma balonunda göster
         hint_result = self.hint_engine.poll()
         if hint_result:
             self.hint_text, self.hint_material = hint_result
             self.hint_started = time.monotonic()
-            self.voice.speak(self.hint_text)
+            self.speak_bubble(self.hint_text, duration=6.5)
 
         if self.state == GameState.RHAZI_TURN:
             if now - self.phase_started >= self.reveal_duration:
@@ -750,12 +762,11 @@ class Game:
                         "total": round(self.player_duration, 1),
                     })
                     self.sounds.play("tick")
-                    self.voice.speak("Sıra sende, malzemeleri seç.", interrupt=True)
+                    self.speak_bubble("Sıra sende çırak! Malzemeleri sırayla seç.", duration=3.5)
                 else:
                     mat = self.sequence[self.phase_cursor]
-                    self._spawn_particles(530, 385, COLORS[mat], 14)
-                    # Her malzeme gösterildiğinde sesli okunur
-                    self.voice.speak(MATERIAL_NAMES[mat])
+                    self._spawn_particles(530, 385, COLORS.get(mat, GOLD), 14)
+                    self.speak_bubble(f"{MATERIAL_NAMES.get(mat, mat)} ekliyorum...", duration=max(1.0, self.reveal_duration * 0.9))
         elif self.state == GameState.PLAYER_TURN and now - self.phase_started >= self.player_duration:
             self._time_out()
         elif self.state == GameState.RESOLUTION and now - self.phase_started >= 2:
@@ -773,14 +784,16 @@ class Game:
     def _time_out(self) -> None:
         self.state        = GameState.RESOLUTION
         self.round_success = False
-        self.last_message  = "Süre doldu — Kazan patladı!"
+        self.last_message  = "Süre doldu — Kazan taştı!"
         self.phase_started = time.monotonic()
         self.flash_color   = RED_LT
         self.flash_started = self.phase_started
         self.shake_started = self.phase_started
-        self._spawn_particles(560, 350, RED, 48)
+        # Hata anında aşırı alevlenme (flare surge)
+        self.fire_surge_until = time.monotonic() + 3.0
+        self._spawn_particles(840, int(self.floor_y - 140), (255, 60, 20), 50)
         self.sounds.play("wrong")
-        self.voice.speak("Süre doldu. Kazan patladı.", interrupt=True)
+        self.speak_bubble("Vakit doldu çırak! Ateş kontrolden çıktı!", duration=3.5)
         self.network.send({"type": "game_over", "message": self.last_message})
 
     def _go_game_over(self) -> None:
@@ -790,7 +803,7 @@ class Game:
         self.state        = GameState.GAME_OVER
         self.game_over_time = time.monotonic()
         self.sounds.play("gameover")
-        self.voice.speak(f"Oyun bitti. Seviye {self.final_level}'e ulaştın.", interrupt=True)
+        self.speak_bubble(f"Oyun bitti! Seviye {self.final_level}'e kadar gelebildin.", duration=4.0)
 
     # ── Buton işleme ─────────────────────────────────────────────────────────
 
@@ -805,14 +818,17 @@ class Game:
             self.flash_color   = RED_LT
             self.flash_started = self.phase_started
             self.shake_started = self.phase_started
-            self._spawn_particles(560, 350, RED, 48)
+            # Hata anında aşırı alevlenme (flare surge)
+            self.fire_surge_until = time.monotonic() + 3.0
+            self._spawn_particles(840, int(self.floor_y - 140), (255, 60, 20), 55)
             self.sounds.play("wrong")
             self.network.send({"type": "game_over", "message": self.last_message})
+            
             # Gemini'den Râzî karakteriyle ipucu iste
             self.hint_engine.request(correct, button, self.level)
-            # Sesli uyarı
+            
             correct_tr = MATERIAL_NAMES.get(correct, correct)
-            self.voice.speak(f"Yanlış. Doğrusu {correct_tr} idi.", interrupt=True)
+            self.speak_bubble(f"Eyvah! Yanlış malzeme, doğrusu {correct_tr} idi!", duration=3.5)
             return
 
         self.player_index += 1
@@ -833,6 +849,7 @@ class Game:
             self.flash_started = self.phase_started
             self._spawn_particles(560, 350, GOLD, 60)
             self.sounds.play("level_up")
+            self.speak_bubble(f"Mükemmel! Seviye {self.level}'e geçtik.", duration=3.0)
         else:
             remaining_count = len(self.sequence) - self.player_index
             self.last_message = f"Doğru  ·  {remaining_count} malzeme kaldı"
@@ -874,6 +891,10 @@ class Game:
         else:
             self.hint_text = None
 
+        # Râzî konuşma balonu & Tarihi bilgi kartı
+        self._draw_speech_bubble()
+        self._draw_info_card()
+
         self._draw_particles()
         self._draw_flash()
 
@@ -905,10 +926,23 @@ class Game:
             # Râzî ve simya masası (genişlik 280px)
             self._blit_on_floor(master_frame, 220)
 
-        forge_frame = self.anim_forge.get_frame(now, 8)
+        # Kazan ve Ateş Çizimi
+        is_surge = now < self.fire_surge_until
+        anim_obj = self.anim_forge_surge if is_surge else self.anim_forge
+        fps = 10 if is_surge else 6
+        forge_frame = anim_obj.get_frame(now, fps)
         if forge_frame:
-            # Forge / Kazan
-            self._blit_on_floor(forge_frame, 845)
+            # Sade döküm kazan, canlı ateş ve duman
+            self._blit_on_floor(forge_frame, 840)
+
+        # Aşırı alevlenme anında etrafa sıçrayan köz ve kıvılcım parçacıkları
+        if is_surge and random.random() < 0.7:
+            self._spawn_particles(
+                random.randint(805, 875),
+                int(self.floor_y - random.randint(80, 190)),
+                random.choice([(255, 140, 20), (255, 50, 10), (255, 230, 60), (220, 30, 10)]),
+                3
+            )
 
     def _blit_on_floor(self, frame: pygame.Surface, center_x: int) -> None:
         bounds = frame.get_bounding_rect()
@@ -995,8 +1029,9 @@ class Game:
         # Top-left = (80, self.floor_y - 230) -> Hand = (184, self.floor_y - 172)
         hand_x = 184
         hand_y = int(self.floor_y - 172)
-        target_x = 820
-        target_y = int(self.floor_y - 40)
+        # Yeni simya kazanı ağzı (center_x = 840, mouth_y = floor_y - 188)
+        target_x = 840
+        target_y = int(self.floor_y - 188)
 
         color    = COLORS[material]
         color_lt = COLORS_LT[material]
@@ -1009,17 +1044,17 @@ class Game:
             # Uçuş safhası: el kalkıkken kazana doğru parabolik yay çizer
             t = (progress - 0.10) / 0.60
             x = int(hand_x + (target_x - hand_x) * t)
-            arc = 150 * 4 * t * (1 - t)
+            arc = 160 * 4 * t * (1 - t)
             y = int(hand_y + (target_y - hand_y) * t - arc)
             # Uçuş izi parçacıkları
-            if random.random() < 0.4:
+            if random.random() < 0.45:
                 self._spawn_particles(x, y, color_lt, 1)
         else:
             # Kazana düştü
             x = target_x
             y = target_y
-            if 0.70 <= progress < 0.75:
-                self._spawn_particles(target_x, target_y - 10, color, 4)
+            if 0.70 <= progress < 0.78:
+                self._spawn_particles(target_x, target_y, color, 5)
 
         pw, ph   = 26, 36
         bottle   = pygame.Surface((pw, ph), pygame.SRCALPHA)
@@ -1035,8 +1070,16 @@ class Game:
         # Tıpa
         pygame.draw.rect(bottle, (130, 90, 50), (10, 0, 7, 5), border_radius=2)
 
-        if progress < 0.75:
+        if progress < 0.72:
             self.pixel_surface.blit(bottle, (x - pw // 2, y - ph // 2))
+
+        # Kazan içine düşüş anında parıltı ve alevlenme efekti
+        if 0.70 <= progress < 0.95:
+            glow_alpha = int((1.0 - (progress - 0.70) / 0.25) * 160)
+            glow_surf = pygame.Surface((140, 70), pygame.SRCALPHA)
+            pygame.draw.ellipse(glow_surf, (*color, glow_alpha), (10, 10, 120, 50))
+            pygame.draw.ellipse(glow_surf, (*color_lt, min(255, glow_alpha + 60)), (30, 18, 80, 34))
+            self.pixel_surface.blit(glow_surf, (target_x - 70, target_y - 35), special_flags=pygame.BLEND_ADD)
 
         if 0.70 <= progress <= 0.76 and not getattr(self, "_drop_sound_played", False):
             self._drop_sound_played = True
@@ -1182,7 +1225,122 @@ class Game:
 
         self.pixel_surface.blit(card, (card_x, card_y))
 
-    # ── Gemini ipucu banner ───────────────────────────────────────────────────
+    # ── Râzî Konuşma Balonu ──────────────────────────────────────────────────
+
+    def _draw_speech_bubble(self) -> None:
+        """Râzî'nin başı üzerinde antika parşömen konuşma balonu çizer."""
+        now = time.monotonic()
+        if not self.bubble_text or now - self.bubble_started >= self.bubble_duration:
+            return
+
+        bx = 220
+        words = self.bubble_text.split()
+        lines = []
+        cur_line = []
+        max_line_w = 260
+        for w in words:
+            test = " ".join(cur_line + [w])
+            if self.font_small.size(test)[0] > max_line_w:
+                if cur_line:
+                    lines.append(" ".join(cur_line))
+                cur_line = [w]
+            else:
+                cur_line.append(w)
+        if cur_line:
+            lines.append(" ".join(cur_line))
+        if not lines:
+            return
+
+        line_h = 16
+        pad_x, pad_y = 14, 10
+        bw = min(320, max(self.font_small.size(l)[0] for l in lines) + pad_x * 2)
+        bh = len(lines) * line_h + pad_y * 2
+
+        # Balon gövdesi
+        box_x = int(bx - bw // 2)
+        box_x = max(10, min(WIDTH - bw - 10, box_x))
+        box_y = int(self.floor_y - 238 - bh)
+
+        surf = pygame.Surface((bw, bh + 14), pygame.SRCALPHA)
+        # Parşömen gövde
+        rect = pygame.Rect(0, 0, bw, bh)
+        pygame.draw.rect(surf, (252, 248, 236), rect, border_radius=10)
+        pygame.draw.rect(surf, (95, 65, 38), rect, 2, border_radius=10)
+
+        # Kuyruk (Râzî'nin ağzına doğru)
+        tail_x = bw // 2
+        tail_points = [(tail_x - 8, bh - 1), (tail_x + 8, bh - 1), (tail_x - 3, bh + 12)]
+        pygame.draw.polygon(surf, (252, 248, 236), tail_points)
+        pygame.draw.line(surf, (95, 65, 38), (tail_x - 8, bh - 1), (tail_x - 3, bh + 12), 2)
+        pygame.draw.line(surf, (95, 65, 38), (tail_x + 8, bh - 1), (tail_x - 3, bh + 12), 2)
+
+        # Metin çizimi
+        ty = pad_y
+        for ln in lines:
+            t_surf = self.font_small.render(ln, True, (45, 28, 18))
+            surf.blit(t_surf, (pad_x, ty))
+            ty += line_h
+
+        self.pixel_surface.blit(surf, (box_x, box_y))
+
+    # ── Tarihi Bilgi Kartı ────────────────────────────────────────────────────
+
+    def _draw_info_card(self) -> None:
+        """Tarihi Ebû Bekir er-Râzî simya/tıp bilgi kartını çizer."""
+        now = time.monotonic()
+        if not self.info_card_mat or now >= self.info_card_until:
+            return
+
+        mat = self.info_card_mat
+        fact = MATERIAL_NOTES.get(mat, "")
+        if not fact:
+            return
+
+        cw, ch = 380, 110
+        cx = WIDTH - cw - 20
+        cy = 75
+
+        elapsed = self.info_card_until - now
+        alpha = int(min(255, elapsed * 180)) if elapsed < 1.0 else 245
+
+        card_surf = pygame.Surface((cw, ch), pygame.SRCALPHA)
+        pygame.draw.rect(card_surf, (28, 20, 16, alpha), (0, 0, cw, ch), border_radius=12)
+        pygame.draw.rect(card_surf, (*GOLD, alpha), (0, 0, cw, ch), 2, border_radius=12)
+        pygame.draw.rect(card_surf, (80, 55, 35, int(alpha * 0.7)), (3, 3, cw - 6, ch - 6), 1, border_radius=10)
+
+        # Başlık
+        head = self.font_tiny.render("🏺 EBÛ BEKİR ER-RÂZÎ'NİN NOTU", True, (*GOLD_LT, alpha))
+        card_surf.blit(head, (16, 12))
+
+        # Sembol ve İsim
+        sym = MATERIAL_SYMBOLS.get(mat, "🜔")
+        color = COLORS.get(mat, GOLD)
+        name_str = MATERIAL_NAMES.get(mat, mat)
+        sym_surf = self.font_large.render(f"{sym} {name_str}", True, (*color, alpha))
+        card_surf.blit(sym_surf, (16, 28))
+
+        # Bilgi metni
+        words = fact.split()
+        lines = []
+        cur_l = []
+        for w in words:
+            test = " ".join(cur_l + [w])
+            if self.font_tiny.size(test)[0] > cw - 32:
+                lines.append(" ".join(cur_l))
+                cur_l = [w]
+            else:
+                cur_l.append(w)
+        if cur_l:
+            lines.append(" ".join(cur_l))
+
+        fy = 54
+        for ln in lines[:3]:
+            f_surf = self.font_tiny.render(ln, True, (*TEXT, alpha))
+            card_surf.blit(f_surf, (16, fy))
+            fy += 15
+
+        self.pixel_surface.blit(card_surf, (cx, cy))
+
 
     def _draw_hint_banner(self, text: str, material: str | None) -> None:
         """Ekranın alt kısmında Gemini'den gelen Râzî ipucunu göster."""
@@ -1325,35 +1483,28 @@ class Game:
     def _make_background(self) -> pygame.Surface:
         assets_dir = os.path.dirname(__file__)
 
-        # Önce yeni pixel-art arka planı dene, sonra eskisini, son olarak fallback çizim
-        candidates = [
-            os.path.join(assets_dir, "assets", "arkaplan_yeni.jpg"),
-            os.path.join(assets_dir, "assets", "arkaplan_yeni.png"),
-            os.path.join(assets_dir, "assets", "PNG", "Animation packed version", "arkaplan.png"),
-        ]
-        for background_path in candidates:
-            try:
-                bg = pygame.image.load(background_path).convert()
-                img_w, img_h = bg.get_size()
+        # Aktif pixel-art arka plan görseli
+        background_path = os.path.join(assets_dir, "assets", "arkaplan_yeni.jpg")
+        try:
+            bg = pygame.image.load(background_path).convert()
+            img_w, img_h = bg.get_size()
 
-                # "Contain" — resmin tamamı görünür, oran korunur, kenar boşlukları BG rengi
-                scale = min(WIDTH / img_w, HEIGHT / img_h)
-                new_w = int(img_w * scale)
-                new_h = int(img_h * scale)
-                scaled  = pygame.transform.smoothscale(bg, (new_w, new_h))
-                surface = pygame.Surface((WIDTH, HEIGHT))
-                surface.fill(BG)
-                x_off = (WIDTH  - new_w) // 2
-                y_off = (HEIGHT - new_h) // 2
-                surface.blit(scaled, (x_off, y_off))
+            # "Contain" — resmin tamamı görünür, oran korunur, kenar boşlukları BG rengi
+            scale = min(WIDTH / img_w, HEIGHT / img_h)
+            new_w = int(img_w * scale)
+            new_h = int(img_h * scale)
+            scaled  = pygame.transform.smoothscale(bg, (new_w, new_h))
+            surface = pygame.Surface((WIDTH, HEIGHT))
+            surface.fill(BG)
+            x_off = (WIDTH  - new_w) // 2
+            y_off = (HEIGHT - new_h) // 2
+            surface.blit(scaled, (x_off, y_off))
 
-                # Zemin çizgisi: resmin alt kenarından BG_FLOOR_PCT oranında yukarı
-                self.floor_y = y_off + int(new_h * BG_FLOOR_PCT)
-                return surface
-            except (OSError, pygame.error):
-                continue
-
-        print("Arka plan yüklenemedi, fallback çizim kullanılıyor.")
+            # Zemin çizgisi: resmin alt kenarından BG_FLOOR_PCT oranında yukarı
+            self.floor_y = y_off + int(new_h * BG_FLOOR_PCT)
+            return surface
+        except (OSError, pygame.error) as e:
+            print(f"Arka plan yüklenemedi ({e}), fallback çizim kullanılıyor.")
 
         # Fallback — çizimsel arka plan
         surface = pygame.Surface((WIDTH, HEIGHT))
