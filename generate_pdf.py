@@ -1,6 +1,7 @@
 """
-Ebû Bekir er-Râzî'nin "Tıbbiyeli Bir Dostuna Nasihatler" risalesini
-ReportLab ile altın yaldızlı, şık ve Türkçe karakter destekli PDF olarak üretir.
+Tabîb Ekmeleddin (Bey Hekim) Kimdir?
+13. Yüzyıl Anadolu Selçuklu Başhekimi ve Mevlânâ'nın Tabibi hakkında
+ReportLab ile altın tezhip çerçeveli, şık ve Türkçe karakter destekli PDF üretir.
 """
 
 from __future__ import annotations
@@ -17,15 +18,15 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer
 
 BASE_DIR = Path(__file__).parent
-OUTPUT_PDF = BASE_DIR / "assets" / "tibbiye_nasihatleri.pdf"
+OUTPUT_PDF = BASE_DIR / "assets" / "tabib_ekmeleddin_kimdir.pdf"
 
-# Renk paleti
-C_GOLD = HexColor("#b8860b")
-C_GOLD_LT = HexColor("#d4a848")
-C_INK = HexColor("#221710")
-C_MUTED = HexColor("#5a4838")
-C_BG_ACCENT = HexColor("#fdfaf3")
-C_BORDER = HexColor("#8c6239")
+# Renk paleti (Selçuklu Turkuazı & Altın Tezhip Uyumu)
+C_GOLD = HexColor("#c29227")
+C_GOLD_LT = HexColor("#dfb558")
+C_TURQUOISE = HexColor("#006d77")
+C_INK = HexColor("#1c140d")
+C_MUTED = HexColor("#5c4838")
+C_BORDER = HexColor("#845b2f")
 
 
 def register_fonts() -> str:
@@ -49,35 +50,43 @@ def register_fonts() -> str:
 
 
 def draw_background_and_border(canvas, doc):
-    """Her sayfaya tarihi tezhip çerçevesi ve kenar süsü çizer."""
+    """Her sayfaya Selçuklu ve Osmanlı tezhip çerçevesi ve kenar süsü çizer."""
     canvas.saveState()
     w, h = doc.pagesize
 
-    # Hafif parşömen arka planı
+    # Hafif antik parşömen arka planı
     canvas.setFillColor(HexColor("#faf6ee"))
     canvas.rect(0, 0, w, h, fill=1, stroke=0)
 
-    # Dış altın çerçeve
+    # Dış kalın altın çerçeve
     canvas.setStrokeColor(C_GOLD)
-    canvas.setLineWidth(2)
+    canvas.setLineWidth(2.2)
     canvas.rect(12 * mm, 12 * mm, w - 24 * mm, h - 24 * mm)
 
-    # İç ince kahve çerçeve
+    # İç ince süs çerçevesi
     canvas.setStrokeColor(C_BORDER)
-    canvas.setLineWidth(0.7)
+    canvas.setLineWidth(0.8)
     canvas.rect(14.5 * mm, 14.5 * mm, w - 29 * mm, h - 29 * mm)
 
-    # Köşe süsleri
-    for x, y in [(14.5 * mm, 14.5 * mm), (w - 14.5 * mm, 14.5 * mm),
-                 (14.5 * mm, h - 14.5 * mm), (w - 14.5 * mm, h - 14.5 * mm)]:
+    # Dört köşe tezhip süslemeleri (Selçuklu yıldızı ve çember motifi)
+    corners = [
+        (14.5 * mm, 14.5 * mm),
+        (w - 14.5 * mm, 14.5 * mm),
+        (14.5 * mm, h - 14.5 * mm),
+        (w - 14.5 * mm, h - 14.5 * mm),
+    ]
+    for x, y in corners:
         canvas.setStrokeColor(C_GOLD)
-        canvas.setLineWidth(1.5)
-        canvas.circle(x, y, 3 * mm, stroke=1, fill=0)
+        canvas.setLineWidth(1.6)
+        canvas.circle(x, y, 3.5 * mm, stroke=1, fill=0)
+        canvas.setStrokeColor(C_TURQUOISE)
+        canvas.setLineWidth(0.8)
+        canvas.circle(x, y, 1.8 * mm, stroke=1, fill=0)
 
     # Alt bilgi
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(C_MUTED)
-    footer_text = "Ebu Bekir er-Razi'nin Kazani — Erciyes Universitesi & Anadolu Tip Projesi"
+    footer_text = "Tabîb Ekmeleddin'in Kazanı — Erciyes Üniversitesi & Anadolu Tıp Tarihi Projesi"
     canvas.drawCentredString(w / 2.0, 7 * mm, footer_text)
 
     canvas.restoreState()
@@ -100,150 +109,156 @@ def build_pdf() -> Path:
 
     styles = getSampleStyleSheet()
 
-    style_title = ParagraphStyle(
-        "RaziTitle",
+    s_top_kicker = ParagraphStyle(
+        "TopKicker",
         fontName=font_bold,
-        fontSize=16,
-        leading=20,
-        textColor=C_GOLD,
-        alignment=1,  # Center
-        spaceAfter=4,
+        fontSize=9,
+        leading=12,
+        textColor=C_TURQUOISE,
+        alignment=1,
+        spaceAfter=3 * mm,
     )
 
-    style_subtitle = ParagraphStyle(
-        "RaziSubtitle",
+    s_title = ParagraphStyle(
+        "MainTitle",
+        fontName=font_bold,
+        fontSize=18,
+        leading=22,
+        textColor=C_GOLD,
+        alignment=1,
+        spaceAfter=2 * mm,
+    )
+
+    s_subtitle = ParagraphStyle(
+        "SubTitle",
         fontName=font_name,
-        fontSize=10,
-        leading=13,
+        fontSize=11,
+        leading=15,
         textColor=C_MUTED,
         alignment=1,
-        spaceAfter=10,
+        spaceAfter=5 * mm,
     )
 
-    style_intro = ParagraphStyle(
-        "RaziIntro",
+    s_section = ParagraphStyle(
+        "SectionHeader",
+        fontName=font_bold,
+        fontSize=12,
+        leading=16,
+        textColor=C_TURQUOISE,
+        spaceBefore=4 * mm,
+        spaceAfter=2 * mm,
+    )
+
+    s_body = ParagraphStyle(
+        "Body",
         fontName=font_name,
         fontSize=9.5,
-        leading=13.5,
+        leading=14.5,
         textColor=C_INK,
-        spaceAfter=8,
-        firstLineIndent=10,
+        spaceAfter=2.5 * mm,
+        alignment=4,  # Justified
     )
 
-    style_item_title = ParagraphStyle(
-        "RaziItemTitle",
-        fontName=font_bold,
-        fontSize=10,
-        leading=13,
-        textColor=C_GOLD,
-        spaceBefore=6,
-        spaceAfter=2,
-    )
-
-    style_item_body = ParagraphStyle(
-        "RaziItemBody",
+    s_quote = ParagraphStyle(
+        "Quote",
         fontName=font_name,
-        fontSize=9,
-        leading=12.5,
-        textColor=C_INK,
-        spaceAfter=5,
-        leftIndent=8,
+        fontSize=9.5,
+        leading=14.5,
+        textColor=HexColor("#4a3622"),
+        leftIndent=8 * mm,
+        rightIndent=8 * mm,
+        spaceBefore=3 * mm,
+        spaceAfter=3 * mm,
     )
 
     story = []
 
-    # Başlık
-    story.append(Paragraph("EBÛ BEKİR MUHAMMED BİN ZEKERİYYÂ ER-RÂZÎ", style_title))
-    story.append(Paragraph("Felsefe Risaleleri · Tıbbiyeli Bir Dostuna Nasihatler<br/><i>(Risâletün fî Nüsehın li-Ba'dı Ashâbihi mine'l-Etıbbâ — M.S. 865–925)</i>", style_subtitle))
-    story.append(HRFlowable(width="90%", thickness=1, color=C_GOLD, spaceBefore=2, spaceAfter=8))
+    # Üst Bilgi & Başlık
+    story.append(Paragraph("ANADOLU SELÇUKLU TIP TARİHİ VE KÜLTÜR MİRASI", s_top_kicker))
+    story.append(Paragraph("TABÎB EKMELEDDİN (BEY HEKİM) KİMDİR?", s_title))
+    story.append(Paragraph("13. Yüzyıl Selçuklu Saray Başhekimi, Dârüşşifa Üstadı ve Hz. Mevlânâ'nın Tabibi", s_subtitle))
+    story.append(HRFlowable(width="90%", thickness=1.2, color=C_GOLD, spaceBefore=1 * mm, spaceAfter=4 * mm))
 
-    # Giriş Paragrafı
-    intro_p = (
-        "Büyük İslam hekimi, kimyager ve filozofu Ebû Bekir er-Râzî'nin hekimlik ahlakına ve "
-        "tıbbi deontolojiye dair genç bir hekim dostuna kaleme aldığı bu tarihi mektup, tıp tarihinin "
-        "en kıymetli etik metinlerinden biridir. Râzî, tıp sanatının yalnızca bedenleri değil, ruhları da "
-        "şifalandıran ilahi ve insani bir emanet olduğunu şu nasihatlerle bildirir:"
-    )
-    story.append(Paragraph(intro_p, style_intro))
+    # Bölüm 1: Tarihî Şahsiyeti ve Menşei
+    story.append(Paragraph("1. Tarihî Şahsiyeti ve Selçuklu Sarayındaki Yeri", s_section))
+    story.append(Paragraph(
+        "Asıl adı <b>Ekmeleddîn Tabîb el-Nahcivânî</b> olan ve Anadolu'da hürmetle <b>Bey Hekim</b> (Beyhekim) "
+        "olarak anılan bu usta tabip, 13. yüzyılda Anadolu Selçuklu Devleti'nin payitahtı Konya'da yaşamış "
+        "en muteber hekim ve ilim adamlarındandır. Selçuklu sultanları II. İzzeddin Keykavus ve "
+        "IV. Rükneddin Kılıçarslan devirlerinde saray başhekimliği (Melikü'l-Hükemâ) makamında bulunmuş; "
+        "yalnızca hükümdarların değil, ordu ve halkın sıhhatini de idare etmiştir.",
+        s_body
+    ))
+    story.append(Paragraph(
+        "Konya'daki Dârüşşifa'nın baştabipliğini yürütmüş, yüksek tıbbî ahlakı, derin teşhis mahareti ve cömertliği "
+        "sebebiyle halk arasında 'hekimlerin efendisi' manasında 'Bey Hekim' lakabıyla şöhret bulmuştur. "
+        "Konya'da günümüze kadar ulaşan tarihî <b>Beyhekim Mescidi</b> ve <b>Beyhekim Mahallesi</b>, "
+        "onun Anadolu tıbbına ve şehir kültürüne bıraktığı ölümsüz mirasın nişaneleridir.",
+        s_body
+    ))
 
-    nasihatler = [
-        (
-            "1. Hekimliğin Kutsiyeti ve Merhamet İlkesi",
-            "Tabip, sanatını asla sadece dünyalık servet veya şan toplamak için icra etmemelidir. Hekimlik, "
-            "insanın ıstırabını dindirme sanatıdır. Fakir ve biçare hastaları hiçbir menfaat gözetmeksizin, "
-            "en varlıklı beylere gösterdiği özen ve muhabbetle tedavi etmelidir."
-        ),
-        (
-            "2. Hastanın Sırrı Hekimin Namusudur",
-            "Bir hekim, hastasının bedeninde, hanesinde veya ruhunda şahit olduğu en mahrem hâlleri "
-            "asla başkalarına ifşa etmemelidir. Hastanın sırrı emanettir; mezara kadar tabibin göğsünde mahfuz kalmalıdır."
-        ),
-        (
-            "3. Umut ve Moral Aşılamak (Ruh ile Bedenin Birliği)",
-            "Hastanın yanında daima metanetli ol, ona iyileşeceği inancını ve ferahlık hissini aşıla. "
-            "Zira insanın neşesi ve ümidi, bedenin hastalığa karşı gösterdiği doğal savunma gücünün en büyük dayanağıdır."
-        ),
-        (
-            "4. Önce Gıda ve Rejim, Sonra Hafif Deva, En Son Ağır Terkip",
-            "Bir illeti gıda ve perhizle gidermek mümkünse asla ilaca başvurma. İlaç gerekiyorsa evvela "
-            "tek ve hafif bir şifa kaynağı (müfredat) kullan. Çaresiz kalmadıkça ağır ve karmaşık terkipleri (mürekkebat) bedene yükleme."
-        ),
-        (
-            "5. Sürekli Okuma, Gözlem ve Sorgulama",
-            "Tabip ömrünün son demine dek ilme susamış bir talebedir. Kadim üstatların (Hipokrat, Galen) eserlerini "
-            "ezberlemek yetmez; onları hasta başında bizzat gözlemlemeli, deney yapmalı ve gerektiğinde sorgulamaktan geri durmamalıdır."
-        ),
-        (
-            "6. Tevazu ve Ciddiyet",
-            "Kibir, hekimin basiretini bağlar. Teşhisinde tereddüt ettiğin bir dertle karşılaştığında ehline "
-            "danışmaktan haya etme. Şifa hekimin hünerinden değil, Hâlık'ın izniyledir; tabip yalnızca şefkatli bir vasıtadır."
-        ),
-        (
-            "7. Zararlı Maddelerden ve Hileden Kaçınma",
-            "Hekim hiçbir şart altında cana kastedecek zehirlere, şüpheli iksirlere ve sahtekarlığa alet olamaz. "
-            "Kazandaki her karışım yalnızca hayat kurtarmak ve acıyı dindirmek gayesiyle hazırlanmalıdır."
-        ),
-        (
-            "8. Hastanın Huysuzluğuna Sabır ve Nezaket",
-            "Ağır ıstırap çeken hasta bazen sitemkar ve huysuz olabilir. Gerçek hekim, hastanın bu zayıflığını "
-            "öfkeyle değil, ana-baba şefkatiyle karşılar; güler yüzünü ve tesellisini eksik etmez."
-        ),
-        (
-            "9. Kendi Zihnini ve Bedenini Koru",
-            "Yorgun, uykusuz ve zihni dağınık bir hekimin teşhisi yanıltıcı olur. Kendi sağlığına ve ahlakına "
-            "ihtimam göster ki, başkalarına sıhhat ve güven dağıtabilesin."
-        ),
-        (
-            "10. Hakikate ve Vicdana Sadakat",
-            "Hekim vicdanını hiçbir dünyevi menfaate satamaz. Hakikatin ardından git ve keşfettiğin her şifalı sırrı "
-            "insanlığın istifadesine sunmaktan çekinme."
-        ),
-    ]
+    # Bölüm 2: Hz. Mevlânâ ile Dostluğu
+    story.append(Paragraph("2. Hz. Mevlânâ Celâleddîn-i Rûmî ile Sırdaşlığı ve Özel Tabipliği", s_section))
+    story.append(Paragraph(
+        "Tabîb Ekmeleddin, Hz. Mevlânâ'nın yalnızca bedenî hekimi değil, aynı zamanda onun yüksek maneviyat "
+        "meclislerinde bulunan en yakın gönül dostlarındandır. Ahmed Eflâkî'nin <i>Menâkıbü'l-Ârifîn</i> adlı "
+        "meşhur eserinde anlatıldığı üzere; Mevlânâ hastalandığında derhâl Tabîb Ekmeleddin davet edilir, "
+        "hastalığın mizaç ve ruh üzerindeki tesirleri birlikte istişare edilirdi.",
+        s_body
+    ))
+    story.append(Paragraph(
+        "<i>«Mevlânâ son demlerinde yatağındayken Tabîb Ekmeleddin onun mübarek nabzını tutmuş, "
+        "bedeninin ateş ve zaafını görünce gözyaşlarını tutamamıştı. Mevlânâ ise kadim hekime tebessümle: "
+        "'Ekmeleddin! Bu aşk derdidir, ona şurup da çare etmez, merhem de... Bizi Dost'a vuslattan men etme' "
+        "diyerek hekimine olan muhabbetini ve vuslat neşesini dile getirmiştir.»</i>",
+        s_quote
+    ))
 
-    for title, text in nasihatler:
-        story.append(Paragraph(title, style_item_title))
-        story.append(Paragraph(text, style_item_body))
+    # Bölüm 3: Tıp İlmindeki Mahareti ve Teşhis Usulleri
+    story.append(Paragraph("3. Teşhis İlmi, Bitkisel Simya ve Terkîb-i Edviye (İlaç Sanatı)", s_section))
+    story.append(Paragraph(
+        "Tabîb Ekmeleddin, İbn Sînâ (Avicenna) ve Râzî'nin tıp geleneklerini Selçuklu Anadolu'sunda geliştirerek "
+        "uygulamış bir hekimdir. Başlıca maharet sahaları şunlardır:",
+        s_body
+    ))
+    story.append(Paragraph(
+        "<b>• İlm-i Nabz (Nabız ile Teşhis):</b> Parmak uçlarıyla hastanın nabız ritmini, atış derinliğini ve süratini "
+        "okuyarak organlardaki humma, tıkanıklık ve iltihabı alet olmaksızın en ince ayrıntısıyla tespit edebilirdi.<br/>"
+        "<b>• Terkîb-i Edviye ve Simya:</b> Şifalı bitkilerin, madensel tuzların ve doğal cevherlerin imbiklerde "
+        "damıtılmasıyla özel terkipler, kuvvet macunları ve şuruplar hazırlamıştır. Anadolu'nun endemik şifa nebatlarını "
+        "tedavide sistemleştirmiştir.<br/>"
+        "<b>• Dârüşşifa Eğitimi:</b> Konya Dârüşşifası'nda hekim namzetlerine anatomi, mizaç dengesi ve hekimlik ahlakı dersleri "
+        "vermiş, çıraklarını hasta başında bizzat yetiştirmiştir.",
+        s_body
+    ))
 
-    story.append(Spacer(1, 4))
-    story.append(HRFlowable(width="90%", thickness=0.8, color=C_GOLD, spaceBefore=2, spaceAfter=6))
+    # Bölüm 4: Hekimlik Ahlakı ve Çağlar Aşan Mirası
+    story.append(Paragraph("4. Bey Hekim'in Tıp Ahlakı ve Şifa Felsefesi", s_section))
+    story.append(Paragraph(
+        "Tabîb Ekmeleddin'e göre hekimlik, bir kazanç kapısı değil; Cenâb-ı Hakk'ın 'Şâfî' ismine hürmeten "
+        "insana merhametle hizmet etme sanatıdır. Zengin hastadan aldığı ücreti yoksul hastaların dermanı için "
+        "vakfetmiş, dârüşşifasında garip ve kimsesizleri karşılıksız tedavi etmiştir.",
+        s_body
+    ))
+    story.append(Paragraph(
+        "<i>«Gerçek hekim, hastanın yalnızca nabzına değil, kalbine ve kederine de tabip olandır. "
+        "Güleryüz, tatlı dil ve tevekkül bulunmayan reçetenin tesiri eksik kalır.»</i> anlayışıyla Anadolu tıbbının "
+        "insan merkezli şifa geleneğine rehberlik etmiştir.",
+        s_quote
+    ))
 
-    closing = (
-        "<i>«İnsanlara merhamet etmeyen hekimin ilmi de şifası da bereketsizdir.»</i><br/>"
-        "<b>— Ebû Bekir er-Râzî</b>"
-    )
-    story.append(Paragraph(closing, ParagraphStyle(
-        "RaziClosing",
-        fontName=font_name,
-        fontSize=9.5,
-        leading=13,
-        textColor=C_GOLD,
-        alignment=1,
-    )))
+    story.append(Spacer(1, 4 * mm))
+    story.append(HRFlowable(width="100%", thickness=0.8, color=C_GOLD_LT, spaceBefore=2 * mm, spaceAfter=3 * mm))
+    story.append(Paragraph(
+        "<b>Erciyes Üniversitesi Proje Kurulu</b> · Bu vesika, kadim Anadolu tıp mirasının ve büyük Selçuklu hekimi "
+        "Tabîb Ekmeleddin'in (Bey Hekim) aziz hatırasını genç nesillere aktarmak gayesiyle dijitalleştirilmiştir.",
+        ParagraphStyle("Footnote", fontName=font_name, fontSize=8, leading=11, textColor=C_MUTED, alignment=1)
+    ))
 
     doc.build(story, onFirstPage=draw_background_and_border, onLaterPages=draw_background_and_border)
-    print(f"PDF successfully generated: {OUTPUT_PDF} ({OUTPUT_PDF.stat().st_size} bytes)")
     return OUTPUT_PDF
 
 
 if __name__ == "__main__":
-    build_pdf()
+    pdf_path = build_pdf()
+    print(f"Tabîb Ekmeleddin PDF başarıyla üretildi: {pdf_path} ({os.path.getsize(pdf_path)} bayt)")

@@ -16,7 +16,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-log = logging.getLogger("razi")
+log = logging.getLogger("beyhekim")
 
 DB_PATH = Path(__file__).parent / "leaderboard.db"
 
@@ -35,17 +35,19 @@ score_rate_tracker: dict[str, list[float]] = defaultdict(list)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # DB tabloları hazırla
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("""
             CREATE TABLE IF NOT EXISTS scores (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                player_name TEXT    DEFAULT 'Simyacı',
-                level       INTEGER NOT NULL,
-                max_combo   INTEGER DEFAULT 0,
-                room_id     TEXT    DEFAULT '',
-                ts          INTEGER NOT NULL
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_name TEXT DEFAULT 'Simyacı',
+                level INTEGER NOT NULL,
+                max_combo INTEGER DEFAULT 0,
+                room_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Eski tablolarda kolon yoksa ekle (migrasyon)
         cursor = await db.execute("PRAGMA table_info(scores)")
         cols = [c[1] for c in await cursor.fetchall()]
         if "player_name" not in cols:
@@ -57,7 +59,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Ebû Bekir er-Râzî'nin Kazanı — Sunucu", lifespan=lifespan)
+app = FastAPI(title="Tabîb Ekmeleddin'in Kazanı — Sunucu", lifespan=lifespan)
 
 
 # ── Güvenlik Başlıkları Middleware'i ─────────────────────────────────────────
@@ -113,7 +115,7 @@ async def home() -> HTMLResponse:
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>Ebû Bekir er-Râzî'nin Kazanı</title>
+          <title>Tabîb Ekmeleddin'in Kazanı (Bey Hekim)</title>
           <style>
             body { margin:0; min-height:100vh; display:grid; place-items:center;
                    background:#110d0b; color:#f0e4c8; font:18px Georgia,serif; }
@@ -125,8 +127,9 @@ async def home() -> HTMLResponse:
           </style>
         </head>
         <body><main>
-          <h1>Ebû Bekir er-Râzî'nin Kazanı</h1>
-          <p>Sunucu çalışıyor. Oyuna bağlanmak için Pygame penceresindeki QR kodunu telefonunla okut.</p>
+          <h1>Tabîb Ekmeleddin'in Kazanı</h1>
+          <p style="color:#dfb558; font-style:italic;">Bey Hekim · 13. Yüzyıl Selçuklu Dârüşşifası</p>
+          <p>Sunucu çalışıyor. Oyuna bağlanmak için ekrandaki QR kodunu telefonunla okut.</p>
           <p><a href="/leaderboard">🏆 Liderlik Tablosu</a></p>
         </main></body>
         </html>
@@ -164,10 +167,11 @@ async def get_razi_elements():
     return JSONResponse({"error": "not found"}, status_code=404)
 
 
-@app.get("/download/tibbiye_nasihatleri.pdf")
-async def download_tibbiye_pdf():
-    """Ebû Bekir er-Râzî'nin Tıbbiyeli Bir Dostuna Nasihatler PDF'ini indirir."""
-    path = Path(__file__).parent / "assets" / "tibbiye_nasihatleri.pdf"
+@app.get("/download/tabib_ekmeleddin_kimdir.pdf")
+@app.get("/download/beyhekim_kimdir.pdf")
+async def download_ekmeleddin_pdf():
+    """Tabîb Ekmeleddin (Bey Hekim) Kimdir? tezhip süslemeli PDF'ini sunar."""
+    path = Path(__file__).parent / "assets" / "tabib_ekmeleddin_kimdir.pdf"
     if not path.exists():
         try:
             from generate_pdf import build_pdf
@@ -178,7 +182,7 @@ async def download_tibbiye_pdf():
         return FileResponse(
             path,
             media_type="application/pdf",
-            filename="Ebu_Bekir_er-Razi_Tibbiyeli_Bir_Dostuna_Nasihatler.pdf",
+            filename="Tabib_Ekmeleddin_Bey_Hekim_Kimdir.pdf",
         )
     return JSONResponse({"error": "PDF bulunamadı"}, status_code=404)
 
@@ -306,7 +310,7 @@ async def leaderboard() -> HTMLResponse:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="15">
-  <title>Liderlik Tablosu — Ebû Bekir er-Râzî'nin Kazanı</title>
+  <title>Liderlik Tablosu — Tabîb Ekmeleddin'in Kazanı</title>
   <style>
     :root {{
       --bg:#110d0b; --panel:#211810; --border:#6a4628;
@@ -357,7 +361,7 @@ async def leaderboard() -> HTMLResponse:
 <div class="container">
   <header>
     <h1>🏺 Liderlik Tablosu</h1>
-    <div class="subtitle">Ebû Bekir er-Râzî'nin Kazanı</div>
+    <div class="subtitle">Tabîb Ekmeleddin'in Kazanı (Bey Hekim)</div>
     <span class="total">{total} toplam oyun</span>
   </header>
 

@@ -1,6 +1,14 @@
-# Râzî'nin Kazanı
+# Bey Hekim'in Kazanı (Tabîb Ekmeleddin)
 
-FastAPI sunucusu ile telefon kontrolcüsünü Pygame masaüstü oyununa bağlayan küçük bir hafıza oyunu.
+FastAPI sunucusu ile telefon kontrolcüsünü Pygame masaüstü oyununa bağlayan, 13. yüzyıl Selçuklu başhekimi ve Hz. Mevlânâ'nın tabibi **Tabîb Ekmeleddin (Bey Hekim)** temalı kadim tıp ve simya hafıza oyunu.
+
+## Özellikler
+
+- **Tek Kişilik Macera & 1v1 Çırak Düellosu:** İster tek kişilik 100 seviyeli kadim iksir yolculuğu, ister iki ayrı telefonla gerçek zamanlı hafıza düellosu!
+- **Tabîb Ekmeleddin (Bey Hekim) Başlangıç Anlatımı (Prolog):** Oyun öncesinde Bey Hekim'in sesli/animasyonlu talimatları ve kadim Konya Dârüşşifası hikâyesi.
+- **Tezhipli Selçuklu Risalesi (PDF):** Selçuklu turkuazı ve altın tezhip motifleriyle hazırlanmış "Tabîb Ekmeleddin (Bey Hekim) Kimdir?" bilgilendirme risalesi.
+- **Erciyes Üniversitesi Künyesi:** Kulüp kayıt, yönetim ekibi ve tıp-bilişim sentezi künye ekranı.
+- **Mobil Web Kumandası:** Tarayıcı üzerinden sıfır kurulumla bağlanan antik parşömen temalı telefon kumandası ve dokunsal geri bildirimler (haptic feedback).
 
 ## Kurulum
 
@@ -24,20 +32,21 @@ Başka bir terminalde:
 py desktop_game.py
 ```
 
-Pygame penceresindeki QR kodu telefonla okut. Telefon ve masaüstü aynı sunucuya erişebilmeli; Render gibi uzak bir sunucuda `SERVER_URL` ve `PLAY_URL` değerlerini dağıtım adresiyle değiştirip WebSocket için `wss://` kullan.
+Pygame penceresindeki QR kodu telefonla okut. Telefon ve masaüstü aynı sunucuya erişebilmeli; Render veya uzak bir sunucuda `SERVER_URL` ve `PLAY_URL` değerlerini dağıtım adresiyle değiştirip WebSocket için `wss://` kullan.
 
 Pygame yerel IP adresini otomatik bulur ve QR koduna örneğin `http://192.168.1.25:8000/play/ABC-123` adresini koyar. Otomatik IP yanlış seçilirse PowerShell'de şu şekilde belirtebilirsin:
 
 ```powershell
-$env:RAZI_HOST = "192.168.1.25"
+$env:BEYHEKIM_HOST = "192.168.1.25"
 py desktop_game.py
 ```
 
 ## Akış
 
+- `MODE_SELECT`: Tek Kişilik veya 1v1 Çırak Düellosu mod seçimi.
 - `WAITING_FOR_PLAYER`: Oda kodu ve QR kodu gösterilir.
-- `RHAZI_TURN`: Râzî rastgele malzeme dizisini gösterir.
-- `PLAYER_TURN`: Telefon butonları kuyruk üzerinden kontrol edilir.
-- `RESOLUTION`: Doğru dizi seviyeyi artırır; hata veya zaman aşımı oyunu bitirir.
-
-Oyun doğru cevaplarla sınırsız ilerler. Seviye yükseldikçe dizi 3'ten 12 elemana kadar büyür, gösterim aralığı 1.5 saniyeden 0.38 saniyeye iner ve oyuncuya ayrılan süre kısalır. Yeni malzemeler kademeli olarak açılır: Demir, Bakır, Fosfor ve Arsenik.
+- `PROLOGUE`: Tabîb Ekmeleddin talimatları aktarır; hem ekrandan hem telefondan "BAŞLA" tuşuna basılarak oyun başlatılır.
+- `RHAZI_TURN` (Bey Hekim Sırası): Bey Hekim şifalı cevherleri sırayla kazana atar.
+- `PLAYER_TURN`: Telefon butonları üzerinden aynı sıra kazana eklenir.
+- `RESOLUTION`: Doğru dizi seviyeyi/raundu kazandırır; 3 can hakkı ve kombo sistemi mevcuttur.
+- `CREDITS_VIEW`: Erciyes kulüp kaydı ve Tabîb Ekmeleddin tezhipli PDF risalesi.

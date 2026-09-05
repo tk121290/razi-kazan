@@ -123,21 +123,24 @@ class GameState(Enum):
     CREDITS_VIEW       = auto()
 
 
-RHAZI_PROLOGUE_SINGLE = (
-    "Hoş geldin hekim namzedi! Ben Ebû Bekir Muhammed bin Zekeriyyâ er-Râzî. "
-    "Kitâbü'l-Esrâr'ın sırlarını ve kadim hekimliği öğrenmek için kazanın başına geçtin. "
-    "Birazdan kazana şifalı cevherler, tuzlar ve asitler ekleyeceğim. Bu sırayı dikkatle aklında tut! "
+BEYHEKIM_PROLOGUE_SINGLE = (
+    "Hoş geldin hekim namzedi! Ben Tabîb Ekmeleddin, nam-ı diğer Bey Hekim. "
+    "Konya Dârüşşifası'nın ve kadim hekimliğin sırlarını öğrenmek için kazanın başına geçtin. "
+    "Birazdan kazana şifalı cevherler, bitkiler ve cevherler ekleyeceğim. Bu sırayı dikkatle aklında tut! "
     "Sıra sana geldiğinde telefonundaki butonlarla aynı sırayla kazana ekle. 3 şişe kırma hakkın var. "
     "Her 3 elementte bir süren artacak. Zihnini topla ve hazır olduğunda Başla'ya bas!"
 )
 
-RHAZI_PROLOGUE_DUEL = (
-    "Huzuruma hoş geldiniz çıraklar! Ben Ebû Bekir er-Râzî. "
-    "Hanginizin Kitâbü'l-Esrâr'ın yeni baş hekimi ve vârisi olacağını görmek için bu yarışı tertip ettim. "
-    "Kazana atacağım malzemeleri dikkatle izleyin. Sıra size geldiğinde aynı sırayı ilk ve eksiksiz "
+BEYHEKIM_PROLOGUE_DUEL = (
+    "Huzuruma hoş geldiniz çıraklar! Ben Tabîb Ekmeleddin, nam-ı diğer Bey Hekim. "
+    "Hanginizin dârüşşifanın yeni baş hekimi olacağını görmek için bu yarışı tertip ettim. "
+    "Kazana atacağım şifalı malzemeleri dikkatle izleyin. Sıra size geldiğinde aynı sırayı ilk ve eksiksiz "
     "tamamlayan çırak raundu ve 1 yıldızı ⭐ kazanır. Yanlış malzeme seçen 1.2 saniye sersemler ve sırası başa döner! "
     "Toplam 3 raunt kazanan şampiyon ilan edilir. Hazırsanız Başla'ya basın!"
 )
+
+RHAZI_PROLOGUE_SINGLE = BEYHEKIM_PROLOGUE_SINGLE
+RHAZI_PROLOGUE_DUEL = BEYHEKIM_PROLOGUE_DUEL
 
 
 
@@ -441,7 +444,7 @@ class HintEngine:
         correct_tr = MATERIAL_NAMES.get(correct, correct)
         wrong_tr   = MATERIAL_NAMES.get(wrong,   wrong)
         prompt = (
-            f"Sen Ebû Bekir er-Râzî'nin ruhusun. 9. yüzyıl İslam simyacısı ve tabip.\n"
+            f"Sen Tabîb Ekmeleddin'in (Bey Hekim) ruhusun. 13. yüzyıl Selçuklu başhekimi ve Mevlânâ'nın tabibi.\n"
             f"Oyuncu '{wrong_tr}' seçti ama doğrusu '{correct_tr}' idi.\n"
             f"'{correct_tr}' hakkında tek cümle, dönemsel ve hikâyeli, "
             f"maksimum 18 kelime, sade Türkçe ipucu ver.\n"
@@ -522,7 +525,7 @@ class Game:
         self.screen = pygame.display.set_mode(
             (WIDTH, HEIGHT), pygame.FULLSCREEN | pygame.SCALED
         )
-        pygame.display.set_caption("Ebû Bekir er-Râzî'nin Kazanı")
+        pygame.display.set_caption("Tabîb Ekmeleddin'in Kazanı (Bey Hekim)")
         self.clock = pygame.time.Clock()
         self.pixel_surface = pygame.Surface((WIDTH, HEIGHT))
 
@@ -783,10 +786,10 @@ class Game:
                     webbrowser.open("https://erubilisim.erciyes.edu.tr")
                 except Exception:
                     pass
-            # Nasihatler PDF İndir Butonu (410 <= x <= 710, 572 <= y <= 618)
+            # Tabîb Ekmeleddin PDF İndir Butonu (410 <= x <= 710, 572 <= y <= 618)
             elif 410 <= x <= 710 and 572 <= y <= 618:
                 try:
-                    webbrowser.open(f"http://localhost:{PORT}/download/tibbiye_nasihatleri.pdf")
+                    webbrowser.open(f"http://localhost:{PORT}/download/tabib_ekmeleddin_kimdir.pdf")
                 except Exception:
                     pass
             # Kapat / Geri Dön Butonu (740 <= x <= 990, 572 <= y <= 618)
@@ -824,25 +827,25 @@ class Game:
         self.prologue_started = time.monotonic()
         self.prologue_readies = {"player_1": False, "player_2": False}
         if self.mode == GameMode.DUEL:
-            self.prologue_text = RHAZI_PROLOGUE_DUEL
+            self.prologue_text = BEYHEKIM_PROLOGUE_DUEL
             self.network.send({
                 "type": "prologue",
                 "mode": "duel",
-                "title": "Ebû Bekir er-Râzî'nin Talimatları",
-                "text": RHAZI_PROLOGUE_DUEL,
+                "title": "Tabîb Ekmeleddin'in Talimatları",
+                "text": BEYHEKIM_PROLOGUE_DUEL,
                 "button_text": "BAŞLA",
             })
             self.speak_bubble("Huzuruma hoş geldiniz çıraklar! Dikkatle dinleyin.", duration=5.0)
         else:
-            self.prologue_text = RHAZI_PROLOGUE_SINGLE
+            self.prologue_text = BEYHEKIM_PROLOGUE_SINGLE
             self.network.send({
                 "type": "prologue",
                 "mode": "single",
-                "title": "Ebû Bekir er-Râzî'nin Talimatları",
-                "text": RHAZI_PROLOGUE_SINGLE,
+                "title": "Tabîb Ekmeleddin'in Talimatları",
+                "text": BEYHEKIM_PROLOGUE_SINGLE,
                 "button_text": "BAŞLA",
             })
-            self.speak_bubble("Hoş geldin hekim namzedi! Kitâbü'l-Esrâr'ın sırlarını öğrenmeye hazır mısın?", duration=5.0)
+            self.speak_bubble("Hoş geldin hekim namzedi! Konya Dârüşşifası'nın sırlarını öğrenmeye hazır mısın?", duration=5.0)
 
     def _start_game_from_prologue(self) -> None:
         if self.state != GameState.PROLOGUE:
@@ -1021,7 +1024,7 @@ class Game:
         self.phase_cursor  = 0
         self.phase_started = time.monotonic()
         self.state         = GameState.RHAZI_TURN
-        self.last_message  = f"Tarihi Ayin: {self.recipe_name}" if self.recipe_name else "Ebû Bekir er-Râzî malzemeleri hazırlıyor..."
+        self.last_message  = f"Tarihi Ayin: {self.recipe_name}" if self.recipe_name else "Tabîb Ekmeleddin malzemeleri hazırlıyor..."
         self._spawn_particles(530, 385, GOLD, 22)
 
         # Kilidi açık malzemeleri, canı ve kombo sayısını telefona bildir
@@ -1517,7 +1520,7 @@ class Game:
             self.round_success = True
             self.combo        += 1
             self.max_combo    = max(self.max_combo, self.combo)
-            self.last_message  = "Doğru! Ebû Bekir er-Râzî onaylıyor."
+            self.last_message  = "Doğru! Tabîb Ekmeleddin onaylıyor."
             self.phase_started = time.monotonic()
             self.level        += 1
             self.flash_color   = GREEN_LT
@@ -1540,7 +1543,7 @@ class Game:
                 self.network.send({"type": "life_gained", "lives": self.lives})
 
             combo_msg = f" · 🔥 x{self.combo} Kombo!" if self.combo >= 2 else ""
-            self.last_message = f"Doğru! Ebû Bekir er-Râzî onaylıyor.{combo_msg}"
+            self.last_message = f"Doğru! Tabîb Ekmeleddin onaylıyor.{combo_msg}"
             self.speak_bubble(f"Mükemmel! Seviye {self.level}'e geçtik.{life_msg}{combo_msg}", duration=3.5)
         else:
             remaining_count = len(self.sequence) - self.player_index
@@ -1670,7 +1673,7 @@ class Game:
     def _draw_waiting_screen(self) -> None:
         # Başlık
         mode_title = "1v1 ÇIRAK DÜELLOSU" if self.mode == GameMode.DUEL else "TEK KİŞİLİK MACERA"
-        self._text_shadow(f"EBÛ BEKİR ER-RÂZÎ'NİN KAZANI · {mode_title}", self.font_title, GOLD, (50, 44))
+        self._text_shadow(f"TABÎB EKMELEDDİN'İN KAZANI · {mode_title}", self.font_title, GOLD, (50, 44))
         self._text("Mobil cihazınızdan QR kodu okutarak ayine bağlanın", self.font_body, TEXT_DIM, (52, 88))
 
         # QR kutusu (Sol Panel)
@@ -1727,8 +1730,8 @@ class Game:
 
             steps = [
                 ("1", "QR kodu telefonunun kamerasıyla tara ve bağlan."),
-                ("2", "Ebû Bekir er-Râzî'nin talimatlarını dinle ve 'BAŞLA'ya bas."),
-                ("3", "Râzî kazana şifalı cevherleri atarken sırayı aklında tut."),
+                ("2", "Tabîb Ekmeleddin'in talimatlarını dinle ve 'BAŞLA'ya bas."),
+                ("3", "Bey Hekim kazana şifalı cevherleri atarken sırayı aklında tut."),
                 ("4", "Sıra sana geldiğinde telefondan aynı sırayla ekle."),
                 ("5", "3 can hakkın var. Her 3 elementte bir süren uzar!"),
             ]
@@ -2259,7 +2262,7 @@ class Game:
 
         cx = WIDTH // 2
         self._text_center("⚔️  1v1 ÇIRAK DÜELLOSU  ⚔️", self.font_title, GOLD_LT, cx, 64)
-        self._text_center("Ebû Bekir er-Râzî'nin huzurunda 3 raunt kazanan şampiyon olur!", self.font_small, TEXT_DIM, cx, 98)
+        self._text_center("Tabîb Ekmeleddin'in huzurunda 3 raunt kazanan şampiyon olur!", self.font_small, TEXT_DIM, cx, 98)
 
         p1 = self.players.get("player_1", {"name": "Çırak 1", "emblem": "☿", "ready": False})
         c1 = pygame.Rect(cx - 380, 140, 310, 380)
@@ -2327,7 +2330,7 @@ class Game:
         self.pixel_surface.blit(emb_s, (cx - emb_s.get_width() // 2, box.y + 74))
 
         self._text_center(w_name.upper(), self.font_large, TEXT, cx, box.y + 118)
-        self._text_center("Kitâbü'l-Esrâr'ın Yeni Üstadı ve Baş Simyacısı!", self.font_small, GOLD, cx, box.y + 148)
+        self._text_center("Konya Dârüşşifası'nın Yeni Baş Hekimi!", self.font_small, GOLD, cx, box.y + 148)
 
         self._draw_separator(box.x + 30, box.y + 178, box.right - 30)
 
@@ -2493,7 +2496,7 @@ class Game:
         pygame.draw.rect(card_surf, (80, 55, 35, int(alpha * 0.7)), (3, 3, cw - 6, ch - 6), 1, border_radius=10)
 
         # Başlık
-        head = self.font_tiny.render("🏺 EBÛ BEKİR ER-RÂZÎ'NİN NOTU", True, (*GOLD_LT, alpha))
+        head = self.font_tiny.render("🏺 TABÎB EKMELEDDİN'İN NOTU", True, (*GOLD_LT, alpha))
         card_surf.blit(head, (16, 12))
 
         # Sembol ve İsim
@@ -2527,7 +2530,7 @@ class Game:
 
 
     def _draw_hint_banner(self, text: str, material: str | None) -> None:
-        """Ekranın alt kısmında Gemini'den gelen Râzî ipucunu göster."""
+        """Ekranın alt kısmında Gemini'den gelen Bey Hekim ipucunu göster."""
         elapsed   = time.monotonic() - self.hint_started
         duration  = self.hint_engine.HINT_DURATION
         fade_time = 0.8
@@ -2546,7 +2549,7 @@ class Game:
         pygame.draw.rect(banner, (*accent, alpha),  (0, 0, 4, banner_h), border_radius=8)
 
         # Gemini ikonu
-        gem_label = self.font_tiny.render("✦ RÂZİ'NİN İPUCU", True, (*GOLD, alpha))
+        gem_label = self.font_tiny.render("✦ BEY HEKİM'İN İPUCU", True, (*GOLD, alpha))
         banner.blit(gem_label, (14, 8))
 
         # İpucu metni — word wrap
@@ -2645,7 +2648,7 @@ class Game:
         mouse_pos = pygame.mouse.get_pos()
 
         # Başlık ve Üst Panel
-        self._text_shadow("EBÛ BEKİR ER-RÂZÎ'NİN KAZANI", self.font_title, GOLD_LT, (WIDTH // 2 - 270, 48))
+        self._text_shadow("TABÎB EKMELEDDİN'İN KAZANI", self.font_title, GOLD_LT, (WIDTH // 2 - 270, 48))
         self._text_center("Kadim Tıp ve Simya Mirası · Bir Hafıza ve Dikkat Ayini", self.font_body, TEXT_DIM, WIDTH // 2, 86)
         self._draw_separator(80, 118, WIDTH - 80)
 
@@ -2666,7 +2669,7 @@ class Game:
             "• 3 İksir şişesi (can) kırılma hakkı",
             "• 30 Simya cevheri & Tarihi reçeteler",
             "• Her 3 elementte bir artan süre ve kombo",
-            "• Râzî'nin talimatlarını dinle ve başla!",
+            "• Bey Hekim'in talimatlarını dinle ve başla!",
         ]
         by = c1.y + 144
         for b in c1_bullets:
@@ -2696,7 +2699,7 @@ class Game:
             "• Canlı & eşzamanlı hafıza düellosu",
             "• İlk 3 raundu (yıldızı) kazanan şampiyon",
             "• Yanlış malzeme seçiminde 1.2s sersemleme",
-            "• Kitâbü'l-Esrâr'ın yeni vârisi belirlensin!",
+            "• Konya Dârüşşifası'nın yeni baş hekimi belirlensin!",
         ]
         by2 = c2.y + 144
         for b in c2_bullets:
@@ -2715,7 +2718,7 @@ class Game:
         cred_hover = btn_credits.collidepoint(mouse_pos)
         self._draw_panel(btn_credits, radius=10)
         pygame.draw.rect(self.pixel_surface, GOLD_LT if cred_hover else GOLD, btn_credits, 2, border_radius=10)
-        self._text_center("🏛️ Erciyes Kulüp Bilgisi, Künye & Risale (C)", self.font_body_bold, GOLD_LT, btn_credits.centerx, btn_credits.y + 12)
+        self._text_center("🏛️ Erciyes Kulüp Bilgisi, Künye & Tabîb Ekmeleddin (C)", self.font_body_bold, GOLD_LT, btn_credits.centerx, btn_credits.y + 12)
 
     def _draw_prologue_screen(self) -> None:
         mouse_pos = pygame.mouse.get_pos()
@@ -2723,7 +2726,7 @@ class Game:
         elapsed = now - self.prologue_started
 
         # Üst Başlık
-        self._text_shadow("EBÛ BEKİR ER-RÂZÎ DİYOR Kİ:", self.font_title, GOLD_LT, (WIDTH // 2 - 260, 36))
+        self._text_shadow("TABÎB EKMELEDDİN (BEY HEKİM) DİYOR Kİ:", self.font_title, GOLD_LT, (WIDTH // 2 - 320, 36))
         mode_label = "⚔️ 1v1 Çırak Düellosu Talimatları" if self.mode == GameMode.DUEL else "🧪 Tek Kişilik Macera Talimatları"
         self._text_center(mode_label, self.font_body_bold, TEXT_DIM, WIDTH // 2, 72)
 
@@ -2744,7 +2747,7 @@ class Game:
         pygame.draw.rect(self.pixel_surface, GOLD, box, 2, border_radius=16)
 
         # Parşömen Başlığı
-        self._text("📜 ŞİFALI KAZANIN VE AYİNİN SIRRI", self.font_medium, GOLD_LT, (box.x + 30, box.y + 22))
+        self._text("📜 KONYA DÂRÜŞŞİFASI VE AYİNİN SIRRI", self.font_medium, GOLD_LT, (box.x + 30, box.y + 22))
         self._draw_separator(box.x + 20, box.y + 52, box.right - 20)
 
         # Açıklama Metni (Multiline)
@@ -2784,7 +2787,7 @@ class Game:
 
         # Modal Başlık
         self._text_center("🏛️  ERCİYES ÜNİVERSİTESİ & PROJE KÜNYESİ  🏛️", self.font_title, GOLD_LT, box.centerx, box.y + 24)
-        self._text_center("Ebû Bekir er-Râzî'nin İzinde Kadim Tıp, Felsefe ve Bilişim Sentezi", self.font_body, TEXT_DIM, box.centerx, box.y + 56)
+        self._text_center("Tabîb Ekmeleddin'in (Bey Hekim) İzinde Kadim Tıp, Felsefe ve Bilişim Sentezi", self.font_body, TEXT_DIM, box.centerx, box.y + 56)
         self._draw_separator(box.x + 30, box.y + 82, box.right - 30)
 
         # Sütun 1: Kulüp & Proje Ekibi (Sol: 450px)
@@ -2804,25 +2807,25 @@ class Game:
             self._text(val, self.font_body, TEXT, (c1_x, ey + 22))
             ey += 54
 
-        # Sütun 2: Ebû Bekir er-Râzî ve Nasihatler (Sağ: 450px)
+        # Sütun 2: Tabîb Ekmeleddin (Bey Hekim) Kimdir? (Sağ: 450px)
         c2_x = box.x + 510
-        self._text("📜 EBÛ BEKİR ER-RÂZÎ (865–925)", self.font_body_bold, GOLD, (c2_x, box.y + 100))
+        self._text("📜 TABÎB EKMELEDDİN (BEY HEKİM) KİMDİR?", self.font_body_bold, GOLD, (c2_x, box.y + 100))
         self._draw_separator(c2_x, box.y + 126, c2_x + 430)
 
-        r_bio = (
-            "Ebû Bekir er-Râzî; tıp, kimya ve felsefe alanında İslam ve dünya tarihine damga vurmuş "
-            "en büyük hekimlerden biridir. Kitâbü'l-Hâvî ve Kitâbü'l-Esrâr gibi başyapıtları yüzlerce yıl "
-            "Avrupa ve Doğu üniversitelerinde ders kitabı olarak okutulmuştur."
+        ekm_bio = (
+            "Ekmeleddîn Tabîb el-Nahcivânî (13. yüzyıl), Anadolu Selçuklu Devleti'nin başhekimi, "
+            "Konya Dârüşşifası'nın reisi ve Hz. Mevlânâ Celâleddîn-i Rûmî'nin yakın dostu ve özel hekimidir. "
+            "Tıp ilminde devrinin kutbu olup nabız teşhisi (ilm-i nabz) ve bitkisel terkiplerde mahirdir."
         )
-        self._draw_multiline_text(r_bio, self.font_body, TEXT, c2_x, box.y + 140, 430, line_spacing=5)
+        self._draw_multiline_text(ekm_bio, self.font_body, TEXT, c2_x, box.y + 140, 430, line_spacing=5)
 
-        self._text("📖 Tıbbiyeli Bir Dostuna Nasihatler (Felsefe Risaleleri 1. Yazısı):", self.font_body_bold, GOLD_LT, (c2_x, box.y + 240))
-        nasihat_ozet = (
-            "\"Ey ilim talibi dostum! Hekimlik sırf bir zanaat değil, bir ahlak ve şefkat mesleğidir. "
-            "Hastanın zihnine ve kalbine huzur vermeyen hekim bedenine de şifa olamaz. "
-            "İlmini zengin ve fakir arasında ayrım gözetmeksizin dağıt; kibirden sakın, hakikati araştır.\""
+        self._text("🌿 Selçuklu Tababeti & Konya Dârüşşifası:", self.font_body_bold, GOLD_LT, (c2_x, box.y + 245))
+        ekm_detail = (
+            "\"Hekim, hastanın yalnız bedenine değil; ruhuna, mizacına ve nabzına nazar eyler. "
+            "Anadolu Selçuklu dârüşşifalarında musiki, su sesi, şifalı otlar ve simyevi terkipler "
+            "bütüncül bir şifa kaynağı olarak harmanlanmıştır.\""
         )
-        self._draw_multiline_text(nasihat_ozet, self.font_body, TEXT_DIM, c2_x, box.y + 270, 430, line_spacing=5)
+        self._draw_multiline_text(ekm_detail, self.font_body, TEXT_DIM, c2_x, box.y + 275, 430, line_spacing=5)
 
         # Alt Eylem Butonları
         self._draw_separator(box.x + 30, box.bottom - 118, box.right - 30)
@@ -2834,12 +2837,12 @@ class Game:
         pygame.draw.rect(self.pixel_surface, GOLD_LT if b_reg_hover else GOLD, btn_reg, 2, border_radius=10)
         self._text_center("🌐 Erciyes Kulüp Kayıt", self.font_body_bold, GOLD_LT, btn_reg.centerx, btn_reg.y + 13)
 
-        # Buton 2: Nasihatler Risalesi PDF İndir Butonu
+        # Buton 2: Tabîb Ekmeleddin PDF İndir Butonu
         btn_pdf = pygame.Rect(box.x + 360, box.bottom - 98, 300, 46)
         b_pdf_hover = btn_pdf.collidepoint(mouse_pos)
         self._draw_panel(btn_pdf, radius=10)
         pygame.draw.rect(self.pixel_surface, GOLD_LT if b_pdf_hover else GREEN, btn_pdf, 2, border_radius=10)
-        self._text_center("📥 Nasihatler PDF İndir / Oku", self.font_body_bold, GOLD_LT if b_pdf_hover else GREEN_LT, btn_pdf.centerx, btn_pdf.y + 13)
+        self._text_center("📥 Tabîb Ekmeleddin PDF İndir / Oku", self.font_body_bold, GOLD_LT if b_pdf_hover else GREEN_LT, btn_pdf.centerx, btn_pdf.y + 13)
 
         # Buton 3: Kapat / Geri Dön
         btn_close = pygame.Rect(box.x + 690, box.bottom - 98, 250, 46)

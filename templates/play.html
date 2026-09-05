@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Ebû Bekir er-Râzî'nin Kazanı</title>
+  <title>Tabîb Ekmeleddin'in Kazanı (Bey Hekim)</title>
   <style>
     /* ── Değişkenler ── */
     :root {
@@ -940,8 +940,8 @@
 <body>
 <header>
   <div class="logo">
-    Ebû Bekir er-Râzî
-    <small>Simya & Tıp Ayini</small>
+    Tabîb Ekmeleddin
+    <small>Bey Hekim · Tıp & Simya Ayini</small>
   </div>
   <div class="header-right">
     <button class="sound-btn" id="soundBtn" title="Sesi Aç/Kapat">🔊</button>
@@ -1027,7 +1027,7 @@
     <div class="modal-header">
       <div class="modal-title-wrap">
         <h2>Kitâbü'l-Esrâr</h2>
-        <span class="modal-sub">Ebû Bekir er-Râzî'nin Simya Kodeksi & Başarımlar</span>
+        <span class="modal-sub">Tabîb Ekmeleddin'in Simya Kodeksi & Başarımlar</span>
       </div>
       <button class="modal-close" id="closeCodexBtn" aria-label="Kapat">✕</button>
     </div>
@@ -1070,7 +1070,7 @@
     <div class="modal-header">
       <div class="modal-title-wrap" style="width: 100%;">
         <h2 style="color: var(--red-lt);">Ayin Sona Erdi</h2>
-        <span class="modal-sub">Ebû Bekir er-Râzî'nin Laboratuvarı</span>
+        <span class="modal-sub">Tabîb Ekmeleddin'in Dârüşşifası</span>
       </div>
       <button class="modal-close" id="closeGameOverBtn" aria-label="Kapat">✕</button>
     </div>
@@ -1078,7 +1078,7 @@
       <div class="summary-badge">
         <span class="summary-level-label">ULAŞILAN SEVİYE</span>
         <div class="summary-level-val" id="summaryLevel">01</div>
-        <div class="summary-title-val" id="summaryTitle">Çırak Simyacı 🕯️</div>
+        <div class="summary-title-val" id="summaryTitle">Çırak Tabip 🕯️</div>
       </div>
       <div class="summary-stats">
         <div class="summary-stat-box">
@@ -1091,7 +1091,7 @@
         </div>
       </div>
       <div class="nickname-form">
-        <label for="playerNickname" class="nickname-label">Simyacı Adın (Liderlik Tablosu):</label>
+        <label for="playerNickname" class="nickname-label">Hekim Adın (Liderlik Tablosu):</label>
         <div class="nickname-input-group">
           <input type="text" id="playerNickname" maxlength="24" placeholder="İsmini yaz..." />
           <button id="saveScoreBtn" class="save-score-btn">Kaydet</button>
@@ -1100,14 +1100,14 @@
       </div>
       <div class="summary-actions" style="display: flex; flex-direction: column; gap: 8px;">
         <button id="openCreditsBtn" type="button" class="leaderboard-link-btn" style="background: #2b1c10; border: 1px solid var(--gold); color: var(--gold-lt);">
-          🏛️ Erciyes Kulüp, Künye & Risale Portalı
+          🏛️ Erciyes Kulüp & Proje Künyesi
         </button>
         <div style="display: flex; gap: 8px;">
-          <button id="openRaziBioBtn" type="button" class="modal-reset-btn" style="flex: 1; font-size: .75rem; background: #1f140c; border: 1px solid var(--border); color: var(--ink);">
-            📜 Râzî Kimdir?
+          <button id="openEkmeleddinBioBtn" type="button" class="modal-reset-btn" style="flex: 1; font-size: .75rem; background: #1f140c; border: 1px solid var(--border); color: var(--ink);">
+            📜 Tabîb Ekmeleddin Kimdir?
           </button>
-          <a href="/download/tibbiye_nasihatleri.pdf" download class="leaderboard-link-btn" style="flex: 1; font-size: .75rem; text-decoration: none; padding: 10px; background: #1f140c; border: 1px solid var(--border); color: var(--gold-lt); text-align: center;">
-            📥 Nasihatler PDF
+          <a href="/download/tabib_ekmeleddin_kimdir.pdf" download class="leaderboard-link-btn" style="flex: 1; font-size: .75rem; text-decoration: none; padding: 10px; background: #1f140c; border: 1px solid var(--border); color: var(--gold-lt); text-align: center;">
+            📥 Tezhipli PDF
           </a>
         </div>
         <div style="display: flex; gap: 8px;">
@@ -1119,14 +1119,14 @@
   </div>
 </div>
 
-<!-- ── Ebû Bekir er-Râzî Anlatım (Prologue) Modalı ── -->
+<!-- ── Tabîb Ekmeleddin Anlatım (Prologue) Modalı ── -->
 <div class="modal-backdrop hidden" id="prologueModal">
   <div class="modal-card" style="max-width: 460px; text-align: center;">
     <div class="modal-header">
       <div class="modal-title-wrap" style="width: 100%;">
-        <span class="modal-badge" id="prologueBadge">📜 EBÛ BEKİR ER-RÂZÎ ANLATIYOR</span>
+        <span class="modal-badge" id="prologueBadge">📜 TABÎB EKMELEDDİN ANLATIYOR</span>
         <h2 style="color: var(--gold-lt); font-size: 1.25rem;">Şifa & Hikmet Ayini</h2>
-        <span class="modal-sub">Ebû Bekir er-Râzî'nin Huzurundasın</span>
+        <span class="modal-sub">Bey Hekim'in Huzurundasın</span>
       </div>
     </div>
     <div class="modal-body" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
@@ -1141,13 +1141,13 @@
   </div>
 </div>
 
-<!-- ── Erciyes Kulüp, Künye & Risale Portalı ── -->
+<!-- ── Erciyes Kulüp, Künye & Portalı ── -->
 <div class="modal-backdrop hidden" id="creditsModal">
   <div class="modal-card" style="max-width: 500px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
         <h2 style="color: var(--gold-lt); font-size: 1.15rem;">🏛️ Erciyes Üniversitesi & Proje Künyesi</h2>
-        <span class="modal-sub">Ebû Bekir er-Râzî'nin Kazanı Projesi</span>
+        <span class="modal-sub">Tabîb Ekmeleddin'in Kazanı Projesi</span>
       </div>
       <button class="modal-close" id="closeCreditsBtn" aria-label="Kapat">✕</button>
     </div>
@@ -1170,23 +1170,23 @@
           <p><strong style="color: var(--ink);">Proje Yönetim Ekibi:</strong> Anadolu Tıp Oyun Geliştirme Kurulu</p>
           <p><strong style="color: var(--ink);">Kulüp Yönetimi:</strong> Yönetim Kurulu Başkanı ve Temsilciler</p>
           <p><strong style="color: var(--ink);">Yazılım & Simülasyon:</strong> Python / Pygame & WebSockets Mimarisi</p>
-          <p><strong style="color: var(--ink);">Tarih & Tıp Danışmanlığı:</strong> İslam Tıbbı Tarihi ve Râzî Tetkik Heyeti</p>
+          <p><strong style="color: var(--ink);">Tarih & Tıp Danışmanlığı:</strong> Anadolu Selçuklu Tıbbı & Tabîb Ekmeleddin Tetkik Kurulu</p>
           <p><strong style="color: var(--ink);">Emeği Geçen Arkadaşlarımız:</strong> Tüm kulüp üyelerimiz ve hekim adaylarımız</p>
         </div>
       </div>
 
-      <!-- Nasihatler PDF İndir & Risale -->
+      <!-- Tabîb Ekmeleddin PDF İndir & Biyografi -->
       <div style="background: #1c130b; border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center;">
-        <h3 style="color: var(--gold-lt); font-size: .85rem; margin-bottom: 6px;">📜 Tıbbiyeli Bir Dostuna Nasihatler</h3>
+        <h3 style="color: var(--gold-lt); font-size: .85rem; margin-bottom: 6px;">📜 Tabîb Ekmeleddin (Bey Hekim) Kimdir?</h3>
         <p style="font-size: .75rem; color: var(--ink); line-height: 1.4; margin-bottom: 10px;">
-          Ebû Bekir er-Râzî'nin Felsefe Risaleleri'nin ilk yazısı olan bu tarihi ahlak ve hekimlik mektubunu resmi altın çerçeveli PDF olarak cihazınıza indirin.
+          13. Yüzyıl Selçuklu Saray Başhekimi ve Hz. Mevlânâ'nın özel tabibi olan Tabîb Ekmeleddin'in tıp mirasını anlatan altın tezhip çerçeveli resmi PDF'i indirin.
         </p>
         <div style="display: flex; gap: 8px;">
-          <a href="/download/tibbiye_nasihatleri.pdf" download class="leaderboard-link-btn" style="flex: 1; text-decoration: none; padding: 9px; font-size: .78rem; background: #2a1b10; border: 1px solid var(--gold); color: var(--gold-lt);">
-            📥 PDF İndir
+          <a href="/download/tabib_ekmeleddin_kimdir.pdf" download class="leaderboard-link-btn" style="flex: 1; text-decoration: none; padding: 9px; font-size: .78rem; background: #2a1b10; border: 1px solid var(--gold); color: var(--gold-lt);">
+            📥 Tezhipli PDF İndir
           </a>
-          <button type="button" id="openNasihatModalBtn" class="leaderboard-link-btn" style="flex: 1; padding: 9px; font-size: .78rem; background: #2a1b10; border: 1px solid var(--border); color: var(--ink);">
-            📖 Risaleyi Oku
+          <button type="button" id="openBioModalFromCreditsBtn" class="leaderboard-link-btn" style="flex: 1; padding: 9px; font-size: .78rem; background: #2a1b10; border: 1px solid var(--border); color: var(--ink);">
+            📖 Biyografiyi Oku
           </button>
         </div>
       </div>
@@ -1195,73 +1195,41 @@
   </div>
 </div>
 
-<!-- ── Ebû Bekir er-Râzî Kimdir? Modalı ── -->
-<div class="modal-backdrop hidden" id="raziBioModal">
+<!-- ── Tabîb Ekmeleddin (Bey Hekim) Kimdir? Modalı ── -->
+<div class="modal-backdrop hidden" id="ekmeleddinBioModal">
   <div class="modal-card" style="max-width: 480px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
-        <h2 style="color: var(--gold-lt); font-size: 1.15rem;">📜 Ebû Bekir er-Râzî Kimdir?</h2>
-        <span class="modal-sub">M.S. 865 – 925 · Rey ve Bağdat</span>
+        <h2 style="color: var(--gold-lt); font-size: 1.15rem;">📜 Tabîb Ekmeleddin (Bey Hekim) Kimdir?</h2>
+        <span class="modal-sub">13. Yüzyıl · Selçuklu Başhekimi & Mevlânâ'nın Tabibi</span>
       </div>
-      <button class="modal-close" id="closeRaziBioBtn" aria-label="Kapat">✕</button>
+      <button class="modal-close" id="closeEkmeleddinBioBtn" aria-label="Kapat">✕</button>
     </div>
     <div class="modal-body" style="padding: 14px 18px; font-size: .82rem; line-height: 1.55; color: var(--ink); max-height: 68vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
-      <p><strong style="color: var(--gold);">Ebû Bekir Muhammed bin Zekeriyyâ er-Râzî</strong>, Orta Çağ İslam dünyasının ve tıp tarihinin en büyük dehalarından biri olup Batı dünyasında <em>Rhazes</em> veya <em>Al-Razi</em> adıyla anılır. "Arapların Galen'i" kabul edilir.</p>
+      <p><strong style="color: var(--gold);">Ekmeleddîn Tabîb el-Nahcivânî</strong> (halk arasındaki hürmetli unvanıyla <strong>Bey Hekim</strong>), 13. yüzyılda Anadolu Selçuklu Devleti'nin başkenti Konya'da yaşamış devrin en büyük hekim ve filozoflarındandır.</p>
       
       <div style="background: #21160e; padding: 10px; border-radius: 6px; border-left: 3px solid var(--gold);">
-        <strong style="color: var(--gold-lt); display: block; margin-bottom: 3px;">🧪 Tıp Devrimleri:</strong>
-        • <strong>Çiçek ve Kızamık Ayrımı:</strong> Tarihte çiçek (variola) ile kızamık (morbilli) hastalıklarını klinik olarak ilk defa birbirinden ayıran hekimdir (<em>Kitâb fi'l-Cederî ve'l-Hasbe</em>).<br/>
-        • <strong>Bağdat Hastane Deneyi:</strong> Şehrin farklı köşelerine taze et astırarak en geç bozulan temiz havalı noktayı hastane yeri olarak seçmiştir.<br/>
-        • <strong>Cerrahi Yenilikler:</strong> Yaraların dikilmesinde ilk kez hayvan bağırsağını (katgüt) kullanmıştır.
+        <strong style="color: var(--gold-lt); display: block; margin-bottom: 3px;">🏛️ Selçuklu Saray Başhekimi:</strong>
+        • Sultan II. İzzeddin Keykavus ve IV. Rükneddin Kılıçarslan devirlerinde sarayın ve ordunun başhekimliğini yürütmüştür.<br/>
+        • Konya Dârüşşifası'nda sayısız hekim namzedi yetiştirmiş, tıp ve cerrahi mektebi kurmuştur.<br/>
+        • Konya'daki tarihî <strong>Beyhekim Mescidi</strong> ve <strong>Beyhekim Mahallesi</strong> onun aziz hatırasını taşır.
       </div>
 
       <div style="background: #21160e; padding: 10px; border-radius: 6px; border-left: 3px solid var(--green);">
-        <strong style="color: var(--green-lt); display: block; margin-bottom: 3px;">⚗️ Simya & Kimya Devrimleri:</strong>
-        • <strong>Sülfürik Asit & Saf Alkol:</strong> Zaç yağını (sülfürik asit) ve saf etil alkolü damıtarak elde eden ilk simyagerdir.<br/>
-        • <strong>Maddelerin Sınıflandırılması:</strong> <em>Kitâbü'l-Esrâr</em> (Sırlar Kitabı) adlı şaheserinde maddeleri mineral, bitkisel ve hayvansal olarak modern kimyanın temellerine uygun tasnif etmiştir.
+        <strong style="color: var(--green-lt); display: block; margin-bottom: 3px;">🕊️ Hz. Mevlânâ ile Sırdaşlığı:</strong>
+        • Ahmed Eflâkî'nin <em>Menâkıbü'l-Ârifîn</em> eserinde nakledildiği üzere, Hz. Mevlânâ'nın en yakın dostu ve özel hekimidir.<br/>
+        • Mevlânâ'nın son hastalığında başucunda bulunmuş, derin sevgisi ve hekimlik titizliğiyle tarihe geçmiştir.
       </div>
 
       <div style="background: #21160e; padding: 10px; border-radius: 6px; border-left: 3px solid var(--gold-lt);">
-        <strong style="color: var(--gold-lt); display: block; margin-bottom: 3px;">⚖️ Felsefe ve Ahlak:</strong>
-        Hekimliğin para için değil, insan ıstırabını dindirmek için yapılması gerektiğini savunmuş, fakir hastaları ücretsiz tedavi etmiştir. <em>"Felsefe Risaleleri"</em> deontoloji ve ahlakın zirvesidir.
+        <strong style="color: var(--gold-lt); display: block; margin-bottom: 3px;">🧪 İlm-i Nabz & Bitkisel Farmakoloji:</strong>
+        • Hastanın nabız vuruşlarından ve mizaç dengesinden hastalıkları teşhis etmede benzersiz bir dehadır.<br/>
+        • Şifalı bitkiler, mineraller ve damıtılmış şuruplarla (terkîb-i edviye) Anadolu tıbbını zenginleştirmiştir.
       </div>
       
-      <a href="/download/tibbiye_nasihatleri.pdf" download class="leaderboard-link-btn" style="text-align: center; text-decoration: none; padding: 10px; background: var(--gold); color: #110d0b; font-weight: 700; margin-top: 4px;">
-        📥 "Tıbbiyeli Bir Dostuna Nasihatler" PDF'ini İndir
+      <a href="/download/tabib_ekmeleddin_kimdir.pdf" download class="leaderboard-link-btn" style="text-align: center; text-decoration: none; padding: 10px; background: var(--gold); color: #110d0b; font-weight: 700; margin-top: 4px;">
+        📥 "Tabîb Ekmeleddin Kimdir?" Tezhipli PDF'ini İndir
       </a>
-    </div>
-  </div>
-</div>
-
-<!-- ── Tıbbiyeli Bir Dostuna Nasihatler Risale Modalı ── -->
-<div class="modal-backdrop hidden" id="nasihatModal">
-  <div class="modal-card" style="max-width: 480px;">
-    <div class="modal-header">
-      <div class="modal-title-wrap">
-        <h2 style="color: var(--gold-lt); font-size: 1.15rem;">📜 Tıbbiyeli Bir Dostuna Nasihatler</h2>
-        <span class="modal-sub">Ebû Bekir er-Râzî · Felsefe Risaleleri</span>
-      </div>
-      <button class="modal-close" id="closeNasihatBtn" aria-label="Kapat">✕</button>
-    </div>
-    <div class="modal-body" style="padding: 14px 18px; font-size: .80rem; line-height: 1.55; color: var(--ink); max-height: 68vh; overflow-y: auto;">
-      <p style="font-style: italic; color: var(--gold); margin-bottom: 8px;">«İnsanlara merhamet etmeyen hekimin ilmi de şifası da bereketsizdir.»</p>
-      <ol style="padding-left: 18px; display: flex; flex-direction: column; gap: 8px;">
-        <li><strong>Hekimliğin Kutsiyeti:</strong> Tabip mesleğini yalnız dünyalık servet için yapamaz; fakir hastaları menfaatsizce, zenginler gibi tedavi eder.</li>
-        <li><strong>Hastanın Sırrı:</strong> Hastanın bedeni ve hanesindeki sırlar hekimin namusudur; mezara kadar saklanır.</li>
-        <li><strong>Umut ve Moral:</strong> Hastaya daima ferahlık aşıla; zira ruhun neşesi bedenin bağışıklığına en büyük kuvvettir.</li>
-        <li><strong>Önce Gıda Sonra İlaç:</strong> Gıda ve perhizle tedavi mümkünse ilaca başvurma; tek ve hafif deva yetiyorsa ağır terkipten kaçın.</li>
-        <li><strong>Sürekli Okuma ve Deney:</strong> Kitap ezberlemek yetmez; hasta başında gözlemle, deney yap ve gerekirse sorgula.</li>
-        <li><strong>Tevazu ve Ciddiyet:</strong> Kibir hekimi kör eder; bilmediğinde ehline danış, şifayı Hakk'ın bir lütfu bil.</li>
-        <li><strong>Zarardan Kaçınma:</strong> Hekim zehirlere ve hileye alet olamaz; her karışım hayat kurtarmak içindir.</li>
-        <li><strong>Hastaya Nezaket:</strong> Acı çekenin sitemine öfkeyle değil ana-baba şefkatiyle yaklaş.</li>
-        <li><strong>Kendi Sıhhatini Koru:</strong> Yorgun hekim hata yapar; zihnini ve bedenini dinç tut.</li>
-        <li><strong>Hakikate Sadakat:</strong> Öğrendiğin her şifayı insanlığın istifadesine sun.</li>
-      </ol>
-      <div style="margin-top: 14px; text-align: center;">
-        <a href="/download/tibbiye_nasihatleri.pdf" download class="leaderboard-link-btn" style="display: inline-block; text-decoration: none; padding: 10px 18px; background: var(--gold); color: #110d0b; font-weight: 700;">
-          📥 Resmi PDF Dosyasını İndir
-        </a>
-      </div>
     </div>
   </div>
 </div>
@@ -1326,21 +1294,21 @@
   <div class="modal-card duel-card duel-match-card">
     <div class="duel-trophy-icon" id="duelResultTrophy">🏆</div>
     <h2 id="duelMatchTitle" style="font-size: 1.3rem; color: var(--gold-lt);">DÜELLO ZAFERİ!</h2>
-    <p id="duelMatchSub" style="font-size: .82rem; color: var(--ink); margin-top: 4px;">Ebû Bekir er-Râzî'nin takdirini kazandın!</p>
+    <p id="duelMatchSub" style="font-size: .82rem; color: var(--ink); margin-top: 4px;">Tabîb Ekmeleddin'in takdirini kazandın!</p>
     <div class="duel-score-pill" id="duelFinalScoreDisplay">3 — 1</div>
     <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px; width: 100%;">
       <button type="button" id="duelRematchBtn" class="duel-ready-btn">
         ⚔️ Yeniden Düello Yap
       </button>
       <button type="button" id="openCreditsBtnDuel" class="leaderboard-link-btn" style="background: #2b1c10; border: 1px solid var(--gold); color: var(--gold-lt);">
-        🏛️ Erciyes Kulüp, Künye & Risale Portalı
+        🏛️ Erciyes Kulüp & Proje Künyesi
       </button>
       <div style="display: flex; gap: 8px;">
-        <button id="openRaziBioBtnDuel" type="button" class="modal-reset-btn" style="flex: 1; font-size: .75rem; background: #1f140c; border: 1px solid var(--border); color: var(--ink);">
-          📜 Râzî Kimdir?
+        <button id="openEkmeleddinBioBtnDuel" type="button" class="modal-reset-btn" style="flex: 1; font-size: .75rem; background: #1f140c; border: 1px solid var(--border); color: var(--ink);">
+          📜 Tabîb Ekmeleddin Kimdir?
         </button>
-        <a href="/download/tibbiye_nasihatleri.pdf" download class="leaderboard-link-btn" style="flex: 1; font-size: .75rem; text-decoration: none; padding: 10px; background: #1f140c; border: 1px solid var(--border); color: var(--gold-lt); text-align: center;">
-          📥 Nasihatler PDF
+        <a href="/download/tabib_ekmeleddin_kimdir.pdf" download class="leaderboard-link-btn" style="flex: 1; font-size: .75rem; text-decoration: none; padding: 10px; background: #1f140c; border: 1px solid var(--border); color: var(--gold-lt); text-align: center;">
+          📥 Tezhipli PDF
         </a>
       </div>
     </div>
@@ -1429,14 +1397,11 @@
   const openCreditsBtn        = document.getElementById('openCreditsBtn');
   const openCreditsBtnDuel    = document.getElementById('openCreditsBtnDuel');
 
-  const raziBioModal          = document.getElementById('raziBioModal');
-  const closeRaziBioBtn       = document.getElementById('closeRaziBioBtn');
-  const openRaziBioBtn        = document.getElementById('openRaziBioBtn');
-  const openRaziBioBtnDuel    = document.getElementById('openRaziBioBtnDuel');
-
-  const nasihatModal          = document.getElementById('nasihatModal');
-  const closeNasihatBtn       = document.getElementById('closeNasihatBtn');
-  const openNasihatModalBtn   = document.getElementById('openNasihatModalBtn');
+  const ekmeleddinBioModal         = document.getElementById('ekmeleddinBioModal');
+  const closeEkmeleddinBioBtn      = document.getElementById('closeEkmeleddinBioBtn');
+  const openEkmeleddinBioBtn       = document.getElementById('openEkmeleddinBioBtn');
+  const openEkmeleddinBioBtnDuel   = document.getElementById('openEkmeleddinBioBtnDuel');
+  const openBioModalFromCreditsBtn = document.getElementById('openBioModalFromCreditsBtn');
 
 
   // Düello Durumu
@@ -1950,9 +1915,9 @@
 
   setupModalToggle(openCreditsBtn, creditsModal, closeCreditsBtn);
   setupModalToggle(openCreditsBtnDuel, creditsModal, closeCreditsBtn);
-  setupModalToggle(openRaziBioBtn, raziBioModal, closeRaziBioBtn);
-  setupModalToggle(openRaziBioBtnDuel, raziBioModal, closeRaziBioBtn);
-  setupModalToggle(openNasihatModalBtn, nasihatModal, closeNasihatBtn);
+  setupModalToggle(openEkmeleddinBioBtn, ekmeleddinBioModal, closeEkmeleddinBioBtn);
+  setupModalToggle(openEkmeleddinBioBtnDuel, ekmeleddinBioModal, closeEkmeleddinBioBtn);
+  setupModalToggle(openBioModalFromCreditsBtn, ekmeleddinBioModal, closeEkmeleddinBioBtn);
 
   // ── Düello Lobisi & Yıldız Fonksiyonları ──
   function renderDuelStars(mine, opp) {
@@ -2348,7 +2313,7 @@
       playVictoryChime();
       statusEl.textContent = msg.combo >= 2
         ? `Mükemmel! 🔥 x${msg.combo} Kombo!`
-        : 'Doğru! Râzî onaylıyor.';
+        : 'Doğru! Tabîb Ekmeleddin onaylıyor.';
       statusEl.className = 'status ready';
     }
 
