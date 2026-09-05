@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import html
 import logging
+import re
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
@@ -9,13 +11,24 @@ from typing import Any
 
 import aiosqlite
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("razi")
 
 DB_PATH = Path(__file__).parent / "leaderboard.db"
+
+# ── Güvenlik Sabitleri ────────────────────────────────────────────────────────
+ROOM_ID_PATTERN = re.compile(r"^[A-Z0-9_-]{3,12}$")
+VALID_BUTTON_PATTERN = re.compile(r"^[a-z0-9_]{1,32}$")
+MAX_ACTIVE_ROOMS = 100
+MAX_MSG_RATE_PER_SEC = 25  # Bir WebSocket'ten saniyede izin verilen maks mesaj
+SCORE_POST_LIMIT_PER_MIN = 10
+
+# IP bazlı rate-limiter
+score_rate_tracker: dict[str, list[float]] = defaultdict(list)
 
 
 # ── Başlangıç / Kapatma ───────────────────────────────────────────────────────
@@ -37,10 +50,24 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Ebû Bekir er-Râzî'nin Kazanı — Sunucu", lifespan=lifespan)
+
+
+# ── Güvenlik Başlıkları Middleware'i ─────────────────────────────────────────
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 # room_id → {"desktop": WebSocket | None, "mobile": set[WebSocket]}
-rooms: dict[str, dict[str, Any]] = defaultdict(lambda: {"desktop": None, "mobile": set()})
+rooms: dict[str, dict[str, Any]] = {}
 
 
 # ── Yardımcılar ───────────────────────────────────────────────────────────────
@@ -53,7 +80,7 @@ async def safe_send(ws: WebSocket, message: dict[str, Any]) -> None:
 
 
 async def broadcast_mobile(room: dict, message: dict[str, Any]) -> None:
-    for mobile in list(room["mobile"]):
+    for mobile in list(room.get("mobile", [])):
         await safe_send(mobile, message)
 
 
@@ -97,10 +124,16 @@ async def play_without_room() -> HTMLResponse:
 
 @app.get("/play/{room_id}", response_class=HTMLResponse)
 async def play(request: Request, room_id: str) -> HTMLResponse:
+    clean_id = room_id.strip().upper()
+    if not ROOM_ID_PATTERN.match(clean_id):
+        return HTMLResponse(
+            "<h1>Geçersiz Oda Kodu</h1><p>Oda kodu 3-12 karakter ve alfanümerik olmalıdır.</p>",
+            status_code=400,
+        )
     return templates.TemplateResponse(
         request=request,
         name="play.html",
-        context={"room_id": room_id.upper()},
+        context={"room_id": clean_id},
     )
 
 
@@ -109,19 +142,42 @@ async def get_razi_elements():
     path = Path(__file__).parent / "razi_elements.json"
     if path.exists():
         return FileResponse(path, media_type="application/json")
-    return {"error": "not found"}
+    return JSONResponse({"error": "not found"}, status_code=404)
 
 
 # ── Liderlik Tablosu ──────────────────────────────────────────────────────────
 
 @app.post("/api/scores")
-async def post_score(request: Request) -> dict[str, Any]:
+async def post_score(request: Request) -> JSONResponse:
     """desktop_game.py'nin save_score() fonksiyonu buraya POST atar."""
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    
+    # Rate limit: 1 dakikada maks 10 skor kaydı
+    timestamps = [t for t in score_rate_tracker[client_ip] if now - t < 60.0]
+    if len(timestamps) >= SCORE_POST_LIMIT_PER_MIN:
+        return JSONResponse({"ok": False, "error": "Çok fazla skor isteği. Lütfen bekleyin."}, status_code=429)
+    timestamps.append(now)
+    score_rate_tracker[client_ip] = timestamps
+
     try:
         payload = await request.json()
-        level   = int(payload.get("level", 0))
-        room_id = str(payload.get("room_id", ""))[:16]
-        ts      = int(time.time())
+        if not isinstance(payload, dict):
+            return JSONResponse({"ok": False, "error": "Geçersiz veri biçimi"}, status_code=400)
+
+        # Seviye sınır kontrolü (1 - 100 arası mantıksal sınır)
+        level_raw = payload.get("level")
+        if not isinstance(level_raw, int) or not (1 <= level_raw <= 100):
+            return JSONResponse({"ok": False, "error": "Geçersiz seviye değeri (1-100)"}, status_code=400)
+        level = level_raw
+
+        # Oda kodu format kontrolü
+        room_raw = str(payload.get("room_id", "")).strip().upper()[:12]
+        if room_raw and not ROOM_ID_PATTERN.match(room_raw):
+            return JSONResponse({"ok": False, "error": "Geçersiz oda kodu formatı"}, status_code=400)
+        room_id = room_raw
+
+        ts = int(time.time())
         async with aiosqlite.connect(DB_PATH) as db:
             await db.execute(
                 "INSERT INTO scores (level, room_id, ts) VALUES (?, ?, ?)",
@@ -129,10 +185,10 @@ async def post_score(request: Request) -> dict[str, Any]:
             )
             await db.commit()
         log.info("Score saved: level=%d room=%s", level, room_id)
-        return {"ok": True}
+        return JSONResponse({"ok": True})
     except Exception as e:
         log.error("Score save error: %s", e)
-        return {"ok": False, "error": str(e)}
+        return JSONResponse({"ok": False, "error": "Kayıt sırasında hata oluştu"}, status_code=400)
 
 
 @app.get("/api/scores")
@@ -149,7 +205,7 @@ async def get_scores() -> list[dict]:
 
 @app.get("/leaderboard", response_class=HTMLResponse)
 async def leaderboard() -> HTMLResponse:
-    """Görsel liderlik tablosu."""
+    """Görsel liderlik tablosu (XSS korumalı)."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
@@ -165,12 +221,16 @@ async def leaderboard() -> HTMLResponse:
     for i, row in enumerate(rows):
         medal = medals[i] if i < 3 else f"{i+1}."
         ts_str = time.strftime("%d.%m %H:%M", time.localtime(row["ts"]))
-        room   = row["room_id"] or "—"
+        
+        # Stored XSS koruması: html.escape
+        safe_room = html.escape(str(row["room_id"] or "—"))
+        safe_level = int(row["level"])
+
         rows_html += f"""
         <tr class="{'top' if i < 3 else ''}">
           <td class="rank">{medal}</td>
-          <td class="level">{row['level']:02d}</td>
-          <td class="room">{room}</td>
+          <td class="level">{safe_level:02d}</td>
+          <td class="room">{safe_room}</td>
           <td class="time">{ts_str}</td>
         </tr>"""
 
@@ -263,25 +323,43 @@ async def health() -> dict[str, str]:
 
 @app.websocket("/ws/{room_id}")
 async def room_socket(websocket: WebSocket, room_id: str) -> None:
-    room_id = room_id.upper()
-    role    = websocket.query_params.get("role", "mobile")
+    clean_id = room_id.strip().upper()
+
+    # Oda ID format kontrolü
+    if not ROOM_ID_PATTERN.match(clean_id):
+        await websocket.close(code=4000)
+        return
+
+    role = websocket.query_params.get("role", "mobile")
+    if role not in ("desktop", "mobile"):
+        await websocket.close(code=4000)
+        return
+
+    # DoS koruması: Oda sayısı sınırı kontrolü
+    if clean_id not in rooms:
+        if len(rooms) >= MAX_ACTIVE_ROOMS:
+            log.warning("Max active rooms reached (%d). Rejecting %s", MAX_ACTIVE_ROOMS, clean_id)
+            await websocket.close(code=4002)
+            return
+        rooms[clean_id] = {"desktop": None, "mobile": set()}
+
     await websocket.accept()
-    room = rooms[room_id]
+    room = rooms[clean_id]
 
     if role == "desktop":
         old = room["desktop"]
         if isinstance(old, WebSocket):
             await safe_send(old, {"type": "error", "message": "Replaced by a new game session."})
         room["desktop"] = websocket
-        log.info("Desktop connected — room %s", room_id)
-        await safe_send(websocket, {"type": "desktop_connected", "room_id": room_id})
+        log.info("Desktop connected — room %s", clean_id)
+        await safe_send(websocket, {"type": "desktop_connected", "room_id": clean_id})
 
     else:  # mobile
         mobile_set = room["mobile"]
         assert isinstance(mobile_set, set)
 
         if mobile_set:
-            log.info("Extra mobile rejected — room %s already has a player", room_id)
+            log.info("Extra mobile rejected — room %s already has a player", clean_id)
             await safe_send(websocket, {
                 "type": "error",
                 "message": "Bu odada zaten bir oyuncu var.",
@@ -290,21 +368,41 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
             return
 
         mobile_set.add(websocket)
-        log.info("Mobile connected — room %s", room_id)
+        log.info("Mobile connected — room %s", clean_id)
 
         desktop = room["desktop"]
         if isinstance(desktop, WebSocket):
             await safe_send(desktop, {"type": "player_connected"})
-        await safe_send(websocket, {"type": "connected", "room_id": room_id})
+        await safe_send(websocket, {"type": "connected", "room_id": clean_id})
+
+    # Mesaj işleme döngüsü (Rate limiting & Type validation)
+    msg_timestamps: list[float] = []
 
     try:
         while True:
-            message = await websocket.receive_json()
-            desktop = room["desktop"]
+            try:
+                message = await websocket.receive_json()
+            except Exception:
+                break
 
+            if not isinstance(message, dict):
+                continue
+
+            # Rate limiting
+            now = time.monotonic()
+            msg_timestamps = [t for t in msg_timestamps if now - t < 1.0]
+            if len(msg_timestamps) >= MAX_MSG_RATE_PER_SEC:
+                continue
+            msg_timestamps.append(now)
+
+            desktop = room.get("desktop")
             if role != "desktop":
-                if isinstance(desktop, WebSocket):
-                    await safe_send(desktop, {"type": "button", "button": message.get("button")})
+                btn = message.get("button")
+                if btn is not None:
+                    btn_str = str(btn).strip().lower()
+                    if VALID_BUTTON_PATTERN.match(btn_str):
+                        if isinstance(desktop, WebSocket):
+                            await safe_send(desktop, {"type": "button", "button": btn_str})
             else:
                 await broadcast_mobile(room, message)
 
@@ -312,18 +410,19 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
         pass
     finally:
         if role == "desktop":
-            if room["desktop"] is websocket:
+            if room.get("desktop") is websocket:
                 room["desktop"] = None
-                log.info("Desktop disconnected — room %s", room_id)
+                log.info("Desktop disconnected — room %s", clean_id)
         else:
-            mobile_set = room["mobile"]
-            assert isinstance(mobile_set, set)
-            mobile_set.discard(websocket)
-            log.info("Mobile disconnected — room %s", room_id)
-            desktop = room["desktop"]
+            mobile_set = room.get("mobile", set())
+            if isinstance(mobile_set, set):
+                mobile_set.discard(websocket)
+            log.info("Mobile disconnected — room %s", clean_id)
+            desktop = room.get("desktop")
             if isinstance(desktop, WebSocket):
                 await safe_send(desktop, {"type": "player_disconnected"})
 
-        if room["desktop"] is None and not room["mobile"]:
-            rooms.pop(room_id, None)
-            log.info("Room %s cleaned up", room_id)
+        # Boşalan odayı temizle
+        if room.get("desktop") is None and not room.get("mobile"):
+            rooms.pop(clean_id, None)
+            log.info("Room %s cleaned up", clean_id)

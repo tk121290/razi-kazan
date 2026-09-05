@@ -515,6 +515,7 @@ class Game:
         self.room_id   = make_room_id()
         self.state     = GameState.WAITING_FOR_PLAYER
         self.level     = 1
+        self.lives     = 3
         self.best      = max((s["level"] for s in load_scores()), default=0)
         self.sequence: list[str] = []
         self.player_index  = 0
@@ -610,7 +611,9 @@ class Game:
                 self.player_connected = True
                 self._start_rhazi_turn()
             elif t == "button" and self.state == GameState.PLAYER_TURN:
-                self._handle_button(msg.get("button", ""))
+                btn = msg.get("button", "")
+                if isinstance(btn, str) and (btn in self.material_pool or btn in MATERIALS):
+                    self._handle_button(btn)
             elif t == "button" and msg.get("button") == "reset" and self.state == GameState.GAME_OVER:
                 self._reset_game()
             elif t == "player_disconnected":
@@ -633,9 +636,9 @@ class Game:
         self.last_message  = "Ebû Bekir er-Râzî malzemeleri hazırlıyor..."
         self._spawn_particles(530, 385, GOLD, 18)
 
-        # Kilidi açık malzemeleri telefona bildir (30 elemente kadar)
+        # Kilidi açık malzemeleri ve kalan canı telefona bildir (30 elemente kadar)
         unlocked = list(self.material_pool)
-        self.network.send({"type": "round_started", "unlocked": unlocked})
+        self.network.send({"type": "round_started", "unlocked": unlocked, "lives": self.lives})
 
         # Yeni element açıldı mı veya bilgi kartı gösterimi
         if len(unlocked) > getattr(self, "last_unlocked_count", 0):
@@ -653,6 +656,7 @@ class Game:
 
     def _reset_game(self) -> None:
         self.level        = 1
+        self.lives        = 3
         self.sequence     = []
         self.player_index = 0
         self.phase_cursor = 0
@@ -666,6 +670,7 @@ class Game:
         self.room_id         = make_room_id()
         self.network         = NetworkBridge(SERVER_URL, self.room_id, self.events)
         self.qr_surface      = self._make_qr()
+        self.lives           = 3
         self.sequence        = []
         self.player_index    = 0
         self.phase_cursor    = 0
@@ -782,18 +787,33 @@ class Game:
                 self._return_to_qr_screen()
 
     def _time_out(self) -> None:
+        self.lives -= 1
+        self.flash_color   = RED_LT
+        self.flash_started = time.monotonic()
+        self.shake_started = time.monotonic()
+        self.fire_surge_until = time.monotonic() + 2.5
+        self._spawn_particles(840, int(self.floor_y - 140), (255, 60, 20), 50)
+        self.sounds.play("wrong")
+
+        if self.lives > 0:
+            self.last_message = f"Zaman doldu! ({self.lives} Can kaldı)"
+            self.player_index = 0
+            self.phase_started = time.monotonic()
+            self._last_tick = 0.0
+            self.speak_bubble(f"Vakit tükendi! Bir iksir şişen kırıldı ({self.lives} can kaldı). Sırayı tekrar dene!", duration=4.0)
+            self.network.send({
+                "type": "life_lost",
+                "lives": self.lives,
+                "message": f"Süre tükendi! {self.lives} canın kaldı.",
+                "total": round(self.player_duration, 1),
+            })
+            return
+
         self.state        = GameState.RESOLUTION
         self.round_success = False
         self.last_message  = "Süre doldu — Kazan taştı!"
         self.phase_started = time.monotonic()
-        self.flash_color   = RED_LT
-        self.flash_started = self.phase_started
-        self.shake_started = self.phase_started
-        # Hata anında aşırı alevlenme (flare surge)
-        self.fire_surge_until = time.monotonic() + 3.0
-        self._spawn_particles(840, int(self.floor_y - 140), (255, 60, 20), 50)
-        self.sounds.play("wrong")
-        self.speak_bubble("Vakit doldu çırak! Ateş kontrolden çıktı!", duration=3.5)
+        self.speak_bubble("Vakit tükendi ve tüm şişeler kırıldı! Ateş kontrolden çıktı!", duration=3.5)
         self.network.send({"type": "game_over", "message": self.last_message})
 
     def _go_game_over(self) -> None:
@@ -810,25 +830,39 @@ class Game:
     def _handle_button(self, button: str) -> None:
         if button != self.sequence[self.player_index]:
             correct = self.sequence[self.player_index]
-            self.state        = GameState.RESOLUTION
-            self.round_success = False
+            self.lives -= 1
             name = MATERIAL_NAMES.get(button, button or "bilinmiyor")
-            self.last_message  = f"Yanlış! '{name}' seçildi."
-            self.phase_started = time.monotonic()
+            correct_tr = MATERIAL_NAMES.get(correct, correct)
             self.flash_color   = RED_LT
-            self.flash_started = self.phase_started
-            self.shake_started = self.phase_started
-            # Hata anında aşırı alevlenme (flare surge)
-            self.fire_surge_until = time.monotonic() + 3.0
+            self.flash_started = time.monotonic()
+            self.shake_started = time.monotonic()
+            self.fire_surge_until = time.monotonic() + 2.5
             self._spawn_particles(840, int(self.floor_y - 140), (255, 60, 20), 55)
             self.sounds.play("wrong")
-            self.network.send({"type": "game_over", "message": self.last_message})
-            
+
             # Gemini'den Râzî karakteriyle ipucu iste
             self.hint_engine.request(correct, button, self.level)
-            
-            correct_tr = MATERIAL_NAMES.get(correct, correct)
-            self.speak_bubble(f"Eyvah! Yanlış malzeme, doğrusu {correct_tr} idi!", duration=3.5)
+
+            if self.lives > 0:
+                self.last_message  = f"Yanlış! '{name}' seçildi ({self.lives} Can kaldı)"
+                self.player_index = 0
+                self.phase_started = time.monotonic()
+                self._last_tick = 0.0
+                self.speak_bubble(f"Dikkat et çırak! Doğrusu {correct_tr} idi. ({self.lives} can kaldı, sırayı baştan dene!)", duration=4.0)
+                self.network.send({
+                    "type": "life_lost",
+                    "lives": self.lives,
+                    "message": f"Yanlış seçim! {self.lives} canın kaldı.",
+                    "total": round(self.player_duration, 1),
+                })
+                return
+
+            self.state        = GameState.RESOLUTION
+            self.round_success = False
+            self.last_message  = f"Yanlış! '{name}' seçildi."
+            self.phase_started = time.monotonic()
+            self.network.send({"type": "game_over", "message": self.last_message})
+            self.speak_bubble(f"Eyvah! Tüm şişeler kırıldı, ayin bozuldu! Doğrusu {correct_tr} idi!", duration=3.5)
             return
 
         self.player_index += 1
@@ -849,7 +883,14 @@ class Game:
             self.flash_started = self.phase_started
             self._spawn_particles(560, 350, GOLD, 60)
             self.sounds.play("level_up")
-            self.speak_bubble(f"Mükemmel! Seviye {self.level}'e geçtik.", duration=3.0)
+
+            life_msg = ""
+            if self.level in (26, 51, 76) and self.lives < 3:
+                self.lives += 1
+                life_msg = " · 🧪 +1 Can Yenilendi!"
+                self.network.send({"type": "life_gained", "lives": self.lives})
+
+            self.speak_bubble(f"Mükemmel! Seviye {self.level}'e geçtik.{life_msg}", duration=3.5)
         else:
             remaining_count = len(self.sequence) - self.player_index
             self.last_message = f"Doğru  ·  {remaining_count} malzeme kaldı"
@@ -1009,6 +1050,23 @@ class Game:
         # Seviye
         self._text("SEVİYE", self.font_tiny, TEXT_DIM, (24, 14))
         self._text_shadow(f"{self.level:02d}", self.font_title, GOLD_LT, (24, 30))
+
+        # Canlar (3 İksir Şişesi)
+        self._text("CAN", self.font_tiny, TEXT_DIM, (110, 14))
+        for i in range(3):
+            fx = 110 + i * 22
+            fy = 32
+            active = i < self.lives
+            flask_col = GREEN if active else (65, 42, 34)
+            # Gövde
+            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 8, fy + 12), 7)
+            # Boyun
+            pygame.draw.rect(self.pixel_surface, flask_col, (fx + 6, fy + 2, 4, 6))
+            # Tıpa
+            pygame.draw.rect(self.pixel_surface, GOLD if active else (50, 32, 24), (fx + 5, fy, 6, 3), border_radius=1)
+            # Parlama
+            if active:
+                pygame.draw.circle(self.pixel_surface, (255, 255, 255), (fx + 6, fy + 10), 2)
 
         # Mesaj — ortada
         msg_surface = self.font_large.render(self.last_message, True, TEXT)

@@ -58,6 +58,38 @@
       color: var(--muted);
       font-style: italic;
     }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lives-badge {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 1.2rem;
+      background: #211810cc;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 3px 8px;
+    }
+    .flask {
+      transition: transform .25s, opacity .25s, filter .25s;
+    }
+    .flask.lost {
+      opacity: .2;
+      filter: grayscale(100%);
+      transform: scale(0.8);
+    }
+    .flask.shake {
+      animation: flask-shake .4s ease-in-out;
+    }
+    @keyframes flask-shake {
+      0%, 100% { transform: translateY(0); }
+      25% { transform: translateY(-4px) rotate(-10deg); }
+      75% { transform: translateY(2px) rotate(10deg); }
+    }
+
     .room-badge {
       font-size: .72rem;
       letter-spacing: .12em;
@@ -69,6 +101,34 @@
       display: block;
       font-size: .6rem;
       color: var(--muted);
+    }
+
+    .category-tabs {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      padding: 2px 0 6px 0;
+      margin-bottom: 6px;
+      scrollbar-width: none;
+    }
+    .category-tabs::-webkit-scrollbar { display: none; }
+    .cat-btn {
+      flex-shrink: 0;
+      background: #211810cc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--muted);
+      font: 600 .70rem Georgia, serif;
+      padding: 4px 9px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .cat-btn.active {
+      background: var(--gold);
+      color: #110d0b;
+      border-color: var(--gold-lt);
+      font-weight: 700;
+      box-shadow: 0 0 8px rgba(212, 168, 72, 0.4);
     }
 
     .status-wrap {
@@ -238,9 +298,16 @@
     Ebû Bekir er-Râzî
     <small>Simya & Tıp Ayini</small>
   </div>
-  <div class="room-badge">
-    <span>ODA</span>
-    <strong id="roomCode">{{ room_id }}</strong>
+  <div class="header-right">
+    <div class="lives-badge" id="livesBadge" title="Kalan İksir Şişeleri (Canlar)">
+      <span class="flask" id="flask1">🧪</span>
+      <span class="flask" id="flask2">🧪</span>
+      <span class="flask" id="flask3">🧪</span>
+    </div>
+    <div class="room-badge">
+      <span>ODA</span>
+      <strong id="roomCode">{{ room_id }}</strong>
+    </div>
   </div>
 </header>
 
@@ -256,6 +323,13 @@
 </div>
 
 <main>
+  <div class="category-tabs" id="categoryTabs">
+    <button class="cat-btn active" data-cat="all">Tümü</button>
+    <button class="cat-btn" data-cat="metal">Metaller</button>
+    <button class="cat-btn" data-cat="mineral">Tuz & Taş</button>
+    <button class="cat-btn" data-cat="liquid">Sıvı & Asit</button>
+    <button class="cat-btn" data-cat="organic">Organik & İksir</button>
+  </div>
   <div class="buttons-container">
     <div class="buttons disabled" id="buttonsGrid">
       <!-- Dinamik yüklenecek butonlar -->
@@ -275,9 +349,34 @@
   const resetBtn     = document.getElementById('resetBtn');
   const unlockedNote = document.getElementById('unlockedNote');
 
-  let elementsMap = {};
-  let unlockedList = [];
-  let timerTotal   = 0;
+  let elementsMap    = {};
+  let unlockedList   = [];
+  let timerTotal     = 0;
+  let activeCategory = 'all';
+
+  // Kategori Butonları
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCategory = btn.dataset.cat;
+      renderButtons();
+    });
+  });
+
+  // Can (Şişe) Güncelleme
+  function updateLives(count) {
+    for (let i = 1; i <= 3; i++) {
+      const el = document.getElementById('flask' + i);
+      if (el) {
+        if (i <= count) {
+          el.className = 'flask';
+        } else {
+          el.className = 'flask lost';
+        }
+      }
+    }
+  }
 
   // 30 Element verisini sunucudan çek
   fetch('/razi_elements.json')
@@ -291,15 +390,23 @@
       // Fallback 8 element
       const defaultIds = ["civa", "kukurt", "tuz", "demir", "bakir", "kursun", "kalay", "antimon"];
       defaultIds.forEach(id => {
-        elementsMap[id] = { id: id, name: id.toUpperCase(), symbol: "☿", color: [140, 140, 160] };
+        elementsMap[id] = { id: id, name: id.toUpperCase(), symbol: "☿", color: [140, 140, 160], category: 'metal' };
       });
       renderButtons();
     });
 
   function renderButtons() {
     gridEl.innerHTML = '';
-    const activeIds = unlockedList.length > 0 ? unlockedList : Object.keys(elementsMap).slice(0, 8);
+    let activeIds = unlockedList.length > 0 ? unlockedList : Object.keys(elementsMap).slice(0, 8);
     
+    // Kategoriye göre filtrele
+    if (activeCategory !== 'all') {
+      activeIds = activeIds.filter(id => {
+        const el = elementsMap[id];
+        return el && el.category === activeCategory;
+      });
+    }
+
     if (activeIds.length > 8) {
       gridEl.classList.add('many-cols');
     } else {
@@ -325,7 +432,8 @@
       gridEl.appendChild(btn);
     });
 
-    unlockedNote.textContent = `${activeIds.length} / 30 element açık`;
+    const totalActive = unlockedList.length > 0 ? unlockedList.length : 8;
+    unlockedNote.textContent = `${totalActive} / 30 element açık` + (activeCategory !== 'all' ? ` (${activeIds.length} gösteriliyor)` : '');
   }
 
   function sendButton(matId, btn) {
@@ -375,6 +483,7 @@
       gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
       resetBtn.classList.remove('visible');
+      if (msg.lives !== undefined) updateLives(msg.lives);
       if (msg.unlocked && Array.isArray(msg.unlocked)) {
         unlockedList = msg.unlocked;
         renderButtons();
@@ -393,7 +502,28 @@
       updateTimer(msg.remaining, msg.total);
     }
 
+    if (msg.type === 'life_lost') {
+      if (msg.lives !== undefined) {
+        updateLives(msg.lives);
+        const lostFlask = document.getElementById('flask' + (msg.lives + 1));
+        if (lostFlask) lostFlask.classList.add('shake');
+      }
+      statusEl.textContent = msg.message || 'Can kaybedildi! Sırayı baştan dene.';
+      statusEl.className = 'status error';
+      if (navigator.vibrate) navigator.vibrate([120, 60, 160]);
+      timerTotal = msg.total || timerTotal;
+      updateTimer(timerTotal, timerTotal);
+    }
+
+    if (msg.type === 'life_gained') {
+      if (msg.lives !== undefined) updateLives(msg.lives);
+      statusEl.textContent = '🧪 Ustalık ödülü: +1 Can yenilendi!';
+      statusEl.className = 'status ready';
+      if (navigator.vibrate) navigator.vibrate([60, 60, 140]);
+    }
+
     if (msg.type === 'game_over') {
+      updateLives(0);
       statusEl.textContent = `Oyun bitti: ${msg.message || 'Kazan taştı.'}`;
       statusEl.className   = 'status error';
       gridEl.classList.add('disabled');

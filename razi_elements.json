@@ -3,240 +3,510 @@
     "id": "civa",
     "name": "Cıva",
     "symbol": "☿",
-    "color": [130, 185, 210],
-    "color_lt": [185, 225, 245],
-    "fact": "Râzî, cıva bileşiklerini deri hastalıklarında ve cerrahi merhemlerde ilk kez kullanan hekimdir."
+    "color": [
+      130,
+      185,
+      210
+    ],
+    "color_lt": [
+      185,
+      225,
+      245
+    ],
+    "fact": "Râzî, cıva bileşiklerini deri hastalıklarında ve cerrahi merhemlerde ilk kez kullanan hekimdir.",
+    "category": "metal"
   },
   {
     "id": "kukurt",
     "name": "Kükürt",
     "symbol": "🜍",
-    "color": [235, 215, 35],
-    "color_lt": [255, 245, 110],
-    "fact": "Râzî, kükürdü 'madenlerin ruhu' olarak nitelendirmiş ve arındırma süreçlerini Kitâbü'l-Esrâr'da yazmıştır."
+    "color": [
+      235,
+      215,
+      35
+    ],
+    "color_lt": [
+      255,
+      245,
+      110
+    ],
+    "fact": "Râzî, kükürdü 'madenlerin ruhu' olarak nitelendirmiş ve arındırma süreçlerini Kitâbü'l-Esrâr'da yazmıştır.",
+    "category": "organic"
   },
   {
     "id": "tuz",
     "name": "Tuz",
     "symbol": "🜔",
-    "color": [245, 245, 255],
-    "color_lt": [255, 255, 255],
-    "fact": "Tuz, simyada cisimleri sabitleyici ve arındırıcı temel unsur olarak kabul edilirdi."
+    "color": [
+      245,
+      245,
+      255
+    ],
+    "color_lt": [
+      255,
+      255,
+      255
+    ],
+    "fact": "Tuz, simyada cisimleri sabitleyici ve arındırıcı temel unsur olarak kabul edilirdi.",
+    "category": "mineral"
   },
   {
     "id": "demir",
     "name": "Demir",
     "symbol": "♂",
-    "color": [165, 80, 60],
-    "color_lt": [215, 125, 105],
-    "fact": "Râzî, demir pası ve vitriyolü kan yapıcı ve büzücü ilaç tariflerinde sıklıkla kullanmıştır."
+    "color": [
+      165,
+      80,
+      60
+    ],
+    "color_lt": [
+      215,
+      125,
+      105
+    ],
+    "fact": "Râzî, demir pası ve vitriyolü kan yapıcı ve büzücü ilaç tariflerinde sıklıkla kullanmıştır.",
+    "category": "metal"
   },
   {
     "id": "bakir",
     "name": "Bakır",
     "symbol": "♀",
-    "color": [215, 115, 45],
-    "color_lt": [250, 165, 95],
-    "fact": "Bakır kaplar simya imbiklerinde damıtma için en ideal ısı iletkeni olarak tercih edilirdi."
+    "color": [
+      215,
+      115,
+      45
+    ],
+    "color_lt": [
+      250,
+      165,
+      95
+    ],
+    "fact": "Bakır kaplar simya imbiklerinde damıtma için en ideal ısı iletkeni olarak tercih edilirdi.",
+    "category": "metal"
   },
   {
     "id": "kursun",
     "name": "Kurşun",
     "symbol": "♄",
-    "color": [85, 95, 115],
-    "color_lt": [135, 145, 170],
-    "fact": "Râzî, kurşun beyazını (üstübeç) göz hekimliğinde ve kurutucu merhemlerde reçete etmiştir."
+    "color": [
+      85,
+      95,
+      115
+    ],
+    "color_lt": [
+      135,
+      145,
+      170
+    ],
+    "fact": "Râzî, kurşun beyazını (üstübeç) göz hekimliğinde ve kurutucu merhemlerde reçete etmiştir.",
+    "category": "metal"
   },
   {
     "id": "kalay",
     "name": "Kalay",
     "symbol": "♃",
-    "color": [180, 195, 205],
-    "color_lt": [225, 235, 245],
-    "fact": "Râzî, kalayın havada ve ateşte kolayca oksitlenerek kireçleştiğini (kalsinasyon) kaydetmiştir."
+    "color": [
+      180,
+      195,
+      205
+    ],
+    "color_lt": [
+      225,
+      235,
+      245
+    ],
+    "fact": "Râzî, kalayın havada ve ateşte kolayca oksitlenerek kireçleştiğini (kalsinasyon) kaydetmiştir.",
+    "category": "metal"
   },
   {
     "id": "antimon",
     "name": "Antimon",
     "symbol": "♁",
-    "color": [55, 55, 65],
-    "color_lt": [105, 105, 120],
-    "fact": "Sürme (kuhl) taşı olarak bilinen antimon, Râzî tarafından göz hastalıklarının tedavisinde kullanılmıştır."
+    "color": [
+      55,
+      55,
+      65
+    ],
+    "color_lt": [
+      105,
+      105,
+      120
+    ],
+    "fact": "Sürme (kuhl) taşı olarak bilinen antimon, Râzî tarafından göz hastalıklarının tedavisinde kullanılmıştır.",
+    "category": "metal"
   },
   {
     "id": "altin",
     "name": "Altın",
     "symbol": "☉",
-    "color": [255, 195, 25],
-    "color_lt": [255, 230, 105],
-    "fact": "Râzî'ye göre altın, tabiatın en dengeli ve çürümez madenidir; kalbi ferahlatıcı macunlara katılırdı."
+    "color": [
+      255,
+      195,
+      25
+    ],
+    "color_lt": [
+      255,
+      230,
+      105
+    ],
+    "fact": "Râzî'ye göre altın, tabiatın en dengeli ve çürümez madenidir; kalbi ferahlatıcı macunlara katılırdı.",
+    "category": "metal"
   },
   {
     "id": "gumus",
     "name": "Gümüş",
     "symbol": "☽",
-    "color": [215, 230, 245],
-    "color_lt": [245, 250, 255],
-    "fact": "Gümüş nitrat bileşikleri cerrahide yakıcı ve yara temizleyici olarak kullanılmıştır."
+    "color": [
+      215,
+      230,
+      245
+    ],
+    "color_lt": [
+      245,
+      250,
+      255
+    ],
+    "fact": "Gümüş nitrat bileşikleri cerrahide yakıcı ve yara temizleyici olarak kullanılmıştır.",
+    "category": "metal"
   },
   {
     "id": "arsenik",
     "name": "Arsenik",
     "symbol": "🜢",
-    "color": [190, 220, 40],
-    "color_lt": [225, 245, 95],
-    "fact": "Zırnık adıyla bilinen sarı ve kırmızı arsenik, metallerin boyanması ve sertleştirilmesinde kullanılırdı."
+    "color": [
+      190,
+      220,
+      40
+    ],
+    "color_lt": [
+      225,
+      245,
+      95
+    ],
+    "fact": "Zırnık adıyla bilinen sarı ve kırmızı arsenik, metallerin boyanması ve sertleştirilmesinde kullanılırdı.",
+    "category": "mineral"
   },
   {
     "id": "fosfor",
     "name": "Fosfor",
     "symbol": "🜛",
-    "color": [40, 230, 120],
-    "color_lt": [115, 255, 175],
-    "fact": "Organik maddelerin damıtılmasıyla elde edilen karanlıkta parlayan koruyucu elementtir."
+    "color": [
+      40,
+      230,
+      120
+    ],
+    "color_lt": [
+      115,
+      255,
+      175
+    ],
+    "fact": "Organik maddelerin damıtılmasıyla elde edilen karanlıkta parlayan koruyucu elementtir.",
+    "category": "organic"
   },
   {
     "id": "boraks",
     "name": "Boraks",
     "symbol": "🜘",
-    "color": [210, 180, 140],
-    "color_lt": [245, 220, 185],
-    "fact": "Tenkar adıyla bilinen boraks, madenleri eritirken cürufu ayıran mükemmel bir ergiticidir."
+    "color": [
+      210,
+      180,
+      140
+    ],
+    "color_lt": [
+      245,
+      220,
+      185
+    ],
+    "fact": "Tenkar adıyla bilinen boraks, madenleri eritirken cürufu ayıran mükemmel bir ergiticidir.",
+    "category": "mineral"
   },
   {
     "id": "sap",
     "name": "Şap",
     "symbol": "🜖",
-    "color": [130, 230, 210],
-    "color_lt": [185, 255, 240],
-    "fact": "Râzî, şapı kanamaları durdurucu ve boyaları kumaşa sabitleyici bir mordan olarak sınıflandırmıştır."
+    "color": [
+      130,
+      230,
+      210
+    ],
+    "color_lt": [
+      185,
+      255,
+      240
+    ],
+    "fact": "Râzî, şapı kanamaları durdurucu ve boyaları kumaşa sabitleyici bir mordan olarak sınıflandırmıştır.",
+    "category": "mineral"
   },
   {
     "id": "nisadir",
     "name": "Nişadır",
     "symbol": "🜹",
-    "color": [80, 205, 245],
-    "color_lt": [145, 235, 255],
-    "fact": "Râzî, amonyum klorürü (nişadır) süblimleştirerek metalleri parlatma ve çözme işlemlerinde kullanmıştır."
+    "color": [
+      80,
+      205,
+      245
+    ],
+    "color_lt": [
+      145,
+      235,
+      255
+    ],
+    "fact": "Râzî, amonyum klorürü (nişadır) süblimleştirerek metalleri parlatma ve çözme işlemlerinde kullanmıştır.",
+    "category": "mineral"
   },
   {
     "id": "zencefre",
     "name": "Zencefre",
     "symbol": "🜟",
-    "color": [225, 35, 45],
-    "color_lt": [255, 95, 105],
-    "fact": "Cıva ve kükürdün birleşimi olan zincifre, Doğu simyasının en kıymetli kırmızı boyar maddesidir."
+    "color": [
+      225,
+      35,
+      45
+    ],
+    "color_lt": [
+      255,
+      95,
+      105
+    ],
+    "fact": "Cıva ve kükürdün birleşimi olan zincifre, Doğu simyasının en kıymetli kırmızı boyar maddesidir.",
+    "category": "mineral"
   },
   {
     "id": "zac_yagi",
     "name": "Zaç Yağı",
     "symbol": "🜖",
-    "color": [25, 135, 155],
-    "color_lt": [65, 185, 210],
-    "fact": "Râzî, yeşil vitriyolü damıtarak sülfürik asidi (zaç yağı) tarihte ilk kez keşfeden bilgindir."
+    "color": [
+      25,
+      135,
+      155
+    ],
+    "color_lt": [
+      65,
+      185,
+      210
+    ],
+    "fact": "Râzî, yeşil vitriyolü damıtarak sülfürik asidi (zaç yağı) tarihte ilk kez keşfeden bilgindir.",
+    "category": "liquid"
   },
   {
     "id": "kirec",
     "name": "Kireç",
     "symbol": "🝀",
-    "color": [240, 235, 205],
-    "color_lt": [255, 250, 235],
-    "fact": "Kireç, simyada sıvıları kostik hale getirmek ve arındırmak için yakıcı bir baz olarak kullanılırdı."
+    "color": [
+      240,
+      235,
+      205
+    ],
+    "color_lt": [
+      255,
+      250,
+      235
+    ],
+    "fact": "Kireç, simyada sıvıları kostik hale getirmek ve arındırmak için yakıcı bir baz olarak kullanılırdı.",
+    "category": "mineral"
   },
   {
     "id": "soda",
     "name": "Soda",
     "symbol": "🜔",
-    "color": [170, 215, 255],
-    "color_lt": [215, 240, 255],
-    "fact": "Natron (tabii soda), cam üretiminde ve metallerin arıtılmasında binlerce yıllık simya gerecidir."
+    "color": [
+      170,
+      215,
+      255
+    ],
+    "color_lt": [
+      215,
+      240,
+      255
+    ],
+    "fact": "Natron (tabii soda), cam üretiminde ve metallerin arıtılmasında binlerce yıllık simya gerecidir.",
+    "category": "mineral"
   },
   {
     "id": "guhercile",
     "name": "Güherçile",
     "symbol": "🜔",
-    "color": [230, 175, 125],
-    "color_lt": [255, 215, 175],
-    "fact": "Potasyum nitrat, simyacıların yüksek ısı elde etmek ve çözeltileri kaynatmak için kullandığı maddedir."
+    "color": [
+      230,
+      175,
+      125
+    ],
+    "color_lt": [
+      255,
+      215,
+      175
+    ],
+    "fact": "Potasyum nitrat, simyacıların yüksek ısı elde etmek ve çözeltileri kaynatmak için kullandığı maddedir.",
+    "category": "mineral"
   },
   {
     "id": "sirke",
     "name": "Sirke",
     "symbol": "🜊",
-    "color": [155, 30, 60],
-    "color_lt": [205, 75, 105],
-    "fact": "Asetik asit kaynağı olan keskin sirke, kurşunu çözerek üstübeç yapmada temel çözücüydü."
+    "color": [
+      155,
+      30,
+      60
+    ],
+    "color_lt": [
+      205,
+      75,
+      105
+    ],
+    "fact": "Asetik asit kaynağı olan keskin sirke, kurşunu çözerek üstübeç yapmada temel çözücüydü.",
+    "category": "liquid"
   },
   {
     "id": "zeytinyagi",
     "name": "Zeytinyağı",
     "symbol": "🝖",
-    "color": [145, 165, 30],
-    "color_lt": [195, 215, 75],
-    "fact": "Râzî, zeytinyağını şifalı bitkilerin özünü çıkarmak ve merhemlerin ana taşıyıcısı olarak kullanmıştır."
+    "color": [
+      145,
+      165,
+      30
+    ],
+    "color_lt": [
+      195,
+      215,
+      75
+    ],
+    "fact": "Râzî, zeytinyağını şifalı bitkilerin özünü çıkarmak ve merhemlerin ana taşıyıcısı olarak kullanmıştır.",
+    "category": "liquid"
   },
   {
     "id": "bal",
     "name": "Bal",
     "symbol": "🝛",
-    "color": [240, 145, 20],
-    "color_lt": [255, 195, 75],
-    "fact": "Râzî, balı hem doğal bir antibiyotik hem de acı ilaçları tatlandıran mucizevi bir bağlayıcı saymıştır."
+    "color": [
+      240,
+      145,
+      20
+    ],
+    "color_lt": [
+      255,
+      195,
+      75
+    ],
+    "fact": "Râzî, balı hem doğal bir antibiyotik hem de acı ilaçları tatlandıran mucizevi bir bağlayıcı saymıştır.",
+    "category": "organic"
   },
   {
     "id": "safran",
     "name": "Safran",
     "symbol": "🝡",
-    "color": [255, 95, 15],
-    "color_lt": [255, 155, 65],
-    "fact": "Safran, Doğu hekimliğinde kalbi güçlendiren ve neşe veren en kıymetli bitkisel maddedir."
+    "color": [
+      255,
+      95,
+      15
+    ],
+    "color_lt": [
+      255,
+      155,
+      65
+    ],
+    "fact": "Safran, Doğu hekimliğinde kalbi güçlendiren ve neşe veren en kıymetli bitkisel maddedir.",
+    "category": "organic"
   },
   {
     "id": "afyon",
     "name": "Afyon",
     "symbol": "🝤",
-    "color": [95, 35, 110],
-    "color_lt": [150, 75, 170],
-    "fact": "Râzî, afyonu cerrahi ameliyatlarda ağrıyı dindirmek için anestezik olarak hassas dozajla uygulamıştır."
+    "color": [
+      95,
+      35,
+      110
+    ],
+    "color_lt": [
+      150,
+      75,
+      170
+    ],
+    "fact": "Râzî, afyonu cerrahi ameliyatlarda ağrıyı dindirmek için anestezik olarak hassas dozajla uygulamıştır.",
+    "category": "organic"
   },
   {
     "id": "kafur",
     "name": "Kâfur",
     "symbol": "🝢",
-    "color": [220, 220, 255],
-    "color_lt": [250, 250, 255],
-    "fact": "Beyaz kristal kâfur, uçucu kokusuyla salgın hastalıklarda havayı temizlemek ve serinletmek için kullanılırdı."
+    "color": [
+      220,
+      220,
+      255
+    ],
+    "color_lt": [
+      250,
+      250,
+      255
+    ],
+    "fact": "Beyaz kristal kâfur, uçucu kokusuyla salgın hastalıklarda havayı temizlemek ve serinletmek için kullanılırdı.",
+    "category": "organic"
   },
   {
     "id": "inci",
     "name": "İnci Tozu",
     "symbol": "🝥",
-    "color": [250, 210, 225],
-    "color_lt": [255, 235, 245],
-    "fact": "Öğütülmüş saf inci tozu, hükümdarların melankoli ve kalp çarpıntısı macunlarına katılırdı."
+    "color": [
+      250,
+      210,
+      225
+    ],
+    "color_lt": [
+      255,
+      235,
+      245
+    ],
+    "fact": "Öğütülmüş saf inci tozu, hükümdarların melankoli ve kalp çarpıntısı macunlarına katılırdı.",
+    "category": "mineral"
   },
   {
     "id": "utu_tasi",
     "name": "Ütü Taşı",
     "symbol": "🝦",
-    "color": [110, 45, 50],
-    "color_lt": [165, 85, 90],
-    "fact": "Hematit (kan taşı), kanamayı kesici ve göz hekimliğinde sürme bileşeni olarak meşhurdur."
+    "color": [
+      110,
+      45,
+      50
+    ],
+    "color_lt": [
+      165,
+      85,
+      90
+    ],
+    "fact": "Hematit (kan taşı), kanamayı kesici ve göz hekimliğinde sürme bileşeni olarak meşhurdur.",
+    "category": "mineral"
   },
   {
     "id": "zumrut",
     "name": "Zümrüt",
     "symbol": "🝧",
-    "color": [20, 160, 85],
-    "color_lt": [65, 225, 135],
-    "fact": "Zümrüt tozu, kadim hekimlerce zehirlenmelere karşı panzehir ve gözü dinlendirici sayılmıştır."
+    "color": [
+      20,
+      160,
+      85
+    ],
+    "color_lt": [
+      65,
+      225,
+      135
+    ],
+    "fact": "Zümrüt tozu, kadim hekimlerce zehirlenmelere karşı panzehir ve gözü dinlendirici sayılmıştır.",
+    "category": "mineral"
   },
   {
     "id": "iksir",
     "name": "Büyük İksir",
     "symbol": "🝀",
-    "color": [235, 50, 200],
-    "color_lt": [255, 120, 230],
-    "fact": "Râzî'nin felsefi simyasında iksir, maddeleri kemale erdiren ve kusurları gideren mükemmel cevherdir."
+    "color": [
+      235,
+      50,
+      200
+    ],
+    "color_lt": [
+      255,
+      120,
+      230
+    ],
+    "fact": "Râzî'nin felsefi simyasında iksir, maddeleri kemale erdiren ve kusurları gideren mükemmel cevherdir.",
+    "category": "mineral"
   }
 ]
