@@ -61,17 +61,41 @@
     .header-right {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
     }
+    /* Kombo Rozeti */
+    .combo-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: .72rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #b83d16, #6b2209);
+      border: 1px solid var(--gold);
+      border-radius: 14px;
+      padding: 3px 7px;
+      box-shadow: 0 0 10px rgba(235, 106, 40, 0.45);
+      transition: transform .2s, opacity .2s;
+    }
+    .combo-pill.bump {
+      animation: combo-pop .3s ease-out;
+    }
+    @keyframes combo-pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.22); filter: brightness(1.3); }
+      100% { transform: scale(1); }
+    }
+
     .lives-badge {
       display: flex;
       align-items: center;
-      gap: 3px;
-      font-size: 1.2rem;
+      gap: 2px;
+      font-size: 1.15rem;
       background: #211810cc;
       border: 1px solid var(--border);
       border-radius: 18px;
-      padding: 3px 8px;
+      padding: 2px 7px;
     }
     .flask {
       transition: transform .25s, opacity .25s, filter .25s;
@@ -88,6 +112,35 @@
       0%, 100% { transform: translateY(0); }
       25% { transform: translateY(-4px) rotate(-10deg); }
       75% { transform: translateY(2px) rotate(10deg); }
+    }
+
+    /* Kodeks Butonu */
+    .codex-btn {
+      position: relative;
+      background: #211810cc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--gold-lt);
+      font: 600 .70rem Georgia, serif;
+      padding: 4px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all .2s;
+    }
+    .codex-btn:hover, .codex-btn:active {
+      background: var(--gold);
+      color: #110d0b;
+      border-color: var(--gold-lt);
+      transform: scale(0.96);
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold-lt);
+      box-shadow: 0 0 6px var(--gold);
     }
 
     .room-badge {
@@ -290,6 +343,290 @@
       text-align: center;
       margin-top: 6px;
     }
+
+    /* Tarihi Reçete Banner */
+    .recipe-banner {
+      width: 100%;
+      max-width: 540px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, rgba(82, 48, 20, 0.9), rgba(42, 22, 10, 0.9));
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 0 12px rgba(212, 168, 72, 0.3);
+      animation: banner-glow 2.5s infinite alternate;
+    }
+    @keyframes banner-glow {
+      from { box-shadow: 0 0 8px rgba(212, 168, 72, 0.2); }
+      to { box-shadow: 0 0 16px rgba(212, 168, 72, 0.5); }
+    }
+    .recipe-icon { font-size: 1.3rem; }
+    .recipe-info { display: flex; flex-direction: column; }
+    .recipe-label { font-size: .62rem; color: var(--gold-lt); letter-spacing: .1em; font-weight: 700; }
+    .recipe-title { font-size: .88rem; font-weight: 700; color: #fff8e8; }
+
+    /* ── Kitâbü'l-Esrâr Kodeksi & Başarımlar Modal'ı ── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 7, 5, 0.88);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      transition: opacity .25s ease;
+    }
+    .modal-backdrop.hidden {
+      display: none;
+    }
+    .modal-card {
+      width: 100%;
+      max-width: 520px;
+      max-height: 88vh;
+      background: linear-gradient(175deg, #241910, #160e09);
+      border: 1px solid #825832;
+      border-radius: 14px;
+      box-shadow: 0 10px 32px rgba(0,0,0,0.8), 0 0 20px rgba(212, 168, 72, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1d130c;
+    }
+    .modal-title-wrap h2 {
+      font-size: 1.05rem;
+      color: var(--gold-lt);
+    }
+    .modal-sub {
+      font-size: .65rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .modal-close:hover { color: var(--gold); }
+
+    .modal-tabs {
+      display: flex;
+      background: #180f0a;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font: 600 .76rem Georgia, serif;
+      padding: 9px 6px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .modal-tab-btn.active {
+      color: var(--gold-lt);
+      border-bottom-color: var(--gold);
+      background: rgba(212, 168, 72, 0.08);
+    }
+
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Ansiklopedi Element Kartları */
+    .codex-search-wrap {
+      margin-bottom: 10px;
+    }
+    .codex-search-input {
+      width: 100%;
+      background: #130c08;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: .80rem;
+      color: var(--ink);
+      font-family: inherit;
+    }
+    .codex-search-input:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .codex-elements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .codex-card {
+      background: #1c130c;
+      border: 1px solid #4a301c;
+      border-radius: 8px;
+      padding: 9px 11px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: border-color .2s;
+    }
+    .codex-card.locked {
+      opacity: .45;
+      filter: grayscale(80%);
+      background: #140d09;
+    }
+    .codex-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.15);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    }
+    .codex-card-content {
+      flex: 1;
+    }
+    .codex-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+    .codex-card-name {
+      font-size: .90rem;
+      font-weight: 700;
+      color: var(--gold-lt);
+    }
+    .codex-card-cat {
+      font-size: .62rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: rgba(212, 168, 72, 0.15);
+      color: var(--gold);
+      border: 1px solid rgba(212, 168, 72, 0.3);
+    }
+    .codex-card-fact {
+      font-size: .75rem;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+    .codex-card.locked .codex-card-fact {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* Başarımlar Listesi */
+    .achievements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .achievement-card {
+      background: #1c130c;
+      border: 1px solid #4a301c;
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .achievement-card.unlocked {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, #281b10, #19100a);
+      box-shadow: 0 0 10px rgba(212, 168, 72, 0.15);
+    }
+    .achievement-icon {
+      font-size: 1.6rem;
+      width: 36px;
+      text-align: center;
+    }
+    .achievement-card.locked .achievement-icon {
+      filter: grayscale(100%);
+      opacity: .4;
+    }
+    .achievement-info {
+      flex: 1;
+    }
+    .achievement-title {
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+    .achievement-card.unlocked .achievement-title {
+      color: var(--gold-lt);
+    }
+    .achievement-desc {
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .achievement-status {
+      font-size: .70rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .achievement-card.unlocked .achievement-status {
+      color: var(--green-lt);
+    }
+
+    /* ── Başarım Bildirim Toast'ı ── */
+    .toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #322212, #1b1109);
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8), 0 0 15px rgba(212, 168, 72, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 2000;
+      max-width: 90vw;
+      animation: toast-in .3s ease-out;
+      transition: opacity .3s, transform .3s;
+    }
+    .toast.hidden { display: none; }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translate(-50%, -20px); }
+      to   { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .toast-icon { font-size: 1.5rem; }
+    .toast-title { font-size: .82rem; font-weight: 700; color: var(--gold-lt); }
+    .toast-desc { font-size: .72rem; color: var(--ink); }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -299,17 +636,32 @@
     <small>Simya & Tıp Ayini</small>
   </div>
   <div class="header-right">
+    <div class="combo-pill hidden" id="comboPill" title="Kesintisiz Kombo">
+      🔥 <span id="comboVal">0</span>x
+    </div>
     <div class="lives-badge" id="livesBadge" title="Kalan İksir Şişeleri (Canlar)">
       <span class="flask" id="flask1">🧪</span>
       <span class="flask" id="flask2">🧪</span>
       <span class="flask" id="flask3">🧪</span>
     </div>
+    <button class="codex-btn" id="openCodexBtn" title="Kitâbü'l-Esrâr Kodeksi & Başarımlar">
+      📖 <span>Kodeks</span>
+      <span class="badge-dot hidden" id="codexDot"></span>
+    </button>
     <div class="room-badge">
       <span>ODA</span>
       <strong id="roomCode">{{ room_id }}</strong>
     </div>
   </div>
 </header>
+
+<div class="recipe-banner hidden" id="recipeBanner">
+  <span class="recipe-icon">🏺</span>
+  <div class="recipe-info">
+    <div class="recipe-label">TARİHİ KADİM REÇETE</div>
+    <div class="recipe-title" id="recipeTitle">Tuz Ruhu Damıtımı</div>
+  </div>
+</div>
 
 <div class="status-wrap">
   <div class="status" id="status">Bağlantı kuruluyor…</div>
@@ -339,22 +691,148 @@
   <button id="resetBtn">↻ &nbsp;Yeni Oyun Başlat</button>
 </main>
 
-<script>
-  const roomId       = {{ room_id|tojson }};
-  const statusEl     = document.getElementById('status');
-  const gridEl       = document.getElementById('buttonsGrid');
-  const timerWrap    = document.getElementById('timerWrap');
-  const timerFill    = document.getElementById('timerFill');
-  const timerLabel   = document.getElementById('timerLabel');
-  const resetBtn     = document.getElementById('resetBtn');
-  const unlockedNote = document.getElementById('unlockedNote');
+<!-- ── Kitâbü'l-Esrâr Modal'ı ── -->
+<div class="modal-backdrop hidden" id="codexModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <h2>Kitâbü'l-Esrâr</h2>
+        <span class="modal-sub">Ebû Bekir er-Râzî'nin Simya Kodeksi & Başarımlar</span>
+      </div>
+      <button class="modal-close" id="closeCodexBtn" aria-label="Kapat">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab-btn active" id="tabElementsBtn">Elementler (<span id="elementsProgress">0/30</span>)</button>
+      <button class="modal-tab-btn" id="tabAchievementsBtn">Başarımlar (<span id="achievementsProgress">0/10</span>)</button>
+    </div>
+    <div class="modal-body">
+      <!-- Elementler Sekmesi -->
+      <div class="tab-pane active" id="paneElements">
+        <div class="codex-search-wrap">
+          <input type="text" id="codexSearch" class="codex-search-input" placeholder="Cevher veya özellik ara…" />
+        </div>
+        <div class="codex-elements-list" id="codexElementsList">
+          <!-- JS ile üretilecek kartlar -->
+        </div>
+      </div>
+      <!-- Başarımlar Sekmesi -->
+      <div class="tab-pane" id="paneAchievements">
+        <div class="achievements-list" id="achievementsList">
+          <!-- JS ile üretilecek başarımlar -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- ── Başarım Toast ── -->
+<div class="toast hidden" id="achievementToast">
+  <div class="toast-icon" id="toastIcon">🏆</div>
+  <div class="toast-content">
+    <div class="toast-title" id="toastTitle">Başarım Açıldı!</div>
+    <div class="toast-desc" id="toastDesc">Açıklama</div>
+  </div>
+</div>
+
+<script>
+  const roomId            = {{ room_id|tojson }};
+  const statusEl          = document.getElementById('status');
+  const gridEl            = document.getElementById('buttonsGrid');
+  const timerWrap         = document.getElementById('timerWrap');
+  const timerFill         = document.getElementById('timerFill');
+  const timerLabel        = document.getElementById('timerLabel');
+  const resetBtn          = document.getElementById('resetBtn');
+  const unlockedNote      = document.getElementById('unlockedNote');
+  const comboPill         = document.getElementById('comboPill');
+  const comboVal          = document.getElementById('comboVal');
+  const recipeBanner      = document.getElementById('recipeBanner');
+  const recipeTitle       = document.getElementById('recipeTitle');
+  const codexModal        = document.getElementById('codexModal');
+  const openCodexBtn      = document.getElementById('openCodexBtn');
+  const closeCodexBtn     = document.getElementById('closeCodexBtn');
+  const codexDot          = document.getElementById('codexDot');
+  const tabElementsBtn    = document.getElementById('tabElementsBtn');
+  const tabAchievementsBtn= document.getElementById('tabAchievementsBtn');
+  const paneElements      = document.getElementById('paneElements');
+  const paneAchievements  = document.getElementById('paneAchievements');
+  const codexSearch       = document.getElementById('codexSearch');
+  const codexElementsList = document.getElementById('codexElementsList');
+  const achievementsList  = document.getElementById('achievementsList');
+  const elementsProgress  = document.getElementById('elementsProgress');
+  const achievementsProg  = document.getElementById('achievementsProgress');
+  const achievementToast  = document.getElementById('achievementToast');
+  const toastIcon         = document.getElementById('toastIcon');
+  const toastTitle        = document.getElementById('toastTitle');
+  const toastDesc         = document.getElementById('toastDesc');
+
+  let elementsList   = [];
   let elementsMap    = {};
   let unlockedList   = [];
   let timerTotal     = 0;
   let activeCategory = 'all';
+  let currentLives   = 3;
+  let currentCombo   = 0;
 
-  // Kategori Butonları
+  // ── Başarımlar Tanımı ──
+  const ACHIEVEMENTS = [
+    { id: "first_drop",       title: "İlk Damıtma",           icon: "🧪", desc: "1. Seviyeyi başarıyla tamamla." },
+    { id: "apprentice",       title: "Simyacı Çırağı",        icon: "⚗️", desc: "10. Seviyeye ulaş." },
+    { id: "master_physician", title: "Büyük Hekim",           icon: "📜", desc: "50. Seviyeye ulaş." },
+    { id: "grand_elixir",     title: "İksir-i Âzam",          icon: "🌌", desc: "100. Seviyeye ve Nihai İksir'e ulaş." },
+    { id: "combo_5",          title: "Ateşli Seri",           icon: "🔥", desc: "5x Kesintisiz doğru kombosu yap." },
+    { id: "combo_10",         title: "Simya Dehası",          icon: "⚡", desc: "10x Kesintisiz doğru kombosu yap." },
+    { id: "recipe_master",    title: "Kadim Reçete Kaşifi",   icon: "🏺", desc: "Tarihi bir Râzî reçetesini tamamla." },
+    { id: "clutch_win",       title: "Yılmaz Ruh",            icon: "🛡️", desc: "Son kalan 1 canınla seviyeyi geç." },
+    { id: "scholar_15",       title: "Kitâbü'l-Esrâr Bilgini",icon: "📚", desc: "15 farklı elementin kilidini aç." },
+    { id: "grand_scholar",    title: "Cevherler Efendisi",    icon: "👑", desc: "30 elementin tamamını keşfet." },
+  ];
+
+  // ── Kalıcı Hafıza (LocalStorage) ──
+  function getSavedDiscovered() {
+    try {
+      const data = localStorage.getItem('razi_discovered_elements');
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  }
+  function saveDiscovered(ids) {
+    try {
+      const current = new Set(getSavedDiscovered());
+      ids.forEach(id => current.add(id));
+      localStorage.setItem('razi_discovered_elements', JSON.stringify([...current]));
+    } catch {}
+  }
+  function getSavedAchievements() {
+    try {
+      const data = localStorage.getItem('razi_unlocked_achievements');
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  }
+  function unlockAchievement(id) {
+    const unlocked = new Set(getSavedAchievements());
+    if (!unlocked.has(id)) {
+      unlocked.add(id);
+      localStorage.setItem('razi_unlocked_achievements', JSON.stringify([...unlocked]));
+      const ach = ACHIEVEMENTS.find(a => a.id === id);
+      if (ach) {
+        showToast(ach.icon, `Başarım: ${ach.title}`, ach.desc);
+        codexDot.classList.remove('hidden');
+        if (navigator.vibrate) navigator.vibrate([60, 40, 100]);
+      }
+      renderAchievements();
+    }
+  }
+
+  function showToast(icon, title, desc) {
+    toastIcon.textContent = icon;
+    toastTitle.textContent = title;
+    toastDesc.textContent = desc;
+    achievementToast.classList.remove('hidden');
+    setTimeout(() => {
+      achievementToast.classList.add('hidden');
+    }, 4200);
+  }
+
+  // ── Kategori Butonları ──
   document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -364,8 +842,9 @@
     });
   });
 
-  // Can (Şişe) Güncelleme
+  // ── Can (Şişe) Güncelleme ──
   function updateLives(count) {
+    currentLives = count;
     for (let i = 1; i <= 3; i++) {
       const el = document.getElementById('flask' + i);
       if (el) {
@@ -378,16 +857,36 @@
     }
   }
 
-  // 30 Element verisini sunucudan çek
+  // ── Kombo Gösterimi ──
+  function updateCombo(count) {
+    currentCombo = count || 0;
+    if (currentCombo >= 2) {
+      comboVal.textContent = currentCombo;
+      comboPill.classList.remove('hidden');
+      comboPill.classList.remove('bump');
+      void comboPill.offsetWidth;
+      comboPill.classList.add('bump');
+      if (currentCombo >= 5)  unlockAchievement("combo_5");
+      if (currentCombo >= 10) unlockAchievement("combo_10");
+    } else {
+      comboPill.classList.add('hidden');
+    }
+  }
+
+  // ── Elementleri Sunucudan Çek ──
   fetch('/razi_elements.json')
     .then(res => res.json())
     .then(data => {
+      elementsList = data;
       data.forEach(el => { elementsMap[el.id] = el; });
+      const initialIds = Object.keys(elementsMap).slice(0, 8);
+      saveDiscovered(initialIds);
       renderButtons();
+      renderCodex();
+      renderAchievements();
     })
     .catch(err => {
       console.warn("Elementler yüklenirken hata:", err);
-      // Fallback 8 element
       const defaultIds = ["civa", "kukurt", "tuz", "demir", "bakir", "kursun", "kalay", "antimon"];
       defaultIds.forEach(id => {
         elementsMap[id] = { id: id, name: id.toUpperCase(), symbol: "☿", color: [140, 140, 160], category: 'metal' };
@@ -398,8 +897,7 @@
   function renderButtons() {
     gridEl.innerHTML = '';
     let activeIds = unlockedList.length > 0 ? unlockedList : Object.keys(elementsMap).slice(0, 8);
-    
-    // Kategoriye göre filtrele
+
     if (activeCategory !== 'all') {
       activeIds = activeIds.filter(id => {
         const el = elementsMap[id];
@@ -458,7 +956,105 @@
     timerWrap.classList.add('visible');
   }
 
-  // WebSocket
+  // ── Kodeks Modal İşlemleri ──
+  openCodexBtn.addEventListener('click', () => {
+    codexModal.classList.remove('hidden');
+    codexDot.classList.add('hidden');
+    renderCodex();
+    renderAchievements();
+  });
+  closeCodexBtn.addEventListener('click', () => codexModal.classList.add('hidden'));
+  codexModal.addEventListener('click', (e) => {
+    if (e.target === codexModal) codexModal.classList.add('hidden');
+  });
+
+  tabElementsBtn.addEventListener('click', () => {
+    tabElementsBtn.classList.add('active');
+    tabAchievementsBtn.classList.remove('active');
+    paneElements.classList.add('active');
+    paneAchievements.classList.remove('active');
+  });
+  tabAchievementsBtn.addEventListener('click', () => {
+    tabAchievementsBtn.classList.add('active');
+    tabElementsBtn.classList.remove('active');
+    paneAchievements.classList.add('active');
+    paneElements.classList.remove('active');
+  });
+
+  codexSearch.addEventListener('input', renderCodex);
+
+  const CAT_LABELS = {
+    metal: "Metal",
+    mineral: "Tuz & Taş",
+    liquid: "Sıvı & Asit",
+    organic: "Organik & İksir",
+  };
+
+  function renderCodex() {
+    if (!elementsList.length) return;
+    const discovered = new Set(getSavedDiscovered());
+    const query = (codexSearch.value || '').trim().toLowerCase();
+
+    codexElementsList.innerHTML = '';
+    elementsProgress.textContent = `${discovered.size}/${elementsList.length}`;
+
+    elementsList.forEach(el => {
+      const isFound = discovered.has(el.id);
+      const matchesSearch = !query ||
+        el.name.toLowerCase().includes(query) ||
+        (el.fact && el.fact.toLowerCase().includes(query)) ||
+        (CAT_LABELS[el.category] || '').toLowerCase().includes(query);
+
+      if (!matchesSearch) return;
+
+      const card = document.createElement('div');
+      card.className = 'codex-card' + (isFound ? '' : ' locked');
+
+      const col = el.color || [120, 110, 100];
+      const bgStyle = isFound
+        ? `background: linear-gradient(135deg, rgb(${col[0]},${col[1]},${col[2]}), rgb(${Math.floor(col[0]*0.5)},${Math.floor(col[1]*0.5)},${Math.floor(col[2]*0.5)}));`
+        : `background: #251b14; color: #665;`;
+
+      card.innerHTML = `
+        <div class="codex-icon-box" style="${bgStyle}">
+          ${isFound ? el.symbol : '🔒'}
+        </div>
+        <div class="codex-card-content">
+          <div class="codex-card-head">
+            <span class="codex-card-name">${isFound ? el.name : 'Gizli Cevher'}</span>
+            <span class="codex-card-cat">${isFound ? (CAT_LABELS[el.category] || el.category) : 'Kilitli'}</span>
+          </div>
+          <div class="codex-card-fact">
+            ${isFound ? (el.fact || "Kadim simyada arındırıcı ve dönüştürücü bileşen.") : "Bu malzemenin sırrı ilerleyen seviyelerde çözülecektir."}
+          </div>
+        </div>
+      `;
+      codexElementsList.appendChild(card);
+    });
+  }
+
+  function renderAchievements() {
+    const unlocked = new Set(getSavedAchievements());
+    achievementsList.innerHTML = '';
+    achievementsProg.textContent = `${unlocked.size}/${ACHIEVEMENTS.length}`;
+
+    ACHIEVEMENTS.forEach(ach => {
+      const isDone = unlocked.has(ach.id);
+      const card = document.createElement('div');
+      card.className = 'achievement-card' + (isDone ? ' unlocked' : ' locked');
+      card.innerHTML = `
+        <div class="achievement-icon">${ach.icon}</div>
+        <div class="achievement-info">
+          <div class="achievement-title">${ach.title}</div>
+          <div class="achievement-desc">${ach.desc}</div>
+        </div>
+        <div class="achievement-status">${isDone ? 'Açıldı ✅' : 'Kilitli 🔒'}</div>
+      `;
+      achievementsList.appendChild(card);
+    });
+  }
+
+  // ── WebSocket ──
   const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
   const socket   = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
 
@@ -483,9 +1079,25 @@
       gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
       resetBtn.classList.remove('visible');
+
       if (msg.lives !== undefined) updateLives(msg.lives);
+      if (msg.combo !== undefined) updateCombo(msg.combo);
+
+      // Tarihi reçete banner kontrolü
+      if (msg.recipe) {
+        recipeTitle.textContent = msg.recipe;
+        recipeBanner.classList.remove('hidden');
+      } else {
+        recipeBanner.classList.add('hidden');
+      }
+
+      // Açılan elementler
       if (msg.unlocked && Array.isArray(msg.unlocked)) {
         unlockedList = msg.unlocked;
+        saveDiscovered(unlockedList);
+        const savedCount = getSavedDiscovered().length;
+        if (savedCount >= 15) unlockAchievement("scholar_15");
+        if (savedCount >= 30) unlockAchievement("grand_scholar");
         renderButtons();
       }
     }
@@ -502,12 +1114,31 @@
       updateTimer(msg.remaining, msg.total);
     }
 
+    if (msg.type === 'round_success') {
+      if (msg.combo !== undefined) updateCombo(msg.combo);
+      if (msg.lives !== undefined) updateLives(msg.lives);
+
+      // Başarımları denetle
+      if (msg.level >= 2)   unlockAchievement("first_drop");
+      if (msg.level >= 10)  unlockAchievement("apprentice");
+      if (msg.level >= 50)  unlockAchievement("master_physician");
+      if (msg.level >= 100) unlockAchievement("grand_elixir");
+      if (msg.recipe_completed) unlockAchievement("recipe_master");
+      if (msg.lives === 1)  unlockAchievement("clutch_win");
+
+      statusEl.textContent = msg.combo >= 2
+        ? `Mükemmel! 🔥 x${msg.combo} Kombo!`
+        : 'Doğru! Râzî onaylıyor.';
+      statusEl.className = 'status ready';
+    }
+
     if (msg.type === 'life_lost') {
       if (msg.lives !== undefined) {
         updateLives(msg.lives);
         const lostFlask = document.getElementById('flask' + (msg.lives + 1));
         if (lostFlask) lostFlask.classList.add('shake');
       }
+      updateCombo(0);
       statusEl.textContent = msg.message || 'Can kaybedildi! Sırayı baştan dene.';
       statusEl.className = 'status error';
       if (navigator.vibrate) navigator.vibrate([120, 60, 160]);
@@ -524,6 +1155,8 @@
 
     if (msg.type === 'game_over') {
       updateLives(0);
+      updateCombo(0);
+      recipeBanner.classList.add('hidden');
       statusEl.textContent = `Oyun bitti: ${msg.message || 'Kazan taştı.'}`;
       statusEl.className   = 'status error';
       gridEl.classList.add('disabled');

@@ -77,6 +77,16 @@ def _load_elements():
 
 MATERIALS, MATERIAL_NAMES, MATERIAL_SYMBOLS, MATERIAL_NOTES, COLORS, COLORS_LT = _load_elements()
 
+# ─── Tarihi Ebû Bekir er-Râzî Reçeteleri (Dönüm Noktası Seviyeleri) ───────────
+HISTORICAL_RECIPES = {
+    5:   ("Tuz Ruhu Damıtımı", ("tuz", "kukurt", "tuz")),
+    10:  ("Zaç & Demir Sentezi", ("tuz", "demir", "bakir", "civa")),
+    25:  ("Sirke Ruhu Ayini", ("sirke", "sap", "tuz", "bakir", "civa")),
+    50:  ("El-Kühül Damıtımı", ("sirke", "kukurt", "civa", "nisadir", "altin")),
+    75:  ("Tıbbi Panzehir Sentezi", ("altin", "gumus", "civa", "safran", "afyon", "kafur")),
+    100: ("Büyük İksir (İksir-i Âzam)", ("civa", "kukurt", "altin", "gumus", "buyuk_iksir")),
+}
+
 # ─── Renk Paleti ──────────────────────────────────────────────────────────────
 BG       = (17, 13, 12)          # çok koyu zemin
 PANEL    = (35, 24, 20)          # kart arka planı
@@ -516,6 +526,8 @@ class Game:
         self.state     = GameState.WAITING_FOR_PLAYER
         self.level     = 1
         self.lives     = 3
+        self.combo     = 0
+        self.recipe_name = ""
         self.best      = max((s["level"] for s in load_scores()), default=0)
         self.sequence: list[str] = []
         self.player_index  = 0
@@ -629,24 +641,47 @@ class Game:
 
     def _start_rhazi_turn(self) -> None:
         self.round_success = False
-        self.sequence      = [random.choice(self.material_pool) for _ in range(self.sequence_length)]
+        unlocked = list(self.material_pool)
+
+        # Tarihi reçete dönüm noktası kontrolü
+        if self.level in HISTORICAL_RECIPES:
+            rec_title, rec_elements = HISTORICAL_RECIPES[self.level]
+            if all(m in unlocked for m in rec_elements):
+                self.recipe_name = rec_title
+                self.sequence = list(rec_elements)
+            else:
+                self.recipe_name = ""
+                self.sequence = [random.choice(self.material_pool) for _ in range(self.sequence_length)]
+        else:
+            self.recipe_name = ""
+            self.sequence = [random.choice(self.material_pool) for _ in range(self.sequence_length)]
+
         self.phase_cursor  = 0
         self.phase_started = time.monotonic()
         self.state         = GameState.RHAZI_TURN
-        self.last_message  = "Ebû Bekir er-Râzî malzemeleri hazırlıyor..."
-        self._spawn_particles(530, 385, GOLD, 18)
+        self.last_message  = f"Tarihi Ayin: {self.recipe_name}" if self.recipe_name else "Ebû Bekir er-Râzî malzemeleri hazırlıyor..."
+        self._spawn_particles(530, 385, GOLD, 22)
 
-        # Kilidi açık malzemeleri ve kalan canı telefona bildir (30 elemente kadar)
-        unlocked = list(self.material_pool)
-        self.network.send({"type": "round_started", "unlocked": unlocked, "lives": self.lives})
+        # Kilidi açık malzemeleri, canı ve kombo sayısını telefona bildir
+        self.network.send({
+            "type": "round_started",
+            "unlocked": unlocked,
+            "lives": self.lives,
+            "combo": self.combo,
+            "recipe": self.recipe_name,
+        })
 
         # Yeni element açıldı mı veya bilgi kartı gösterimi
-        if len(unlocked) > getattr(self, "last_unlocked_count", 0):
+        if self.recipe_name:
+            self.speak_bubble(f"Tarihi Formül: '{self.recipe_name}'! Malzemeleri dikkatle izle.", duration=4.0)
+        elif len(unlocked) > getattr(self, "last_unlocked_count", 0):
             new_mat = unlocked[-1]
             self.info_card_mat = new_mat
             self.info_card_until = time.monotonic() + 6.0
             self.last_unlocked_count = len(unlocked)
             self.speak_bubble(f"Seviye {self.level}! Yeni malzeme: {MATERIAL_NAMES.get(new_mat, new_mat)}", duration=3.5)
+        elif self.combo >= 2:
+            self.speak_bubble(f"Harika seri! 🔥 x{self.combo} Kombo! Odaklan.", duration=3.0)
         elif random.random() < 0.4:
             self.info_card_mat = random.choice(unlocked)
             self.info_card_until = time.monotonic() + 5.0
@@ -657,6 +692,8 @@ class Game:
     def _reset_game(self) -> None:
         self.level        = 1
         self.lives        = 3
+        self.combo        = 0
+        self.recipe_name  = ""
         self.sequence     = []
         self.player_index = 0
         self.phase_cursor = 0
@@ -788,6 +825,7 @@ class Game:
 
     def _time_out(self) -> None:
         self.lives -= 1
+        self.combo = 0
         self.flash_color   = RED_LT
         self.flash_started = time.monotonic()
         self.shake_started = time.monotonic()
@@ -804,6 +842,7 @@ class Game:
             self.network.send({
                 "type": "life_lost",
                 "lives": self.lives,
+                "combo": 0,
                 "message": f"Süre tükendi! {self.lives} canın kaldı.",
                 "total": round(self.player_duration, 1),
             })
@@ -831,6 +870,7 @@ class Game:
         if button != self.sequence[self.player_index]:
             correct = self.sequence[self.player_index]
             self.lives -= 1
+            self.combo = 0
             name = MATERIAL_NAMES.get(button, button or "bilinmiyor")
             correct_tr = MATERIAL_NAMES.get(correct, correct)
             self.flash_color   = RED_LT
@@ -852,6 +892,7 @@ class Game:
                 self.network.send({
                     "type": "life_lost",
                     "lives": self.lives,
+                    "combo": 0,
                     "message": f"Yanlış seçim! {self.lives} canın kaldı.",
                     "total": round(self.player_duration, 1),
                 })
@@ -876,6 +917,7 @@ class Game:
         if self.player_index == len(self.sequence):
             self.state        = GameState.RESOLUTION
             self.round_success = True
+            self.combo        += 1
             self.last_message  = "Doğru! Ebû Bekir er-Râzî onaylıyor."
             self.phase_started = time.monotonic()
             self.level        += 1
@@ -884,13 +926,23 @@ class Game:
             self._spawn_particles(560, 350, GOLD, 60)
             self.sounds.play("level_up")
 
+            self.network.send({
+                "type": "round_success",
+                "level": self.level,
+                "combo": self.combo,
+                "lives": self.lives,
+                "recipe_completed": bool(self.recipe_name),
+            })
+
             life_msg = ""
             if self.level in (26, 51, 76) and self.lives < 3:
                 self.lives += 1
                 life_msg = " · 🧪 +1 Can Yenilendi!"
                 self.network.send({"type": "life_gained", "lives": self.lives})
 
-            self.speak_bubble(f"Mükemmel! Seviye {self.level}'e geçtik.{life_msg}", duration=3.5)
+            combo_msg = f" · 🔥 x{self.combo} Kombo!" if self.combo >= 2 else ""
+            self.last_message = f"Doğru! Ebû Bekir er-Râzî onaylıyor.{combo_msg}"
+            self.speak_bubble(f"Mükemmel! Seviye {self.level}'e geçtik.{life_msg}{combo_msg}", duration=3.5)
         else:
             remaining_count = len(self.sequence) - self.player_index
             self.last_message = f"Doğru  ·  {remaining_count} malzeme kaldı"
@@ -1068,10 +1120,22 @@ class Game:
             if active:
                 pygame.draw.circle(self.pixel_surface, (255, 255, 255), (fx + 6, fy + 10), 2)
 
-        # Mesaj — ortada
-        msg_surface = self.font_large.render(self.last_message, True, TEXT)
-        msg_x = (WIDTH - msg_surface.get_width()) // 2
-        self.pixel_surface.blit(msg_surface, (msg_x, 22))
+        # Kombo Rozeti (2 veya daha fazla doğru tur)
+        if self.combo >= 2:
+            cx = 184
+            cw = 84
+            pygame.draw.rect(self.pixel_surface, (60, 26, 14), (cx, 22, cw, 28), border_radius=4)
+            pygame.draw.rect(self.pixel_surface, GOLD, (cx, 22, cw, 28), 1, border_radius=4)
+            self._text(f"{self.combo}x SERİ", self.font_small, GOLD_LT, (cx + 10, 31))
+
+        # Mesaj ve Tarihi Reçete — ortada
+        if self.recipe_name:
+            self._text_center(f"KADİM REÇETE: {self.recipe_name.upper()}", self.font_small, GOLD_LT, WIDTH // 2, 16)
+            self._text_center(self.last_message, self.font_medium, TEXT, WIDTH // 2, 40)
+        else:
+            msg_surface = self.font_large.render(self.last_message, True, TEXT)
+            msg_x = (WIDTH - msg_surface.get_width()) // 2
+            self.pixel_surface.blit(msg_surface, (msg_x, 26))
 
         # En iyi skor — sağda
         self._text("EN İYİ", self.font_tiny, TEXT_DIM, (WIDTH - 120, 14))
