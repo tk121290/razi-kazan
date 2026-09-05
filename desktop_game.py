@@ -780,10 +780,10 @@ class Game:
                 self._open_credits_view()
 
         elif self.state == GameState.CREDITS_VIEW:
-            # Erciyes Kulüp Kayıt Butonu (110 <= x <= 380, 572 <= y <= 618)
+            # ERÜ Topluluk Kayıt Butonu (110 <= x <= 380, 572 <= y <= 618)
             if 110 <= x <= 380 and 572 <= y <= 618:
                 try:
-                    webbrowser.open("https://erubilisim.erciyes.edu.tr")
+                    webbrowser.open("https://erulogin.erciyes.edu.tr/")
                 except Exception:
                     pass
             # Tabîb Ekmeleddin PDF İndir Butonu (410 <= x <= 710, 572 <= y <= 618)
@@ -2718,7 +2718,7 @@ class Game:
         cred_hover = btn_credits.collidepoint(mouse_pos)
         self._draw_panel(btn_credits, radius=10)
         pygame.draw.rect(self.pixel_surface, GOLD_LT if cred_hover else GOLD, btn_credits, 2, border_radius=10)
-        self._text_center("🏛️ Erciyes Kulüp Bilgisi, Künye & Tabîb Ekmeleddin (C)", self.font_body_bold, GOLD_LT, btn_credits.centerx, btn_credits.y + 12)
+        self._text_center("🏛️ ERÜ Anadolu Tıp Tarihi Topluluğu & Künye (C)", self.font_body_bold, GOLD_LT, btn_credits.centerx, btn_credits.y + 12)
 
     def _draw_prologue_screen(self) -> None:
         mouse_pos = pygame.mouse.get_pos()
@@ -2786,20 +2786,20 @@ class Game:
         pygame.draw.rect(self.pixel_surface, GOLD, box, 2, border_radius=18)
 
         # Modal Başlık
-        self._text_center("🏛️  ERCİYES ÜNİVERSİTESİ & PROJE KÜNYESİ  🏛️", self.font_title, GOLD_LT, box.centerx, box.y + 24)
-        self._text_center("Tabîb Ekmeleddin'in (Bey Hekim) İzinde Kadim Tıp, Felsefe ve Bilişim Sentezi", self.font_body, TEXT_DIM, box.centerx, box.y + 56)
+        self._text_center("🏛️  ERÜ ANADOLU TIP TARİHİ TOPLULUĞU & KÜNYE  🏛️", self.font_title, GOLD_LT, box.centerx, box.y + 24)
+        self._text_center("Tabîb Ekmeleddin'in (Bey Hekim) İzinde Kadim Tıp, Felsefe ve Kültür Sentezi", self.font_body, TEXT_DIM, box.centerx, box.y + 56)
         self._draw_separator(box.x + 30, box.y + 82, box.right - 30)
 
-        # Sütun 1: Kulüp & Proje Ekibi (Sol: 450px)
+        # Sütun 1: Topluluk & Proje Ekibi (Sol: 450px)
         c1_x = box.x + 40
-        self._text("📋 PROJE VE KULÜP YÖNETİMİ", self.font_body_bold, GOLD, (c1_x, box.y + 100))
+        self._text("📋 PROJE VE TOPLULUK YÖNETİMİ", self.font_body_bold, GOLD, (c1_x, box.y + 100))
         self._draw_separator(c1_x, box.y + 126, c1_x + 430)
 
         entries = [
-            ("Projeyi Geliştiren Kulüp:", "Erciyes Üniversitesi Bilişim & Tıp Topluluğu"),
-            ("Proje Yönetim Ekibi:", "Proje Koordinatörlüğü & Yazılım Geliştirme Kurulu"),
-            ("Kulüp Yönetimi:", "Kulüp Başkanı, Yönetim ve Denetim Kurulu Heyeti"),
-            ("Emeği Geçen Arkadaşlarımız:", "Tasarım, Oyun Mekaniği, Tarih ve Tıp Danışmanları"),
+            ("Projeyi Geliştiren Topluluk:", "ERÜ Anadolu Tıp Tarihi Topluluğu"),
+            ("Proje Yönetim Ekibi:", "Topluluk Koordinatörlüğü & Yazılım Geliştirme Kurulu"),
+            ("Topluluk Yönetimi:", "Topluluk Başkanı, Yönetim ve Denetim Kurulu Heyeti"),
+            ("Emeği Geçen Arkadaşlarımız:", "ERÜ Anadolu Tıp Tarihi Topluluğu Üyeleri ve Hekim Adayları"),
         ]
         ey = box.y + 140
         for title, val in entries:
@@ -2834,12 +2834,12 @@ class Game:
         # Alt Eylem Butonları
         self._draw_separator(box.x + 30, box.bottom - 118, box.right - 30)
 
-        # Buton 1: Erciyes Kulüp Kayıt Butonu
+        # Buton 1: ERÜ Topluluk Kayıt Butonu
         btn_reg = pygame.Rect(box.x + 60, box.bottom - 98, 270, 46)
         b_reg_hover = btn_reg.collidepoint(mouse_pos)
         self._draw_panel(btn_reg, radius=10)
         pygame.draw.rect(self.pixel_surface, GOLD_LT if b_reg_hover else GOLD, btn_reg, 2, border_radius=10)
-        self._text_center("🌐 Erciyes Kulüp Kayıt", self.font_body_bold, GOLD_LT, btn_reg.centerx, btn_reg.y + 13)
+        self._text_center("🌐 ERÜ Topluluk Kayıt", self.font_body_bold, GOLD_LT, btn_reg.centerx, btn_reg.y + 13)
 
         # Buton 2: Tabîb Ekmeleddin PDF İndir Butonu
         btn_pdf = pygame.Rect(box.x + 360, box.bottom - 98, 300, 46)

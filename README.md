@@ -7,7 +7,7 @@ FastAPI sunucusu ile telefon kontrolcüsünü Pygame masaüstü oyununa bağlaya
 - **Tek Kişilik Macera & 1v1 Çırak Düellosu:** İster tek kişilik 100 seviyeli kadim iksir yolculuğu, ister iki ayrı telefonla gerçek zamanlı hafıza düellosu!
 - **Tabîb Ekmeleddin (Bey Hekim) Başlangıç Anlatımı (Prolog):** Oyun öncesinde Bey Hekim'in sesli/animasyonlu talimatları ve kadim Konya Dârüşşifası hikâyesi.
 - **Tezhipli Selçuklu Risalesi (PDF):** Selçuklu turkuazı ve altın tezhip motifleriyle hazırlanmış "Tabîb Ekmeleddin (Bey Hekim) Kimdir?" bilgilendirme risalesi.
-- **Erciyes Üniversitesi Künyesi:** Kulüp kayıt, yönetim ekibi ve tıp-bilişim sentezi künye ekranı.
+- **ERÜ Anadolu Tıp Tarihi Topluluğu Künyesi:** Topluluk kayıt, yönetim ekibi ve kadim tıp tarihi künye ekranı.
 - **Mobil Web Kumandası:** Tarayıcı üzerinden sıfır kurulumla bağlanan antik parşömen temalı telefon kumandası ve dokunsal geri bildirimler (haptic feedback).
 
 ## Kurulum
@@ -49,4 +49,4 @@ py desktop_game.py
 - `RHAZI_TURN` (Bey Hekim Sırası): Bey Hekim şifalı cevherleri sırayla kazana atar.
 - `PLAYER_TURN`: Telefon butonları üzerinden aynı sıra kazana eklenir.
 - `RESOLUTION`: Doğru dizi seviyeyi/raundu kazandırır; 3 can hakkı ve kombo sistemi mevcuttur.
-- `CREDITS_VIEW`: Erciyes kulüp kaydı ve Tabîb Ekmeleddin tezhipli PDF risalesi.
+- `CREDITS_VIEW`: ERÜ Anadolu Tıp Tarihi Topluluğu kaydı ve Tabîb Ekmeleddin tezhipli PDF risalesi.

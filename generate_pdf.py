@@ -86,7 +86,7 @@ def draw_background_and_border(canvas, doc):
     # Sayfa ve alt bilgi
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(C_MUTED)
-    footer_text = f"Tabîb Ekmeleddin'in Kazanı · Klinik Tıp Tarihi Monografisi — Sayfa {doc.page}"
+    footer_text = f"Tabîb Ekmeleddin'in Kazanı · ERÜ Anadolu Tıp Tarihi Topluluğu — Sayfa {doc.page}"
     canvas.drawCentredString(w / 2.0, 7 * mm, footer_text)
 
     canvas.restoreState()
@@ -312,7 +312,7 @@ def build_pdf() -> Path:
     story.append(Spacer(1, 2 * mm))
     story.append(HRFlowable(width="100%", thickness=0.8, color=C_GOLD_LT, spaceBefore=1 * mm, spaceAfter=2 * mm))
     story.append(Paragraph(
-        "<b>Erciyes Üniversitesi Bilişim & Tıp Topluluğu</b> · Bu akademik vesika, tıp fakültesi hekim namzetleri ve hekimlerimiz için "
+        "<b>ERÜ Anadolu Tıp Tarihi Topluluğu</b> · Bu akademik vesika, tıp fakültesi hekim namzetleri ve hekimlerimiz için "
         "Anadolu Selçuklu Başhekimi Tabîb Ekmeleddin'in (Bey Hekim) klinik mirasını bilimsel tıp tarihi perspektifiyle belgelemek üzere hazırlanmıştır.",
         ParagraphStyle("Footnote", fontName=font_name, fontSize=7.5, leading=10.5, textColor=C_MUTED, alignment=1)
     ))
