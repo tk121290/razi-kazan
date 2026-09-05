@@ -5,3 +5,5 @@ venv/
 .env
 room_qr.png
 .vscode/
+*.db
+scores.json
