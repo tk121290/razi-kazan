@@ -934,6 +934,91 @@
       border-radius: 16px;
     }
 
+    /* Sinematik Film Sonu Kayan Jenerik (Credits Crawl) */
+    .cinema-credits-container {
+      position: relative;
+      background: radial-gradient(ellipse at center, #180f09 0%, #0c0704 100%);
+      border: 1.5px solid var(--gold);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 4px 20px rgba(0, 0, 0, 0.6);
+      height: 280px;
+    }
+    .cinema-credits-crawl {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      padding: 20px 14px 100px 14px;
+      animation: creditsRollAnim 42s linear infinite;
+    }
+    .cinema-credits-container:hover .cinema-credits-crawl,
+    .cinema-credits-container:active .cinema-credits-crawl {
+      animation-play-state: paused;
+    }
+    .cinema-credits-container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 45px;
+      background: linear-gradient(to bottom, #0c0704 20%, rgba(12, 7, 4, 0));
+      z-index: 5;
+      pointer-events: none;
+    }
+    .cinema-credits-container::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 45px;
+      background: linear-gradient(to top, #0c0704 20%, rgba(12, 7, 4, 0));
+      z-index: 5;
+      pointer-events: none;
+    }
+    @keyframes creditsRollAnim {
+      0% {
+        transform: translateY(120px);
+      }
+      100% {
+        transform: translateY(-100%);
+      }
+    }
+    .cinema-badge {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: .08em;
+      margin-top: 18px;
+      display: block;
+    }
+    .cinema-role-title {
+      font-size: .92rem;
+      font-weight: 800;
+      color: var(--gold-lt);
+      margin: 2px 0 3px 0;
+    }
+    .cinema-role-desc {
+      font-size: .72rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 6px;
+    }
+    .cinema-name {
+      font-size: .84rem;
+      color: #f7eee2;
+      line-height: 1.6;
+    }
+    .cinema-divider {
+      width: 60px;
+      height: 1px;
+      background: var(--border);
+      margin: 12px auto;
+    }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -1143,36 +1228,97 @@
 
 <!-- ── Erciyes Kulüp, Künye & Portalı ── -->
 <div class="modal-backdrop hidden" id="creditsModal">
-  <div class="modal-card" style="max-width: 500px;">
+  <div class="modal-card" style="max-width: 560px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
-        <h2 style="color: var(--gold-lt); font-size: 1.15rem;">🏛️ ERÜ Anadolu Tıp Tarihi Topluluğu & Künye</h2>
+        <h2 style="color: var(--gold-lt); font-size: 1.15rem;">🏛️ ERÜ Anadolu Tıp Tarihi Topluluğu & Kayan Jenerik</h2>
         <span class="modal-sub">Tabîb Ekmeleddin'in Kazanı Projesi</span>
       </div>
       <button class="modal-close" id="closeCreditsBtn" aria-label="Kapat">✕</button>
     </div>
-    <div class="modal-body" style="padding: 14px 18px; display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto;">
+    <div class="modal-body" style="padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; max-height: 75vh; overflow-y: auto;">
       
-      <!-- ERÜ Topluluk Kayıt Butonu -->
-      <div style="background: linear-gradient(135deg, #2b1a0e, #180f08); border: 1px solid var(--gold); border-radius: 10px; padding: 12px; text-align: center;">
-        <span style="font-size: .75rem; color: var(--gold); font-weight: 700; letter-spacing: .08em; display: block; margin-bottom: 4px;">ERCİYES ÜNİVERSİTESİ ÖĞRENCİ TOPLULUĞU</span>
-        <div style="font-size: .95rem; font-weight: 700; color: var(--ink); margin-bottom: 8px;">ERÜ Anadolu Tıp Tarihi Topluluğu</div>
-        <a href="https://erulogin.erciyes.edu.tr/" target="_blank" class="leaderboard-link-btn" style="display: block; text-decoration: none; padding: 10px; background: var(--gold); color: #110d0b; font-weight: 800; font-size: .88rem; border-radius: 6px;">
-          🏛️ ERÜ ANADOLU TIP TARİHİ TOPLULUĞU KAYIT OL
-        </a>
+      <!-- Sinematik Film Sonu Kayan Jenerik -->
+      <div class="cinema-credits-container" title="Duraklatmak için dokunun veya fareyi üzerine getirin">
+        <div class="cinema-credits-crawl">
+          <div style="font-size: .85rem; font-weight: 800; color: var(--gold-lt); margin-bottom: 2px;">✦ ✦ ✦ BEY HEKİM ✦ ✦ ✦</div>
+          <div style="font-size: .95rem; font-weight: 800; color: #fff;">ERCİYES ÜNİVERSİTESİ TIP FAKÜLTESİ</div>
+          <div style="font-size: .72rem; color: var(--muted); margin-bottom: 16px;">Kadim Tıp Kültürü, Deontoloji ve Bilim Yolculuğu</div>
+          <div class="cinema-divider"></div>
+
+          <span class="cinema-badge">🏛️ PROJE SAHİBİ VE ORGANİZASYON</span>
+          <div class="cinema-role-title">ERÜ ANADOLU TIP TARİHİ TOPLULUĞU</div>
+          <div class="cinema-role-desc">Erciyes Üniversitesi Tıp Fakültesi & Kadim Kültür Mirası</div>
+          <div class="cinema-name">Erciyes Üniversitesi Anadolu Tıp Tarihi Topluluğu</div>
+          <div class="cinema-divider"></div>
+
+          <span class="cinema-badge">👑 TOPLULUK YÖNETİMİ & KOORDİNASYON</span>
+          <div class="cinema-role-title">GENEL YÖNETİM HEYETİ</div>
+          <div class="cinema-role-desc">Yönetim Kurulu Başkanı ve Temsilciler Heyeti</div>
+          <div class="cinema-name">Topluluk Yönetim Kurulu Başkanı</div>
+          <div class="cinema-name">Yönetim Kurulu Başkan Yardımcısı</div>
+          <div class="cinema-name">Genel Sekreter & Organizasyon Sorumlusu</div>
+          <div class="cinema-name">Denetim ve İdare Kurulu Heyeti</div>
+          <div class="cinema-divider"></div>
+
+          <span class="cinema-badge">💻 YAZILIM VE OYUN MİMARİSİ</span>
+          <div class="cinema-role-title">OYUN MOTORU & BİLİŞİM KURULU</div>
+          <div class="cinema-role-desc">FastAPI WebSockets, Python Pygame & Mobil Kumanda</div>
+          <div class="cinema-name">Oyun Motoru & Mekanik Geliştiricileri</div>
+          <div class="cinema-name">WebSockets Ağ Mimarisi & Sunucu Ekibi</div>
+          <div class="cinema-name">Mobil Web Kumandası & Dokunsal Arayüz Ekibi</div>
+          <div class="cinema-divider"></div>
+
+          <span class="cinema-badge">🩺 AKADEMİK TIP TARİHİ & DANIŞMANLIK</span>
+          <div class="cinema-role-title">KLİNİK SEMİYOLOJİ VE TARİH TETKİK KURULU</div>
+          <div class="cinema-role-desc">Tabîb Ekmeleddin (Bey Hekim) Doktrini & Selçuklu Tıbbı</div>
+          <div class="cinema-name">Tıp Tarihi & Deontoloji Danışmanları</div>
+          <div class="cinema-name">Selçuklu Dârüşşifaları ve Tabîb Ekmeleddin Araştırma Ekibi</div>
+          <div class="cinema-name">Klinik Sfigmoloji, Uroskopi ve Galenik Farmakoloji Masası</div>
+          <div class="cinema-divider"></div>
+
+          <span class="cinema-badge">🎨 SANAT, TASARIM VE TEZHİP GRAFİKLERİ</span>
+          <div class="cinema-role-title">GÖRSEL İLETİŞİM & TEZHİP SANATI</div>
+          <div class="cinema-role-desc">Selçuklu Altın Varak & Turkuazı, Piksel Çizimler</div>
+          <div class="cinema-name">Tezhipli Selçuklu Risalesi Sanat Ekibi</div>
+          <div class="cinema-name">Piksel Çizim, Sprite & Karakter Animatörleri</div>
+          <div class="cinema-name">Simya Kazanı & Parşömen Arayüz Tasarımcıları</div>
+          <div class="cinema-divider"></div>
+
+          <span class="cinema-badge">👥 EMEĞİ GEÇEN ARKADAŞLARIMIZ</span>
+          <div class="cinema-role-title">TOPLULUK ÜYELERİ & HEKİM ADAYLARI</div>
+          <div class="cinema-role-desc">Test, Geri Bildirim ve Katkı Sağlayan Hekim Adayları</div>
+          <div class="cinema-name">ERÜ Anadolu Tıp Tarihi Topluluğu Aktif Üyeleri</div>
+          <div class="cinema-name">Erciyes Üniversitesi Tıp Fakültesi Öğrencileri</div>
+          <div class="cinema-name">Tüm Katkı ve Destek Veren Arkadaşlarımız</div>
+          <div class="cinema-divider"></div>
+
+          <span class="cinema-badge">🌟 ÖZEL TEŞEKKÜR</span>
+          <div class="cinema-role-title">KADİM İLHAM VE MİRAS</div>
+          <div class="cinema-role-desc">Tıbbın, Hikmetin ve Şefkatin Işığında</div>
+          <div class="cinema-name">Erciyes Üniversitesi Rektörlüğü ve Tıp Fakültesi Dekanlığı</div>
+          <div class="cinema-name">Tabîb Ekmeleddin el-Nahcivânî (Bey Hekim) Aziz Ruhuna</div>
+          <div class="cinema-name">Hz. Mevlânâ Celâleddîn-i Rûmî ve Konya Dârüşşifası Hekimleri</div>
+          <div class="cinema-divider"></div>
+
+          <span class="cinema-badge">📜 ŞİFA VE HİKMET DÜSTURU</span>
+          <div style="font-size: .82rem; font-style: italic; color: var(--gold-lt); margin: 8px 0;">« Gerçek hekim odur ki hastanın derdine derman, ruhuna ve gönlüne şifa ola... »</div>
+          <div style="font-size: .88rem; font-weight: 800; color: #fff;">— ERÜ ANADOLU TIP TARİHİ TOPLULUĞU —</div>
+          <div style="font-size: .75rem; color: var(--muted); margin-top: 4px;">KAYSERİ · 2026</div>
+        </div>
+      </div>
+      <div style="font-size: .68rem; color: var(--muted); text-align: center; margin-top: -6px;">
+        👆 Akışı duraklatmak için parmağınızla basılı tutun veya fareyle üzerine gelin
       </div>
 
-      <!-- Proje Künyesi -->
-      <div style="background: #1c130b; border: 1px solid var(--border); border-radius: 8px; padding: 12px;">
-        <h3 style="color: var(--gold-lt); font-size: .85rem; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">📜 PROJE VE TOPLULUK KÜNYESİ</h3>
-        <div style="font-size: .78rem; line-height: 1.6; color: var(--muted);">
-          <p><strong style="color: var(--ink);">Projeyi Geliştiren Topluluk:</strong> ERÜ Anadolu Tıp Tarihi Topluluğu</p>
-          <p><strong style="color: var(--ink);">Proje Yönetim Ekibi:</strong> ERÜ Anadolu Tıp Tarihi Proje Kurulu</p>
-          <p><strong style="color: var(--ink);">Topluluk Yönetimi:</strong> Yönetim Kurulu Başkanı ve Temsilciler Heyeti</p>
-          <p><strong style="color: var(--ink);">Yazılım & Simülasyon:</strong> Python / Pygame & WebSockets Mimarisi</p>
-          <p><strong style="color: var(--ink);">Tarih & Tıp Danışmanlığı:</strong> ERÜ Anadolu Tıp Tarihi Topluluğu Akademik Danışma Kurulu</p>
-          <p><strong style="color: var(--ink);">Emeği Geçen Arkadaşlarımız:</strong> ERÜ Anadolu Tıp Tarihi Topluluğu Üyeleri ve Tıp Fakültesi Öğrencileri</p>
-        </div>
+      <!-- ERÜ Topluluk Kayıt Butonu -->
+      <div style="background: linear-gradient(135deg, #2b1a0e, #180f08); border: 1.5px solid var(--gold); border-radius: 10px; padding: 12px; text-align: center;">
+        <span style="font-size: .72rem; color: var(--gold); font-weight: 700; letter-spacing: .08em; display: block; margin-bottom: 4px;">ERCİYES ÜNİVERSİTESİ ÖĞRENCİ TOPLULUĞU</span>
+        <div style="font-size: .95rem; font-weight: 700; color: #fff; margin-bottom: 8px;">ERÜ Anadolu Tıp Tarihi Topluluğu</div>
+        <a href="https://kulup.erciyes.edu.tr/uyelik/uyeol" target="_blank" class="leaderboard-link-btn" style="display: block; text-decoration: none; padding: 11px; background: var(--gold); color: #110d0b; font-weight: 800; font-size: .88rem; border-radius: 6px; box-shadow: 0 3px 12px rgba(212, 168, 72, 0.4);">
+          🏛️ ERÜ ANADOLU TIP TARİHİ TOPLULUĞU ÜYE OL
+        </a>
+        <span style="font-size: .66rem; color: var(--muted); display: block; margin-top: 4px;">kulup.erciyes.edu.tr/uyelik/uyeol</span>
       </div>
 
       <!-- Tabîb Ekmeleddin PDF İndir & Biyografi -->

@@ -142,6 +142,88 @@ BEYHEKIM_PROLOGUE_DUEL = (
 RHAZI_PROLOGUE_SINGLE = BEYHEKIM_PROLOGUE_SINGLE
 RHAZI_PROLOGUE_DUEL = BEYHEKIM_PROLOGUE_DUEL
 
+# ── ERÜ Anadolu Tıp Tarihi Topluluğu — Kayan Jenerik (Film Sonu Credits Roll) ──
+CREDITS_ROLL_DATA = [
+    {
+        "badge": "🏛️ PROJE SAHİBİ VE ORGANİZASYON",
+        "title": "ERÜ ANADOLU TIP TARİHİ TOPLULUĞU",
+        "desc": "Erciyes Üniversitesi Tıp Fakültesi & Kadim Kültür Mirası",
+        "names": [
+            "Erciyes Üniversitesi Anadolu Tıp Tarihi Topluluğu",
+        ]
+    },
+    {
+        "badge": "👑 TOPLULUK YÖNETİMİ & KOORDİNASYON",
+        "title": "GENEL YÖNETİM HEYETİ",
+        "desc": "Yönetim Kurulu Başkanı ve Temsilciler Heyeti",
+        "names": [
+            "Topluluk Yönetim Kurulu Başkanı",
+            "Yönetim Kurulu Başkan Yardımcısı",
+            "Genel Sekreter & Organizasyon Sorumlusu",
+            "Denetim ve İdare Kurulu Heyeti",
+        ]
+    },
+    {
+        "badge": "💻 YAZILIM VE OYUN MİMARİSİ",
+        "title": "OYUN MOTORU & BİLİŞİM KURULU",
+        "desc": "FastAPI WebSockets, Python Pygame & Mobil Kumanda",
+        "names": [
+            "Oyun Motoru & Mekanik Geliştiricileri",
+            "WebSockets Ağ Mimarisi & Sunucu Ekibi",
+            "Mobil Web Kumandası & Dokunsal Arayüz Ekibi",
+        ]
+    },
+    {
+        "badge": "🩺 AKADEMİK TIP TARİHİ & DANIŞMANLIK",
+        "title": "KLİNİK SEMİYOLOJİ VE TARİH TETKİK KURULU",
+        "desc": "Tabîb Ekmeleddin (Bey Hekim) Doktrini & Selçuklu Tıbbı",
+        "names": [
+            "Tıp Tarihi & Deontoloji Danışmanları",
+            "Selçuklu Dârüşşifaları ve Tabîb Ekmeleddin Araştırma Ekibi",
+            "Klinik Sfigmoloji, Uroskopi ve Galenik Farmakoloji Masası",
+        ]
+    },
+    {
+        "badge": "🎨 SANAT, TASARIM VE TEZHİP GRAFİKLERİ",
+        "title": "GÖRSEL İLETİŞİM & TEZHİP SANATI",
+        "desc": "Selçuklu Altın Varak & Turkuazı, Piksel Çizimler",
+        "names": [
+            "Tezhipli Selçuklu Risalesi Sanat Ekibi",
+            "Piksel Çizim, Sprite & Karakter Animatörleri",
+            "Simya Kazanı & Parşömen Arayüz Tasarımcıları",
+        ]
+    },
+    {
+        "badge": "👥 EMEĞİ GEÇEN ARKADAŞLARIMIZ",
+        "title": "TOPLULUK ÜYELERİ & HEKİM ADAYLARI",
+        "desc": "Test, Geri Bildirim ve Katkı Sağlayan Hekim Adayları",
+        "names": [
+            "ERÜ Anadolu Tıp Tarihi Topluluğu Aktif Üyeleri",
+            "Erciyes Üniversitesi Tıp Fakültesi Öğrencileri",
+            "Tüm Katkı ve Destek Veren Arkadaşlarımız",
+        ]
+    },
+    {
+        "badge": "🌟 ÖZEL TEŞEKKÜR",
+        "title": "KADİM İLHAM VE MİRAS",
+        "desc": "Tıbbın, Hikmetin ve Şefkatin Işığında",
+        "names": [
+            "Erciyes Üniversitesi Rektörlüğü ve Tıp Fakültesi Dekanlığı",
+            "Tabîb Ekmeleddin el-Nahcivânî (Bey Hekim) Aziz Ruhuna",
+            "Hz. Mevlânâ Celâleddîn-i Rûmî ve Konya Dârüşşifası Hekimleri",
+        ]
+    },
+    {
+        "badge": "📜 ŞİFA VE HİKMET DÜSTURU",
+        "title": "TABÎB EKMELEDDİN'İN SÖZÜ",
+        "desc": "«Gerçek hekim odur ki hastanın derdine derman, ruhuna ve gönlüne şifa ola...»",
+        "names": [
+            "— ERÜ ANADOLU TIP TARİHİ TOPLULUĞU —",
+            "KAYSERİ · 2026",
+        ]
+    }
+]
+
 
 
 
@@ -599,6 +681,9 @@ class Game:
         self.prologue_text    = ""
         self.prologue_readies = {"player_1": False, "player_2": False}
         self._prev_credits_state = GameState.MODE_SELECT
+        self.credits_scroll_y    = 0.0
+        self.credits_paused      = False
+        self.credits_last_time   = 0.0
 
         # Konuşma balonu & Alev patlaması & Bilgi kartları
         self.bubble_text     = ""
@@ -702,15 +787,29 @@ class Game:
                             else:
                                 self._open_credits_view()
                         elif event.key in (pygame.K_SPACE, pygame.K_RETURN):
-                            if self.state == GameState.PROLOGUE:
+                            if self.state == GameState.CREDITS_VIEW:
+                                self.credits_paused = not self.credits_paused
+                            elif self.state == GameState.PROLOGUE:
                                 self._start_game_from_prologue()
                             elif self.state == GameState.GAME_OVER:
                                 self._reset_game()
                             elif self.state == GameState.DUEL_MATCH_OVER:
                                 self._reset_duel()
+                        elif event.key == pygame.K_r:
+                            if self.state == GameState.CREDITS_VIEW:
+                                self.credits_scroll_y = 0.0
+                        elif event.key == pygame.K_UP:
+                            if self.state == GameState.CREDITS_VIEW:
+                                self.credits_scroll_y = max(0.0, self.credits_scroll_y - 45.0)
+                        elif event.key == pygame.K_DOWN:
+                            if self.state == GameState.CREDITS_VIEW:
+                                self.credits_scroll_y += 45.0
                         elif event.key == pygame.K_m:
                             if self.state in (GameState.GAME_OVER, GameState.DUEL_MATCH_OVER, GameState.WAITING_FOR_PLAYER):
                                 self._return_to_mode_select()
+                    elif event.type == pygame.MOUSEWHEEL:
+                        if self.state == GameState.CREDITS_VIEW:
+                            self.credits_scroll_y = max(0.0, self.credits_scroll_y - event.y * 35.0)
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         self._handle_mouse_click(event.pos)
 
@@ -780,21 +879,24 @@ class Game:
                 self._open_credits_view()
 
         elif self.state == GameState.CREDITS_VIEW:
-            # ERÜ Topluluk Kayıt Butonu (110 <= x <= 380, 572 <= y <= 618)
-            if 110 <= x <= 380 and 572 <= y <= 618:
+            # ERÜ Topluluk Kayıt Butonu (110 <= x <= 380, 615 <= y <= 670)
+            if 110 <= x <= 380 and 615 <= y <= 670:
                 try:
-                    webbrowser.open("https://erulogin.erciyes.edu.tr/")
+                    webbrowser.open("https://kulup.erciyes.edu.tr/uyelik/uyeol")
                 except Exception:
                     pass
-            # Tabîb Ekmeleddin PDF İndir Butonu (410 <= x <= 710, 572 <= y <= 618)
-            elif 410 <= x <= 710 and 572 <= y <= 618:
+            # Tabîb Ekmeleddin PDF İndir Butonu (410 <= x <= 710, 615 <= y <= 670)
+            elif 410 <= x <= 710 and 615 <= y <= 670:
                 try:
                     webbrowser.open(f"http://localhost:{PORT}/download/tabib_ekmeleddin_kimdir.pdf")
                 except Exception:
                     pass
-            # Kapat / Geri Dön Butonu (740 <= x <= 990, 572 <= y <= 618)
-            elif 740 <= x <= 990 and 572 <= y <= 618:
+            # Kapat / Geri Dön Butonu (740 <= x <= 990, 615 <= y <= 670)
+            elif 740 <= x <= 990 and 615 <= y <= 670:
                 self._close_credits_view()
+            # Kayan jenerik alanına tıklandığında duraklat / devam et
+            elif 80 <= x <= 1020 and 80 <= y <= 570:
+                self.credits_paused = not self.credits_paused
 
     # ── Mod & Ekran Geçiş Yardımcıları ───────────────────────────────────────
 
@@ -865,6 +967,9 @@ class Game:
         if self.state != GameState.CREDITS_VIEW:
             self._prev_credits_state = self.state
             self.state = GameState.CREDITS_VIEW
+            self.credits_scroll_y = 0.0
+            self.credits_paused = False
+            self.credits_last_time = time.monotonic()
 
     def _close_credits_view(self) -> None:
         if self.state == GameState.CREDITS_VIEW:
@@ -2775,85 +2880,142 @@ class Game:
     def _draw_credits_screen(self) -> None:
         mouse_pos = pygame.mouse.get_pos()
 
-        # Karartma Arka Plan
+        # Karartma Arka Plan (Sinematik Koyu Tiyatro / Parşömen Tonu)
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 215))
+        overlay.fill((5, 3, 2, 230))
         self.pixel_surface.blit(overlay, (0, 0))
 
         # Ana Modal Kutusu
-        box = pygame.Rect(50, 30, 1000, 640)
-        self._draw_panel(box, radius=18)
-        pygame.draw.rect(self.pixel_surface, GOLD, box, 2, border_radius=18)
+        box = pygame.Rect(50, 20, 1000, 660)
+        self._draw_panel(box, radius=16)
+        pygame.draw.rect(self.pixel_surface, GOLD, box, 2, border_radius=16)
 
-        # Modal Başlık
-        self._text_center("🏛️  ERÜ ANADOLU TIP TARİHİ TOPLULUĞU & KÜNYE  🏛️", self.font_title, GOLD_LT, box.centerx, box.y + 24)
-        self._text_center("Tabîb Ekmeleddin'in (Bey Hekim) İzinde Kadim Tıp, Felsefe ve Kültür Sentezi", self.font_body, TEXT_DIM, box.centerx, box.y + 56)
-        self._draw_separator(box.x + 30, box.y + 82, box.right - 30)
+        # Modal Başlık (Sabit Üst Başlık)
+        self._text_center("🏛️  ERÜ ANADOLU TIP TARİHİ TOPLULUĞU  🏛️", self.font_title, GOLD_LT, box.centerx, box.y + 16)
+        self._text_center("Tabîb Ekmeleddin (Bey Hekim) Kazanı — Sinematik Kayan Jenerik", self.font_body, (225, 205, 170), box.centerx, box.y + 44)
+        self._text_center("[Boşluk / Tıkla]: Duraklat/Devam  •  [↑/↓ veya Fare]: Kaydır  •  [R]: Başa Sar", self.font_tiny, (170, 150, 115), box.centerx, box.y + 66)
+        self._draw_separator(box.x + 30, box.y + 84, box.right - 30)
 
-        # Sütun 1: Topluluk & Proje Ekibi (Sol: 450px)
-        c1_x = box.x + 40
-        self._text("📋 PROJE VE TOPLULUK YÖNETİMİ", self.font_body_bold, GOLD, (c1_x, box.y + 100))
-        self._draw_separator(c1_x, box.y + 126, c1_x + 430)
+        # Zaman & Akış Hesaplaması (Sinematik Kayan Jenerik)
+        now = time.monotonic()
+        if self.credits_last_time <= 0.0:
+            dt = 1.0 / 60.0
+        else:
+            dt = min(0.1, now - self.credits_last_time)
+        self.credits_last_time = now
 
-        entries = [
-            ("Projeyi Geliştiren Topluluk:", "ERÜ Anadolu Tıp Tarihi Topluluğu"),
-            ("Proje Yönetim Ekibi:", "Topluluk Koordinatörlüğü & Yazılım Geliştirme Kurulu"),
-            ("Topluluk Yönetimi:", "Topluluk Başkanı, Yönetim ve Denetim Kurulu Heyeti"),
-            ("Emeği Geçen Arkadaşlarımız:", "ERÜ Anadolu Tıp Tarihi Topluluğu Üyeleri ve Hekim Adayları"),
-        ]
-        ey = box.y + 140
-        for title, val in entries:
-            self._text(title, self.font_body_bold, GOLD_LT, (c1_x, ey))
-            self._text(val, self.font_body, TEXT, (c1_x, ey + 22))
-            ey += 54
+        if not self.credits_paused:
+            self.credits_scroll_y += dt * 36.0  # saniyede 36 piksel akıcı okuma hızı
 
-        # Sütun 2: Tabîb Ekmeleddin (Bey Hekim) Kimdir? (Sağ: 450px)
-        c2_x = box.x + 510
-        self._text("📜 TABÎB EKMELEDDİN (BEY HEKİM) KİMDİR?", self.font_body_bold, GOLD, (c2_x, box.y + 100))
-        self._draw_separator(c2_x, box.y + 126, c2_x + 430)
+        # Kayan Jenerik Alanı (Viewport: y: 90 -> 590, yükseklik 500)
+        viewport = pygame.Rect(box.x + 20, box.y + 90, box.width - 40, 505)
 
-        ekm_bio = (
-            "Ekmeleddîn Tabîb el-Nahcivânî (13. yy); Anadolu Selçuklu Melikü'l-Hükemâ'sı, Konya Dârüşşifası'nın "
-            "baştabibi ve Hz. Mevlânâ'nın hekimidir. İbn Sînâ (El-Kânûn) ve Ebû Bekir er-Râzî (El-Hâvî) ekollerinin "
-            "rasyonel klinik tanı, yatak başı (bedside) eğitim ve semiyoloji geleneğini Anadolu'da kurumsallaştırmıştır."
-        )
-        self._draw_multiline_text(ekm_bio, self.font_body, TEXT, c2_x, box.y + 135, 430, line_spacing=5)
+        # Görünüm alanını sınırla (Viewport Clip)
+        self.pixel_surface.set_clip(viewport)
 
-        self._text("🩺 Klinik Semiyoloji, Nabız & Farmakoloji:", self.font_body_bold, GOLD_LT, (c2_x, box.y + 225))
-        ekm_med_points = [
-            "• Sfigmoloji (İlm-i Nabz): A. radialis palpasyonu ile 10 parametreli nabız analizi (sür'at, tevatür, dikrotik/ipliksi nabız tespiti).",
-            "• Uroskopi (İlm-i Karûre): İdrar dansitesi, renk spektrumu ve sedimantasyon (rusûb) ile nefrolitiyazis ve pyüri ayrıcı tanısı.",
-            "• Terkîb-i Edviye: Müfredât/Mürekkebât sistemi, Sekencebîn (oxymel) ile asit-baz/elektrolit regülasyonu, Tiryâk-ı Kebîr polifarmasisi.",
-            "• Nöropsikiyatri & Müzikoterapi: Mâlihulyâda (melankoli) makamların otonom sinir sistemi etkileri (Rast, Nihavend, Rehavî) ve su sesi.",
-            "• Selçuklu Dârüşşifa Triyajı: Çapraz hava koridorları, bulaşıcı tecrit koğuşları, cerrahi ve bimarhane koğuşlanması.",
-        ]
-        my = box.y + 250
-        for pt in ekm_med_points:
-            my = self._draw_multiline_text(pt, self.font_tiny, TEXT_DIM, c2_x, my, 430, line_spacing=3) + 4
+        # Kayan içerik dikey başlangıç konumu
+        cur_y = viewport.y + 30 - int(self.credits_scroll_y)
 
-        # Alt Eylem Butonları
-        self._draw_separator(box.x + 30, box.bottom - 118, box.right - 30)
+        # Başlangıç Tepe Amblemi
+        self._text_center("✦ ✦ ✦   B E Y   H E K İ M   ✦ ✦ ✦", self.font_body_bold, GOLD_LT, viewport.centerx, cur_y)
+        cur_y += 24
+        self._text_center("ERCİYES ÜNİVERSİTESİ TIP FAKÜLTESİ", self.font_body_bold, (245, 235, 215), viewport.centerx, cur_y)
+        cur_y += 20
+        self._text_center("Kadim Tıp Kültürü, Deontoloji ve Bilim Yolculuğu", self.font_tiny, TEXT_DIM, viewport.centerx, cur_y)
+        cur_y += 42
 
-        # Buton 1: ERÜ Topluluk Kayıt Butonu
-        btn_reg = pygame.Rect(box.x + 60, box.bottom - 98, 270, 46)
+        # Kategori ve İsimlerin Sırayla Akışı
+        for block in CREDITS_ROLL_DATA:
+            # Kategori Rozeti / Başlığı
+            self._text_center(block.get("badge", ""), self.font_body_bold, GOLD, viewport.centerx, cur_y)
+            cur_y += 22
+
+            # Alt Başlık
+            self._text_center(block.get("title", ""), self.font_body_large, GOLD_LT, viewport.centerx, cur_y)
+            cur_y += 22
+
+            # Açıklama
+            desc = block.get("desc", "")
+            if desc:
+                self._text_center(desc, self.font_tiny, (180, 165, 140), viewport.centerx, cur_y)
+                cur_y += 20
+
+            cur_y += 8
+
+            # İsimler
+            for name in block.get("names", []):
+                self._text_center(name, self.font_body, (250, 242, 228), viewport.centerx, cur_y)
+                cur_y += 24
+
+            cur_y += 8
+            # Narin ara çizgi
+            self._draw_separator(viewport.centerx - 140, cur_y, viewport.centerx + 140)
+            cur_y += 30
+
+        # Kapanış Sözü
+        cur_y += 10
+        self._text_center("« İlim ile amel birleşince şifa kemâle erer. »", self.font_body_bold, GOLD_LT, viewport.centerx, cur_y)
+        cur_y += 26
+        self._text_center("ERÜ ANADOLU TIP TARİHİ TOPLULUĞU", self.font_body, (220, 205, 175), viewport.centerx, cur_y)
+        cur_y += 22
+        self._text_center("Kayseri · 2026", self.font_tiny, TEXT_DIM, viewport.centerx, cur_y)
+        cur_y += 80
+
+        # Sonsuz akış döngüsü (Başa dönme)
+        total_content_height = cur_y - (viewport.y + 30 - int(self.credits_scroll_y))
+        if self.credits_scroll_y > total_content_height + viewport.height:
+            self.credits_scroll_y = 0.0
+
+        # Kırpma alanını kaldır
+        self.pixel_surface.set_clip(None)
+
+        # Üst ve Alt Sinematik Karartma Maskeleri (Soft Alpha Fade)
+        top_fade = pygame.Surface((viewport.width, 45), pygame.SRCALPHA)
+        for i in range(45):
+            alpha = int(255 * (1.0 - (i / 45.0)))
+            pygame.draw.line(top_fade, (16, 10, 7, alpha), (0, i), (viewport.width, i))
+        self.pixel_surface.blit(top_fade, (viewport.x, viewport.y))
+
+        bot_fade = pygame.Surface((viewport.width, 45), pygame.SRCALPHA)
+        for i in range(45):
+            alpha = int(255 * (i / 45.0))
+            pygame.draw.line(bot_fade, (16, 10, 7, alpha), (0, i), (viewport.width, i))
+        self.pixel_surface.blit(bot_fade, (viewport.x, viewport.bottom - 45))
+
+        # Duraklatıldı Rozeti
+        if self.credits_paused:
+            pause_rect = pygame.Rect(viewport.centerx - 140, viewport.y + 12, 280, 28)
+            p_surf = pygame.Surface((pause_rect.width, pause_rect.height), pygame.SRCALPHA)
+            p_surf.fill((40, 25, 15, 230))
+            self.pixel_surface.blit(p_surf, (pause_rect.x, pause_rect.y))
+            pygame.draw.rect(self.pixel_surface, GOLD, pause_rect, 1, border_radius=6)
+            self._text_center("⏸ DURAKLATILDI (Tıkla / Boşluk)", self.font_tiny, GOLD_LT, pause_rect.centerx, pause_rect.y + 8)
+
+        # Alt Eylem Butonları Alanı Ayırıcı
+        self._draw_separator(box.x + 30, 604, box.right - 30)
+
+        # Buton 1: ERÜ Topluluk Kayıt Butonu (110 <= x <= 380, 615 <= y <= 670)
+        btn_reg = pygame.Rect(110, 615, 270, 48)
         b_reg_hover = btn_reg.collidepoint(mouse_pos)
         self._draw_panel(btn_reg, radius=10)
         pygame.draw.rect(self.pixel_surface, GOLD_LT if b_reg_hover else GOLD, btn_reg, 2, border_radius=10)
-        self._text_center("🌐 ERÜ Topluluk Kayıt", self.font_body_bold, GOLD_LT, btn_reg.centerx, btn_reg.y + 13)
+        self._text_center("🌐 ERÜ Topluluk Kayıt", self.font_body_bold, GOLD_LT if b_reg_hover else (255, 235, 175), btn_reg.centerx, btn_reg.y + 10)
+        self._text_center("kulup.erciyes.edu.tr/uyelik/uyeol", self.font_tiny, TEXT_DIM, btn_reg.centerx, btn_reg.y + 30)
 
-        # Buton 2: Tabîb Ekmeleddin PDF İndir Butonu
-        btn_pdf = pygame.Rect(box.x + 360, box.bottom - 98, 300, 46)
+        # Buton 2: Tabîb Ekmeleddin PDF İndir Butonu (410 <= x <= 710, 615 <= y <= 670)
+        btn_pdf = pygame.Rect(410, 615, 300, 48)
         b_pdf_hover = btn_pdf.collidepoint(mouse_pos)
         self._draw_panel(btn_pdf, radius=10)
         pygame.draw.rect(self.pixel_surface, GOLD_LT if b_pdf_hover else GREEN, btn_pdf, 2, border_radius=10)
-        self._text_center("📥 Tabîb Ekmeleddin PDF İndir / Oku", self.font_body_bold, GOLD_LT if b_pdf_hover else GREEN_LT, btn_pdf.centerx, btn_pdf.y + 13)
+        self._text_center("📥 Tabîb Ekmeleddin PDF İndir", self.font_body_bold, GOLD_LT if b_pdf_hover else GREEN_LT, btn_pdf.centerx, btn_pdf.y + 10)
+        self._text_center("Tezhipli Biyografi & Tıp Risalesi", self.font_tiny, TEXT_DIM, btn_pdf.centerx, btn_pdf.y + 30)
 
-        # Buton 3: Kapat / Geri Dön
-        btn_close = pygame.Rect(box.x + 690, box.bottom - 98, 250, 46)
+        # Buton 3: Kapat / Geri Dön (740 <= x <= 990, 615 <= y <= 670)
+        btn_close = pygame.Rect(740, 615, 250, 48)
         b_close_hover = btn_close.collidepoint(mouse_pos)
         self._draw_panel(btn_close, radius=10)
         pygame.draw.rect(self.pixel_surface, RED_LT if b_close_hover else BORDER, btn_close, 2, border_radius=10)
-        self._text_center("◀ Kapat / Geri (ESC)", self.font_body_bold, TEXT, btn_close.centerx, btn_close.y + 13)
+        self._text_center("◀ Kapat / Geri (ESC)", self.font_body_bold, (255, 230, 220) if b_close_hover else TEXT, btn_close.centerx, btn_close.y + 15)
 
     def _spawn_particles(self, x: float, y: float,
                          color: tuple, count: int) -> None:
