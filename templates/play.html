@@ -722,6 +722,218 @@
       cursor: pointer;
     }
 
+    /* ── 1v1 Düello (Versus Mode) Stilleri ── */
+    .duel-opp-bar {
+      width: 100%;
+      max-width: 540px;
+      background: linear-gradient(135deg, #24140c, #160d08);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .duel-player-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .85rem;
+    }
+    .duel-player-box.you { color: var(--gold-lt); }
+    .duel-player-box.opp { color: #d0a080; }
+    .duel-emblem { font-size: 1.1rem; }
+    .duel-name { font-weight: 700; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .duel-stars { color: var(--gold); letter-spacing: 2px; font-size: .88rem; }
+    .duel-vs-badge {
+      background: #3d2014;
+      border: 1px solid var(--gold);
+      border-radius: 10px;
+      color: var(--gold-lt);
+      font-size: .65rem;
+      font-weight: 800;
+      padding: 2px 7px;
+    }
+    .duel-progress-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-top: 3px;
+    }
+    .duel-track {
+      width: 100%;
+      height: 7px;
+      background: #140d09;
+      border: 1px solid #4a2818;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .duel-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #c84b3c, #f0c86e);
+      transition: width .2s ease-out;
+    }
+    .duel-track-label {
+      font-size: .65rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    /* Sersemleme Uyarısı */
+    .stun-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(40, 10, 8, 0.88);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: stun-pulse .4s infinite alternate;
+    }
+    @keyframes stun-pulse {
+      from { box-shadow: inset 0 0 40px rgba(220, 40, 30, 0.6); }
+      to   { box-shadow: inset 0 0 100px rgba(255, 60, 40, 0.95); }
+    }
+    .stun-box {
+      background: #1c0d08;
+      border: 2px solid var(--red-lt);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      max-width: 320px;
+      box-shadow: 0 0 30px rgba(235, 80, 60, 0.6);
+    }
+    .stun-bolt { font-size: 2.8rem; animation: stun-spin .6s ease-in-out infinite alternate; }
+    @keyframes stun-spin {
+      from { transform: scale(1) rotate(-8deg); }
+      to   { transform: scale(1.15) rotate(8deg); }
+    }
+    .stun-heading { font-size: 1.3rem; font-weight: 800; color: var(--red-lt); margin: 6px 0; }
+    .stun-msg { font-size: .78rem; color: #f0d0c8; line-height: 1.4; }
+
+    /* Düello Lobisi */
+    .duel-card {
+      max-width: 380px;
+    }
+    .lobby-section {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      text-align: left;
+    }
+    .lobby-label {
+      font-size: .70rem;
+      color: var(--gold-lt);
+      font-weight: 600;
+    }
+    .lobby-input {
+      background: #120b07;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--ink);
+      font-size: .88rem;
+      font-family: inherit;
+    }
+    .lobby-input:focus { outline: none; border-color: var(--gold); }
+    .emblem-selector {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+    .emblem-btn {
+      background: #1a100a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--ink);
+      padding: 6px 2px;
+      font-size: .68rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all .2s;
+    }
+    .emblem-btn.active {
+      background: #3d2414;
+      border-color: var(--gold);
+      color: var(--gold-lt);
+      transform: translateY(-2px);
+      box-shadow: 0 0 10px rgba(212, 168, 72, 0.35);
+    }
+    .opponent-lobby-card {
+      background: #140d09;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .opp-lobby-info { display: flex; align-items: center; gap: 5px; font-size: .78rem; }
+    .opp-lobby-label { color: var(--muted); }
+    .lobby-emblem-tag { font-size: .95rem; }
+    .opp-status-tag {
+      font-size: .65rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: rgba(160, 146, 120, 0.15);
+      color: var(--muted);
+      border: 1px solid rgba(160, 146, 120, 0.3);
+    }
+    .opp-status-tag.ready {
+      background: rgba(82, 185, 130, 0.2);
+      color: var(--green-lt);
+      border-color: var(--green);
+    }
+    .duel-ready-btn {
+      background: linear-gradient(135deg, #a84820, #682410);
+      border: 1px solid var(--gold);
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 800;
+      font-size: .92rem;
+      padding: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(212, 80, 40, 0.35);
+      transition: all .2s;
+    }
+    .duel-ready-btn.ready {
+      background: linear-gradient(135deg, #247545, #144828);
+      border-color: var(--green-lt);
+      box-shadow: 0 4px 15px rgba(82, 185, 130, 0.4);
+    }
+    .duel-ready-btn:active { transform: scale(0.97); }
+    .duel-tip {
+      font-size: .68rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.35;
+    }
+    .duel-match-card {
+      text-align: center;
+      padding: 24px 18px;
+    }
+    .duel-trophy-icon { font-size: 3.2rem; margin-bottom: 6px; }
+    .duel-score-pill {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 18px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--gold-lt);
+      background: #190f08;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -751,6 +963,27 @@
     </div>
   </div>
 </header>
+
+<!-- 1v1 Düello Rakip İlerleme Çubuğu -->
+<div id="duelOpponentBar" class="duel-opp-bar hidden">
+  <div class="duel-player-box you">
+    <span class="duel-emblem" id="myDuelEmblem">☿</span>
+    <span class="duel-name" id="myDuelName">Sen</span>
+    <span class="duel-stars" id="myDuelStars">☆☆☆</span>
+  </div>
+  <div class="duel-vs-badge">VS</div>
+  <div class="duel-player-box opp">
+    <span class="duel-stars" id="oppDuelStars">☆☆☆</span>
+    <span class="duel-name" id="oppDuelName">Rakip</span>
+    <span class="duel-emblem" id="oppDuelEmblem">🜍</span>
+  </div>
+  <div class="duel-progress-container">
+    <div class="duel-track">
+      <div id="duelOppFill" class="duel-fill" style="width: 0%"></div>
+    </div>
+    <span id="duelOppStatusText" class="duel-track-label">Rakip: 0/0</span>
+  </div>
+</div>
 
 <div class="recipe-banner hidden" id="recipeBanner">
   <span class="recipe-icon">🏺</span>
@@ -873,6 +1106,74 @@
   </div>
 </div>
 
+<!-- Sersemleme Uyarısı -->
+<div id="stunOverlay" class="stun-overlay hidden">
+  <div class="stun-box">
+    <div class="stun-bolt">⚡</div>
+    <div class="stun-heading">SERSEMLEDİN!</div>
+    <div class="stun-msg">Yanlış malzeme seçildi! Sıranız sıfırlandı ve 1.2 saniye bekletiliyorsunuz.</div>
+  </div>
+</div>
+
+<!-- Düello Lobisi Modalı -->
+<div id="duelLobbyModal" class="modal-backdrop hidden">
+  <div class="modal-card duel-card">
+    <div class="modal-header">
+      <div>
+        <span class="modal-badge">⚔️ 1v1 ÇIRAK DÜELLOSU</span>
+        <h2 style="font-size: 1.15rem; color: var(--gold-lt);">Simya Meydanı</h2>
+        <span class="modal-sub">Ebû Bekir er-Râzî'nin huzurunda yarış</span>
+      </div>
+    </div>
+    <div class="modal-body" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+      <div class="lobby-section">
+        <label for="duelNickname" class="lobby-label">Çırak Adın:</label>
+        <input type="text" id="duelNickname" maxlength="16" placeholder="İsmini gir..." class="lobby-input">
+      </div>
+
+      <div class="lobby-section">
+        <span class="lobby-label">Simya Amblemin:</span>
+        <div class="emblem-selector" id="emblemSelector">
+          <button type="button" class="emblem-btn active" data-emblem="☿"><span>☿</span><span>Cıva</span></button>
+          <button type="button" class="emblem-btn" data-emblem="🜍"><span>🜍</span><span>Kükürt</span></button>
+          <button type="button" class="emblem-btn" data-emblem="♂"><span>♂</span><span>Demir</span></button>
+          <button type="button" class="emblem-btn" data-emblem="🜚"><span>🜚</span><span>Altın</span></button>
+          <button type="button" class="emblem-btn" data-emblem="☾"><span>☾</span><span>Gümüş</span></button>
+        </div>
+      </div>
+
+      <div class="opponent-lobby-card" id="opponentLobbyCard">
+        <div class="opp-lobby-info">
+          <span class="opp-lobby-label">Rakip:</span>
+          <strong id="lobbyOppName" style="color: var(--ink);">Bekleniyor...</strong>
+          <span id="lobbyOppEmblem" class="lobby-emblem-tag">⏳</span>
+        </div>
+        <div id="lobbyOppStatus" class="opp-status-tag">Bekleniyor...</div>
+      </div>
+
+      <button type="button" id="duelReadyBtn" class="duel-ready-btn">
+        ⚔️ DÜELLOYA HAZIRIM!
+      </button>
+      <div class="duel-tip">
+        🎯 İlk 3 raundu kazanan çırak Kitâbü'l-Esrâr'ın şampiyonu olur!
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Düello Maç Sonu Modalı -->
+<div id="duelMatchOverModal" class="modal-backdrop hidden">
+  <div class="modal-card duel-card duel-match-card">
+    <div class="duel-trophy-icon" id="duelResultTrophy">🏆</div>
+    <h2 id="duelMatchTitle" style="font-size: 1.3rem; color: var(--gold-lt);">DÜELLO ZAFERİ!</h2>
+    <p id="duelMatchSub" style="font-size: .82rem; color: var(--ink); margin-top: 4px;">Ebû Bekir er-Râzî'nin takdirini kazandın!</p>
+    <div class="duel-score-pill" id="duelFinalScoreDisplay">3 — 1</div>
+    <button type="button" id="duelRematchBtn" class="duel-ready-btn" style="margin-top: 14px;">
+      ⚔️ Yeniden Düello Yap
+    </button>
+  </div>
+</div>
+
 <script>
   const roomId            = {{ room_id|tojson }};
   const statusEl          = document.getElementById('status');
@@ -916,6 +1217,49 @@
   const saveScoreBtn      = document.getElementById('saveScoreBtn');
   const saveStatusMsg     = document.getElementById('saveStatusMsg');
   const modalResetBtn     = document.getElementById('modalResetBtn');
+
+  // ── Düello (Versus Mode) Elemanları ──
+  const duelOpponentBar       = document.getElementById('duelOpponentBar');
+  const myDuelEmblem          = document.getElementById('myDuelEmblem');
+  const myDuelName            = document.getElementById('myDuelName');
+  const myDuelStars           = document.getElementById('myDuelStars');
+  const oppDuelStars          = document.getElementById('oppDuelStars');
+  const oppDuelName           = document.getElementById('oppDuelName');
+  const oppDuelEmblem         = document.getElementById('oppDuelEmblem');
+  const duelOppFill           = document.getElementById('duelOppFill');
+  const duelOppStatusText     = document.getElementById('duelOppStatusText');
+
+  const stunOverlay           = document.getElementById('stunOverlay');
+  const duelLobbyModal        = document.getElementById('duelLobbyModal');
+  const duelNickname          = document.getElementById('duelNickname');
+  const emblemSelector        = document.getElementById('emblemSelector');
+  const lobbyOppName          = document.getElementById('lobbyOppName');
+  const lobbyOppEmblem        = document.getElementById('lobbyOppEmblem');
+  const lobbyOppStatus        = document.getElementById('lobbyOppStatus');
+  const duelReadyBtn          = document.getElementById('duelReadyBtn');
+
+  const duelMatchOverModal    = document.getElementById('duelMatchOverModal');
+  const duelResultTrophy      = document.getElementById('duelResultTrophy');
+  const duelMatchTitle        = document.getElementById('duelMatchTitle');
+  const duelMatchSub          = document.getElementById('duelMatchSub');
+  const duelFinalScoreDisplay = document.getElementById('duelFinalScoreDisplay');
+  const duelRematchBtn        = document.getElementById('duelRematchBtn');
+
+  // Düello Durumu
+  let myPlayerId    = 'player_1';
+  let myPlayerNum   = 1;
+  let myEmblem      = '☿';
+  let myName        = localStorage.getItem('razi_nickname') || 'Çırak';
+  let myReady       = false;
+  let isDuelMode    = false;
+  let isStunned     = false;
+  let stunTimeoutId = null;
+  let myDuelScore   = 0;
+  let oppDuelScore  = 0;
+
+  if (duelNickname) {
+    duelNickname.value = myName;
+  }
 
   let elementsList   = [];
   let elementsMap    = {};
@@ -1203,6 +1547,7 @@
 
   function sendButton(matId, btn, cat) {
     if (gridEl.classList.contains('disabled')) return;
+    if (isStunned) return;
     btn.classList.remove('pressed');
     void btn.offsetWidth;
     btn.classList.add('pressed');
@@ -1374,6 +1719,109 @@
     }
   });
 
+  // ── Düello Lobisi & Yıldız Fonksiyonları ──
+  function renderDuelStars(mine, opp) {
+    let sMine = '';
+    for (let i = 0; i < 3; i++) sMine += (i < mine ? '★' : '☆');
+    let sOpp = '';
+    for (let i = 0; i < 3; i++) sOpp += (i < opp ? '★' : '☆');
+    if (myDuelStars) myDuelStars.textContent = sMine;
+    if (oppDuelStars) oppDuelStars.textContent = sOpp;
+  }
+
+  // Amblem Seçimi
+  if (emblemSelector) {
+    emblemSelector.querySelectorAll('.emblem-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        emblemSelector.querySelectorAll('.emblem-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        myEmblem = btn.dataset.emblem;
+        if (myDuelEmblem) myDuelEmblem.textContent = myEmblem;
+        playTone(620, 'sine', 0.1, 0.1);
+        sendLobbyUpdate();
+      });
+    });
+  }
+
+  // Çırak Adı Değişimi
+  if (duelNickname) {
+    duelNickname.addEventListener('change', () => {
+      myName = duelNickname.value.trim() || ('Çırak ' + myPlayerNum);
+      localStorage.setItem('razi_nickname', myName);
+      if (myDuelName) myDuelName.textContent = myName;
+      sendLobbyUpdate();
+    });
+  }
+
+  function sendLobbyUpdate() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: 'join_lobby',
+        name: myName,
+        emblem: myEmblem,
+      }));
+    }
+  }
+
+  // Hazırım Butonu
+  if (duelReadyBtn) {
+    duelReadyBtn.addEventListener('click', () => {
+      myReady = !myReady;
+      if (myReady) {
+        duelReadyBtn.textContent = '✅ HAZIRSIN (Rakip Bekleniyor)';
+        duelReadyBtn.classList.add('ready');
+        playVictoryChime();
+      } else {
+        duelReadyBtn.textContent = '⚔️ DÜELLOYA HAZIRIM!';
+        duelReadyBtn.classList.remove('ready');
+        playTone(400, 'sine', 0.1, 0.1);
+      }
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          type: 'player_ready',
+          ready: myReady,
+        }));
+      }
+    });
+  }
+
+  // Yeniden Düello Butonu
+  if (duelRematchBtn) {
+    duelRematchBtn.addEventListener('click', () => {
+      if (duelMatchOverModal) duelMatchOverModal.classList.add('hidden');
+      if (duelLobbyModal) duelLobbyModal.classList.remove('hidden');
+      myReady = false;
+      if (duelReadyBtn) {
+        duelReadyBtn.textContent = '⚔️ DÜELLOYA HAZIRIM!';
+        duelReadyBtn.classList.remove('ready');
+      }
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ button: 'rematch' }));
+      }
+    });
+  }
+
+  function updateOpponentLobbyInfo(players) {
+    if (!players) return;
+    const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
+    const other = players[otherId];
+    if (other) {
+      if (lobbyOppName) lobbyOppName.textContent = other.name || 'Çırak 2';
+      if (lobbyOppEmblem) lobbyOppEmblem.textContent = other.emblem || '🜍';
+      if (oppDuelName) oppDuelName.textContent = other.name || 'Rakip';
+      if (oppDuelEmblem) oppDuelEmblem.textContent = other.emblem || '🜍';
+      if (lobbyOppStatus) {
+        if (other.ready) {
+          lobbyOppStatus.textContent = 'HAZIR ✓';
+          lobbyOppStatus.classList.add('ready');
+        } else {
+          lobbyOppStatus.textContent = 'Bekleniyor... ⏳';
+          lobbyOppStatus.classList.remove('ready');
+        }
+      }
+    }
+  }
+
   // ── WebSocket ──
   const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
   const socket   = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
@@ -1381,6 +1829,7 @@
   socket.addEventListener('open', () => {
     statusEl.textContent = 'Ebû Bekir er-Râzî bekleniyor…';
     statusEl.className   = 'status';
+    sendLobbyUpdate();
   });
 
   socket.addEventListener('close', () => {
@@ -1393,6 +1842,71 @@
   socket.addEventListener('message', event => {
     const msg = JSON.parse(event.data);
 
+    // ── Bağlantı & Lobi Mesajları ──
+    if (msg.type === 'connected') {
+      myPlayerId  = msg.player_id || 'player_1';
+      myPlayerNum = msg.player_num || 1;
+      if (!localStorage.getItem('razi_nickname')) {
+        myName = `Çırak ${myPlayerNum}`;
+        if (duelNickname) duelNickname.value = myName;
+      }
+      myEmblem = myPlayerId === 'player_1' ? '☿' : '🜍';
+      if (emblemSelector) {
+        emblemSelector.querySelectorAll('.emblem-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.emblem === myEmblem);
+        });
+      }
+      if (myDuelName) myDuelName.textContent = myName;
+      if (myDuelEmblem) myDuelEmblem.textContent = myEmblem;
+      sendLobbyUpdate();
+
+      if (msg.player_count >= 2) {
+        isDuelMode = true;
+        if (duelLobbyModal) duelLobbyModal.classList.remove('hidden');
+        updateOpponentLobbyInfo(msg.players);
+      }
+    }
+
+    if (msg.type === 'opponent_joined' || msg.type === 'player_connected') {
+      if (msg.player_count >= 2) {
+        isDuelMode = true;
+        if (duelLobbyModal) duelLobbyModal.classList.remove('hidden');
+        updateOpponentLobbyInfo(msg.players);
+        playTone(700, 'sine', 0.15, 0.1);
+      }
+    }
+
+    if (msg.type === 'opponent_updated' || msg.type === 'player_updated') {
+      updateOpponentLobbyInfo(msg.players);
+    }
+
+    if (msg.type === 'opponent_ready' || msg.type === 'player_ready') {
+      updateOpponentLobbyInfo(msg.players);
+      if (msg.ready) playTone(880, 'triangle', 0.12, 0.12);
+    }
+
+    if (msg.type === 'opponent_left') {
+      isDuelMode = false;
+      if (duelLobbyModal) duelLobbyModal.classList.add('hidden');
+      if (duelOpponentBar) duelOpponentBar.classList.add('hidden');
+      statusEl.textContent = 'Rakip ayrıldı. Tek kişilik moda dönüldü.';
+      statusEl.className = 'status';
+      if (lobbyOppName) lobbyOppName.textContent = 'Bekleniyor...';
+      if (lobbyOppStatus) {
+        lobbyOppStatus.textContent = 'Bekleniyor...';
+        lobbyOppStatus.classList.remove('ready');
+      }
+    }
+
+    if (msg.type === 'mode_changed') {
+      if (msg.mode === 'single') {
+        isDuelMode = false;
+        if (duelLobbyModal) duelLobbyModal.classList.add('hidden');
+        if (duelOpponentBar) duelOpponentBar.classList.add('hidden');
+      }
+    }
+
+    // ── Oyun Turu Mesajları ──
     if (msg.type === 'round_started') {
       statusEl.textContent = 'Ebû Bekir er-Râzî hazırlanıyor… (İzle)';
       statusEl.className   = 'status';
@@ -1400,6 +1914,22 @@
       timerWrap.classList.remove('visible');
       resetBtn.classList.remove('visible');
       gameOverModal.classList.add('hidden');
+      if (duelLobbyModal) duelLobbyModal.classList.add('hidden');
+      if (duelMatchOverModal) duelMatchOverModal.classList.add('hidden');
+
+      if (msg.mode === 'duel') {
+        isDuelMode = true;
+        if (duelOpponentBar) duelOpponentBar.classList.remove('hidden');
+        myDuelScore = (msg.duel_scores && msg.duel_scores[myPlayerId]) || 0;
+        const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
+        oppDuelScore = (msg.duel_scores && msg.duel_scores[otherId]) || 0;
+        renderDuelStars(myDuelScore, oppDuelScore);
+        if (duelOppFill) duelOppFill.style.width = '0%';
+        if (duelOppStatusText) duelOppStatusText.textContent = 'Rakip: 0';
+      } else {
+        isDuelMode = false;
+        if (duelOpponentBar) duelOpponentBar.classList.add('hidden');
+      }
 
       if (msg.lives !== undefined) updateLives(msg.lives);
       if (msg.combo !== undefined) updateCombo(msg.combo);
@@ -1425,7 +1955,7 @@
     }
 
     if (msg.type === 'player_turn') {
-      statusEl.textContent = 'Sıra Sende! Malzemeleri seç.';
+      statusEl.textContent = isDuelMode ? '⚔️ Hızlı Ol! Sırayı ilk tamamlayan kazanır!' : 'Sıra Sende! Malzemeleri seç.';
       statusEl.className   = 'status ready';
       gridEl.classList.remove('disabled');
       timerTotal = msg.total || 0;
@@ -1434,6 +1964,101 @@
 
     if (msg.type === 'timer_tick') {
       updateTimer(msg.remaining, msg.total);
+    }
+
+    // ── Düello İlerleme & Hata Bildirimleri ──
+    if (msg.type === 'duel_progress') {
+      if (msg.player_id !== myPlayerId) {
+        const pct = msg.total > 0 ? (msg.cursor / msg.total * 100).toFixed(1) : 0;
+        if (duelOppFill) duelOppFill.style.width = pct + '%';
+        if (duelOppStatusText) duelOppStatusText.textContent = `Rakip: ${msg.cursor}/${msg.total}`;
+        playBubbleTone(450, 520, 0.06);
+      }
+    }
+
+    if (msg.type === 'stunned') {
+      if (msg.target === myPlayerId || msg.player_id === myPlayerId) {
+        isStunned = true;
+        if (stunOverlay) stunOverlay.classList.remove('hidden');
+        playFlaskCrack();
+        if (navigator.vibrate) navigator.vibrate([120, 60, 160]);
+        if (stunTimeoutId) clearTimeout(stunTimeoutId);
+        const dur = (msg.duration || 1.2) * 1000;
+        stunTimeoutId = setTimeout(() => {
+          isStunned = false;
+          if (stunOverlay) stunOverlay.classList.add('hidden');
+        }, dur);
+      }
+    }
+
+    if (msg.type === 'opponent_mistake') {
+      statusEl.textContent = msg.message || 'Rakip hata yaptı ve sersemledi! Acele et!';
+      statusEl.className = 'status ready';
+      playTone(280, 'sawtooth', 0.15, 0.1);
+    }
+
+    if (msg.type === 'duel_round_won') {
+      const isWinner = msg.winner_id === myPlayerId;
+      if (isWinner) {
+        playVictoryChime();
+        statusEl.textContent = '⭐ Tebrikler! Bu raundu sen kazandın!';
+        statusEl.className = 'status ready';
+        if (navigator.vibrate) navigator.vibrate([80, 40, 120]);
+      } else {
+        playFlaskCrack();
+        statusEl.textContent = `Rauntu ${msg.winner_name || 'Rakip'} kazandı!`;
+        statusEl.className = 'status error';
+      }
+      if (msg.scores) {
+        myDuelScore = msg.scores[myPlayerId] || 0;
+        const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
+        oppDuelScore = msg.scores[otherId] || 0;
+        renderDuelStars(myDuelScore, oppDuelScore);
+      }
+    }
+
+    if (msg.type === 'duel_round_draw') {
+      statusEl.textContent = 'Raunt berabere sonuçlandı!';
+      statusEl.className = 'status';
+      playTone(440, 'triangle', 0.2, 0.1);
+    }
+
+    if (msg.type === 'duel_match_over') {
+      const isMatchWinner = msg.winner_id === myPlayerId;
+      if (duelMatchTitle) {
+        duelMatchTitle.textContent = isMatchWinner ? '🏆 DÜELLO ZAFERİ!' : '💀 DÜELLO YENİLGİSİ';
+        duelMatchTitle.style.color = isMatchWinner ? 'var(--gold-lt)' : 'var(--red-lt)';
+      }
+      if (duelResultTrophy) duelResultTrophy.textContent = isMatchWinner ? '🏆' : '🕯️';
+      if (duelMatchSub) {
+        duelMatchSub.textContent = isMatchWinner
+          ? 'Muazzam! Ebû Bekir er-Râzî seni Kitâbü\'l-Esrâr\'ın yeni üstadı ilan etti!'
+          : `${msg.winner_name || 'Rakip'} 3 raunt kazanarak şampiyon oldu. Pes etme!`;
+      }
+      const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
+      const sMine = (msg.scores && msg.scores[myPlayerId]) || 0;
+      const sOpp = (msg.scores && msg.scores[otherId]) || 0;
+      if (duelFinalScoreDisplay) duelFinalScoreDisplay.textContent = `${sMine}  —  ${sOpp}`;
+      if (duelMatchOverModal) duelMatchOverModal.classList.remove('hidden');
+      if (isMatchWinner) {
+        playMilestoneFanfare();
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 250]);
+      } else {
+        playFlaskCrack();
+      }
+    }
+
+    if (msg.type === 'duel_lobby_reset') {
+      if (duelMatchOverModal) duelMatchOverModal.classList.add('hidden');
+      if (duelLobbyModal) duelLobbyModal.classList.remove('hidden');
+      myReady = false;
+      if (duelReadyBtn) {
+        duelReadyBtn.textContent = '⚔️ DÜELLOYA HAZIRIM!';
+        duelReadyBtn.classList.remove('ready');
+      }
+      myDuelScore = 0;
+      oppDuelScore = 0;
+      renderDuelStars(0, 0);
     }
 
     if (msg.type === 'round_success') {

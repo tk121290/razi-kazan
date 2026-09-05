@@ -74,7 +74,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
-# room_id → {"desktop": WebSocket | None, "mobile": set[WebSocket]}
+# room_id → {"desktop": WebSocket | None, "players": dict[str, dict], "sockets": dict[WebSocket, str]}
 rooms: dict[str, dict[str, Any]] = {}
 
 
@@ -88,8 +88,19 @@ async def safe_send(ws: WebSocket, message: dict[str, Any]) -> None:
 
 
 async def broadcast_mobile(room: dict, message: dict[str, Any]) -> None:
-    for mobile in list(room.get("mobile", [])):
-        await safe_send(mobile, message)
+    target = message.get("target")
+    players = room.get("players", {})
+    if target and target in players:
+        ws = players[target].get("ws")
+        if ws:
+            await safe_send(ws, message)
+        return
+
+    # Broadcast to all players in room
+    for p_info in list(players.values()):
+        ws = p_info.get("ws")
+        if ws:
+            await safe_send(ws, message)
 
 
 # ── Statik sayfalar ───────────────────────────────────────────────────────────
@@ -380,7 +391,7 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
             log.warning("Max active rooms reached (%d). Rejecting %s", MAX_ACTIVE_ROOMS, clean_id)
             await websocket.close(code=4002)
             return
-        rooms[clean_id] = {"desktop": None, "mobile": set()}
+        rooms[clean_id] = {"desktop": None, "players": {}, "sockets": {}}
 
     await websocket.accept()
     room = rooms[clean_id]
@@ -394,25 +405,63 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
         await safe_send(websocket, {"type": "desktop_connected", "room_id": clean_id})
 
     else:  # mobile
-        mobile_set = room["mobile"]
-        assert isinstance(mobile_set, set)
+        players = room.setdefault("players", {})
+        sockets = room.setdefault("sockets", {})
 
-        if mobile_set:
-            log.info("Extra mobile rejected — room %s already has a player", clean_id)
+        # 2 oyuncu sınırı (Çırak 1 ve Çırak 2)
+        if "player_1" not in players:
+            assigned_id = "player_1"
+        elif "player_2" not in players:
+            assigned_id = "player_2"
+        else:
+            log.info("Room %s is full (max 2 players)", clean_id)
             await safe_send(websocket, {
                 "type": "error",
-                "message": "Bu odada zaten bir oyuncu var.",
+                "message": "Bu oda dolu (Maksimum 2 çırak düellosu).",
             })
             await websocket.close(code=4001)
             return
 
-        mobile_set.add(websocket)
-        log.info("Mobile connected — room %s", clean_id)
+        players[assigned_id] = {
+            "ws": websocket,
+            "name": f"Çırak {1 if assigned_id == 'player_1' else 2}",
+            "emblem": "☿" if assigned_id == "player_1" else "🜍",
+            "ready": False,
+        }
+        sockets[websocket] = assigned_id
+        player_num = 1 if assigned_id == "player_1" else 2
+        log.info("Mobile %s connected as %s — room %s", assigned_id, players[assigned_id]["name"], clean_id)
 
-        desktop = room["desktop"]
+        desktop = room.get("desktop")
+        player_summary = {pid: {"name": p["name"], "emblem": p["emblem"], "ready": p["ready"]} for pid, p in players.items()}
         if isinstance(desktop, WebSocket):
-            await safe_send(desktop, {"type": "player_connected"})
-        await safe_send(websocket, {"type": "connected", "room_id": clean_id})
+            await safe_send(desktop, {
+                "type": "player_connected",
+                "player_id": assigned_id,
+                "player_num": player_num,
+                "player_count": len(players),
+                "players": player_summary,
+            })
+
+        await safe_send(websocket, {
+            "type": "connected",
+            "room_id": clean_id,
+            "player_id": assigned_id,
+            "player_num": player_num,
+            "player_count": len(players),
+            "players": player_summary,
+        })
+
+        # Diğer bağlı oyuncuya yeni rakibi bildir
+        for other_id, other_p in players.items():
+            if other_id != assigned_id and other_p.get("ws"):
+                await safe_send(other_p["ws"], {
+                    "type": "opponent_joined",
+                    "player_id": assigned_id,
+                    "player_num": player_num,
+                    "player_count": len(players),
+                    "players": player_summary,
+                })
 
     # Mesaj işleme döngüsü (Rate limiting & Type validation)
     msg_timestamps: list[float] = []
@@ -436,12 +485,71 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
 
             desktop = room.get("desktop")
             if role != "desktop":
+                p_id = room.get("sockets", {}).get(websocket, "player_1")
+                msg_type = message.get("type")
+
+                # 1. Buton basımı
                 btn = message.get("button")
                 if btn is not None:
                     btn_str = str(btn).strip().lower()
                     if VALID_BUTTON_PATTERN.match(btn_str):
                         if isinstance(desktop, WebSocket):
-                            await safe_send(desktop, {"type": "button", "button": btn_str})
+                            await safe_send(desktop, {
+                                "type": "button",
+                                "player_id": p_id,
+                                "button": btn_str,
+                            })
+
+                # 2. Lobi isim/amblem güncellemesi
+                elif msg_type == "join_lobby":
+                    name_raw = str(message.get("name", "")).strip()
+                    name = re.sub(r"[^\w\s\-çğıöşüÇĞİÖŞÜ]", "", name_raw)[:20].strip() or f"Çırak {1 if p_id == 'player_1' else 2}"
+                    emblem = str(message.get("emblem", "☿"))[:4]
+                    if p_id in room.get("players", {}):
+                        room["players"][p_id]["name"] = name
+                        room["players"][p_id]["emblem"] = emblem
+
+                    player_summary = {pid: {"name": p["name"], "emblem": p["emblem"], "ready": p["ready"]} for pid, p in room["players"].items()}
+                    if isinstance(desktop, WebSocket):
+                        await safe_send(desktop, {
+                            "type": "player_updated",
+                            "player_id": p_id,
+                            "name": name,
+                            "emblem": emblem,
+                            "players": player_summary,
+                        })
+                    for other_id, other_p in room["players"].items():
+                        if other_id != p_id and other_p.get("ws"):
+                            await safe_send(other_p["ws"], {
+                                "type": "opponent_updated",
+                                "player_id": p_id,
+                                "name": name,
+                                "emblem": emblem,
+                                "players": player_summary,
+                            })
+
+                # 3. Hazır durumu
+                elif msg_type == "player_ready":
+                    ready_val = bool(message.get("ready", True))
+                    if p_id in room.get("players", {}):
+                        room["players"][p_id]["ready"] = ready_val
+
+                    player_summary = {pid: {"name": p["name"], "emblem": p["emblem"], "ready": p["ready"]} for pid, p in room["players"].items()}
+                    if isinstance(desktop, WebSocket):
+                        await safe_send(desktop, {
+                            "type": "player_ready",
+                            "player_id": p_id,
+                            "ready": ready_val,
+                            "players": player_summary,
+                        })
+                    for other_id, other_p in room["players"].items():
+                        if other_id != p_id and other_p.get("ws"):
+                            await safe_send(other_p["ws"], {
+                                "type": "opponent_ready",
+                                "player_id": p_id,
+                                "ready": ready_val,
+                                "players": player_summary,
+                            })
             else:
                 await broadcast_mobile(room, message)
 
@@ -453,15 +561,30 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
                 room["desktop"] = None
                 log.info("Desktop disconnected — room %s", clean_id)
         else:
-            mobile_set = room.get("mobile", set())
-            if isinstance(mobile_set, set):
-                mobile_set.discard(websocket)
-            log.info("Mobile disconnected — room %s", clean_id)
+            p_id = room.get("sockets", {}).pop(websocket, None)
+            if p_id and "players" in room:
+                room["players"].pop(p_id, None)
+            log.info("Mobile %s disconnected — room %s", p_id, clean_id)
             desktop = room.get("desktop")
+            rem_players = room.get("players", {})
+            player_summary = {pid: {"name": p["name"], "emblem": p["emblem"], "ready": p["ready"]} for pid, p in rem_players.items()}
             if isinstance(desktop, WebSocket):
-                await safe_send(desktop, {"type": "player_disconnected"})
+                await safe_send(desktop, {
+                    "type": "player_disconnected",
+                    "player_id": p_id,
+                    "player_count": len(rem_players),
+                    "players": player_summary,
+                })
+            for rem_id, rem_p in rem_players.items():
+                if rem_p.get("ws"):
+                    await safe_send(rem_p["ws"], {
+                        "type": "opponent_left",
+                        "player_id": p_id,
+                        "player_count": len(rem_players),
+                        "players": player_summary,
+                    })
 
         # Boşalan odayı temizle
-        if room.get("desktop") is None and not room.get("mobile"):
+        if room.get("desktop") is None and not room.get("players"):
             rooms.pop(clean_id, None)
             log.info("Room %s cleaned up", clean_id)
