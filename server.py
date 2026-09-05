@@ -38,12 +38,20 @@ async def lifespan(app: FastAPI):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("""
             CREATE TABLE IF NOT EXISTS scores (
-                id      INTEGER PRIMARY KEY AUTOINCREMENT,
-                level   INTEGER NOT NULL,
-                room_id TEXT    DEFAULT '',
-                ts      INTEGER NOT NULL
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_name TEXT    DEFAULT 'Simyacı',
+                level       INTEGER NOT NULL,
+                max_combo   INTEGER DEFAULT 0,
+                room_id     TEXT    DEFAULT '',
+                ts          INTEGER NOT NULL
             )
         """)
+        cursor = await db.execute("PRAGMA table_info(scores)")
+        cols = [c[1] for c in await cursor.fetchall()]
+        if "player_name" not in cols:
+            await db.execute("ALTER TABLE scores ADD COLUMN player_name TEXT DEFAULT 'Simyacı'")
+        if "max_combo" not in cols:
+            await db.execute("ALTER TABLE scores ADD COLUMN max_combo INTEGER DEFAULT 0")
         await db.commit()
     log.info("Database ready: %s", DB_PATH)
     yield
@@ -177,14 +185,24 @@ async def post_score(request: Request) -> JSONResponse:
             return JSONResponse({"ok": False, "error": "Geçersiz oda kodu formatı"}, status_code=400)
         room_id = room_raw
 
+        # Simyacı adı doğrulama ve temizleme
+        player_name_raw = str(payload.get("player_name", "Simyacı")).strip()
+        player_name = re.sub(r"[^\w\s\-çğıöşüÇĞİÖŞÜ]", "", player_name_raw)[:24].strip()
+        if not player_name:
+            player_name = "Simyacı"
+
+        # Kombo rekoru
+        max_combo_raw = payload.get("max_combo", 0)
+        max_combo = int(max_combo_raw) if isinstance(max_combo_raw, (int, float)) and 0 <= max_combo_raw <= 200 else 0
+
         ts = int(time.time())
         async with aiosqlite.connect(DB_PATH) as db:
             await db.execute(
-                "INSERT INTO scores (level, room_id, ts) VALUES (?, ?, ?)",
-                (level, room_id, ts),
+                "INSERT INTO scores (player_name, level, max_combo, room_id, ts) VALUES (?, ?, ?, ?, ?)",
+                (player_name, level, max_combo, room_id, ts),
             )
             await db.commit()
-        log.info("Score saved: level=%d room=%s", level, room_id)
+        log.info("Score saved: player=%s level=%d combo=%d room=%s", player_name, level, max_combo, room_id)
         return JSONResponse({"ok": True})
     except Exception as e:
         log.error("Score save error: %s", e)
@@ -197,19 +215,28 @@ async def get_scores() -> list[dict]:
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
-            "SELECT level, room_id, ts FROM scores ORDER BY level DESC, ts DESC LIMIT 50"
+            "SELECT player_name, level, max_combo, room_id, ts FROM scores ORDER BY level DESC, max_combo DESC, ts DESC LIMIT 50"
         )
         rows = await cursor.fetchall()
     return [dict(r) for r in rows]
 
 
+def get_alchemical_title(lvl: int) -> str:
+    if lvl >= 100: return "İksir-i Âzam Üstadı 🌌"
+    if lvl >= 75:  return "Şeyhü'l-Etıbbâ 👑"
+    if lvl >= 50:  return "Büyük Hekim 📜"
+    if lvl >= 25:  return "Usta Simyager ⚗️"
+    if lvl >= 10:  return "Kalfa Tabip 🧪"
+    return "Çırak Simyacı 🕯️"
+
+
 @app.get("/leaderboard", response_class=HTMLResponse)
 async def leaderboard() -> HTMLResponse:
-    """Görsel liderlik tablosu (XSS korumalı)."""
+    """Görsel liderlik tablosu (XSS korumalı, unvanlı ve kombolu)."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
-            "SELECT level, room_id, ts FROM scores ORDER BY level DESC, ts DESC LIMIT 20"
+            "SELECT player_name, level, max_combo, room_id, ts FROM scores ORDER BY level DESC, max_combo DESC, ts DESC LIMIT 20"
         )
         rows = [dict(r) for r in await cursor.fetchall()]
         total_cur = await db.execute("SELECT COUNT(*) FROM scores")
@@ -223,13 +250,20 @@ async def leaderboard() -> HTMLResponse:
         ts_str = time.strftime("%d.%m %H:%M", time.localtime(row["ts"]))
         
         # Stored XSS koruması: html.escape
+        safe_name = html.escape(str(row["player_name"] or "Simyacı"))
         safe_room = html.escape(str(row["room_id"] or "—"))
         safe_level = int(row["level"])
+        safe_combo = int(row["max_combo"] or 0)
+        title = get_alchemical_title(safe_level)
+
+        combo_str = f"🔥 x{safe_combo}" if safe_combo >= 2 else "—"
 
         rows_html += f"""
         <tr class="{'top' if i < 3 else ''}">
           <td class="rank">{medal}</td>
+          <td class="player"><strong>{safe_name}</strong><small>{title}</small></td>
           <td class="level">{safe_level:02d}</td>
+          <td class="combo">{combo_str}</td>
           <td class="room">{safe_room}</td>
           <td class="time">{ts_str}</td>
         </tr>"""
@@ -253,7 +287,7 @@ async def leaderboard() -> HTMLResponse:
       min-height:100vh; background:var(--bg); color:var(--ink);
       font-family:Georgia,serif; padding:32px 16px;
     }}
-    .container {{ max-width:640px; margin:0 auto; }}
+    .container {{ max-width:720px; margin:0 auto; }}
     header {{ text-align:center; margin-bottom:32px; }}
     h1 {{ font-size:clamp(1.4rem,5vw,2rem); color:var(--gold); margin-bottom:6px; }}
     .subtitle {{ color:var(--muted); font-size:.9rem; }}
@@ -266,20 +300,23 @@ async def leaderboard() -> HTMLResponse:
       border-radius:12px; overflow:hidden;
     }}
     th {{
-      padding:12px 16px; text-align:left; font-size:.75rem;
+      padding:12px 14px; text-align:left; font-size:.72rem;
       letter-spacing:.1em; color:var(--muted);
       border-bottom:1px solid var(--border);
       background:#1a100a;
     }}
-    td {{ padding:12px 16px; border-bottom:1px solid #2a1a10; }}
+    td {{ padding:12px 14px; border-bottom:1px solid #2a1a10; }}
     tr:last-child td {{ border-bottom:none; }}
     tr.top td {{ color:var(--gold); }}
     tr:hover td {{ background:#2a1810; }}
-    .rank  {{ font-size:1.2rem; width:48px; }}
-    .level {{ font-size:1.6rem; font-weight:bold; width:72px; color:var(--gold); }}
+    .rank  {{ font-size:1.2rem; width:44px; }}
+    .player strong {{ display:block; font-size:.92rem; color:var(--ink); }}
+    .player small {{ display:block; font-size:.68rem; color:var(--gold); margin-top:1px; }}
+    .level {{ font-size:1.5rem; font-weight:bold; width:64px; color:var(--gold); }}
     tr.top .level {{ color:#f5d060; text-shadow:0 0 12px #f5d06066; }}
-    .room  {{ color:var(--muted); font-size:.85rem; }}
-    .time  {{ color:var(--muted); font-size:.78rem; white-space:nowrap; }}
+    .combo {{ font-size:.82rem; color:var(--gold); font-weight:bold; }}
+    .room  {{ color:var(--muted); font-size:.80rem; }}
+    .time  {{ color:var(--muted); font-size:.75rem; white-space:nowrap; }}
     .empty {{ text-align:center; padding:48px; color:var(--muted); font-style:italic; }}
     .refresh {{ text-align:center; margin-top:16px; font-size:.75rem; color:var(--muted); }}
     a {{ color:var(--gold); text-decoration:none; }}
@@ -297,13 +334,15 @@ async def leaderboard() -> HTMLResponse:
     <thead>
       <tr>
         <th>#</th>
+        <th>SİMYACI</th>
         <th>SEVİYE</th>
+        <th>KOMBO</th>
         <th>ODA</th>
         <th>ZAMAN</th>
       </tr>
     </thead>
     <tbody>
-      {'<tr><td colspan="4" class="empty">Henüz kayıt yok. İlk oyunu oyna!</td></tr>' if not rows else rows_html}
+      {'<tr><td colspan="6" class="empty">Henüz kayıt yok. İlk oyunu oyna!</td></tr>' if not rows else rows_html}
     </tbody>
   </table>
 

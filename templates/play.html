@@ -626,6 +626,102 @@
     .toast-title { font-size: .82rem; font-weight: 700; color: var(--gold-lt); }
     .toast-desc { font-size: .72rem; color: var(--ink); }
 
+    /* Ses Butonu */
+    .sound-btn {
+      background: #211810cc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--gold);
+      font-size: .85rem;
+      padding: 3px 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+    }
+    .sound-btn:active { transform: scale(0.92); }
+
+    /* Oyun Sonu Özet Modal'ı */
+    .summary-badge {
+      background: linear-gradient(145deg, #2c1a10, #180f08);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 8px;
+    }
+    .summary-level-label { font-size: .65rem; letter-spacing: .12em; color: var(--muted); }
+    .summary-level-val { font-size: 2.2rem; font-weight: 800; color: var(--gold-lt); text-shadow: 0 0 14px rgba(240, 200, 110, 0.4); }
+    .summary-title-val { font-size: .88rem; color: var(--gold); margin-top: 2px; }
+    .summary-stats { display: flex; gap: 8px; }
+    .summary-stat-box {
+      flex: 1;
+      background: #19100a;
+      border: 1px solid #3c2415;
+      border-radius: 8px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .stat-label { font-size: .58rem; color: var(--muted); }
+    .stat-val { font-size: 1.05rem; font-weight: 700; color: #fff8e8; }
+
+    .nickname-form {
+      text-align: left;
+      background: #19100a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 10px;
+    }
+    .nickname-label { font-size: .70rem; color: var(--gold-lt); display: block; margin-bottom: 5px; }
+    .nickname-input-group { display: flex; gap: 6px; }
+    .nickname-input-group input {
+      flex: 1;
+      background: #100a06;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: var(--ink);
+      font-size: .85rem;
+      font-family: inherit;
+    }
+    .nickname-input-group input:focus { outline: none; border-color: var(--gold); }
+    .save-score-btn {
+      background: var(--gold);
+      color: #110d0b;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: .78rem;
+      padding: 0 12px;
+      cursor: pointer;
+      transition: filter .2s;
+    }
+    .save-score-btn:active { filter: brightness(1.2); }
+    .save-status-msg { font-size: .65rem; color: var(--green-lt); display: block; margin-top: 4px; min-height: 14px; }
+
+    .summary-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+    .leaderboard-link-btn {
+      display: block;
+      padding: 8px;
+      background: #211810;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--gold-lt);
+      font-size: .80rem;
+      text-decoration: none;
+    }
+    .modal-reset-btn {
+      padding: 9px;
+      background: linear-gradient(135deg, #8a4430, #5e2818);
+      border: 1px solid #c06040;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 700;
+      font-size: .85rem;
+      cursor: pointer;
+    }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -636,6 +732,7 @@
     <small>Simya & Tıp Ayini</small>
   </div>
   <div class="header-right">
+    <button class="sound-btn" id="soundBtn" title="Sesi Aç/Kapat">🔊</button>
     <div class="combo-pill hidden" id="comboPill" title="Kesintisiz Kombo">
       🔥 <span id="comboVal">0</span>x
     </div>
@@ -734,6 +831,48 @@
   </div>
 </div>
 
+<!-- ── Oyun Sonu Özet Modal'ı ── -->
+<div class="modal-backdrop hidden" id="gameOverModal">
+  <div class="modal-card" style="max-width: 440px; text-align: center;">
+    <div class="modal-header">
+      <div class="modal-title-wrap" style="width: 100%;">
+        <h2 style="color: var(--red-lt);">Ayin Sona Erdi</h2>
+        <span class="modal-sub">Ebû Bekir er-Râzî'nin Laboratuvarı</span>
+      </div>
+      <button class="modal-close" id="closeGameOverBtn" aria-label="Kapat">✕</button>
+    </div>
+    <div class="modal-body" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+      <div class="summary-badge">
+        <span class="summary-level-label">ULAŞILAN SEVİYE</span>
+        <div class="summary-level-val" id="summaryLevel">01</div>
+        <div class="summary-title-val" id="summaryTitle">Çırak Simyacı 🕯️</div>
+      </div>
+      <div class="summary-stats">
+        <div class="summary-stat-box">
+          <span class="stat-label">EN YÜKSEK KOMBO</span>
+          <span class="stat-val" id="summaryCombo">🔥 —</span>
+        </div>
+        <div class="summary-stat-box">
+          <span class="stat-label">AÇILAN CEVHER</span>
+          <span class="stat-val" id="summaryElements">0/30</span>
+        </div>
+      </div>
+      <div class="nickname-form">
+        <label for="playerNickname" class="nickname-label">Simyacı Adın (Liderlik Tablosu):</label>
+        <div class="nickname-input-group">
+          <input type="text" id="playerNickname" maxlength="24" placeholder="İsmini yaz..." />
+          <button id="saveScoreBtn" class="save-score-btn">Kaydet</button>
+        </div>
+        <span id="saveStatusMsg" class="save-status-msg"></span>
+      </div>
+      <div class="summary-actions">
+        <a href="/leaderboard" target="_blank" class="leaderboard-link-btn">🏆 Liderlik Tablosunu Gör</a>
+        <button id="modalResetBtn" class="modal-reset-btn">↻ Yeni Ayin Başlat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const roomId            = {{ room_id|tojson }};
   const statusEl          = document.getElementById('status');
@@ -764,6 +903,19 @@
   const toastIcon         = document.getElementById('toastIcon');
   const toastTitle        = document.getElementById('toastTitle');
   const toastDesc         = document.getElementById('toastDesc');
+  const soundBtn          = document.getElementById('soundBtn');
+
+  // Oyun sonu modal elemanları
+  const gameOverModal     = document.getElementById('gameOverModal');
+  const closeGameOverBtn  = document.getElementById('closeGameOverBtn');
+  const summaryLevel      = document.getElementById('summaryLevel');
+  const summaryTitle      = document.getElementById('summaryTitle');
+  const summaryCombo      = document.getElementById('summaryCombo');
+  const summaryElements   = document.getElementById('summaryElements');
+  const playerNickname    = document.getElementById('playerNickname');
+  const saveScoreBtn      = document.getElementById('saveScoreBtn');
+  const saveStatusMsg     = document.getElementById('saveStatusMsg');
+  const modalResetBtn     = document.getElementById('modalResetBtn');
 
   let elementsList   = [];
   let elementsMap    = {};
@@ -772,6 +924,110 @@
   let activeCategory = 'all';
   let currentLives   = 3;
   let currentCombo   = 0;
+  let lastGameOverLvl = 1;
+  let lastGameOverCombo = 0;
+
+  // ── Web Audio API Sentezleyici (Gerçekçi Simya Sesleri) ──
+  let audioCtx = null;
+  let soundEnabled = localStorage.getItem('razi_sound_enabled') !== 'false';
+  updateSoundButton();
+
+  function initAudio() {
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        audioCtx = new AudioContext();
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function updateSoundButton() {
+    if (soundBtn) {
+      soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+      soundBtn.title = soundEnabled ? 'Sesi Kapat' : 'Sesi Aç';
+    }
+  }
+
+  if (soundBtn) {
+    soundBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('razi_sound_enabled', soundEnabled ? 'true' : 'false');
+      updateSoundButton();
+      if (soundEnabled) {
+        initAudio();
+        playTone(600, 'sine', 0.1, 0.1);
+      }
+    });
+  }
+
+  function playTone(freq, type = 'sine', duration = 0.15, gainVal = 0.12) {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch {}
+  }
+
+  function playBubbleTone(startFreq = 380, endFreq = 720, duration = 0.14) {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch {}
+  }
+
+  function playVictoryChime() {
+    if (!soundEnabled) return;
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    notes.forEach((freq, idx) => {
+      setTimeout(() => playTone(freq, 'triangle', 0.22, 0.14), idx * 75);
+    });
+  }
+
+  function playFlaskCrack() {
+    if (!soundEnabled) return;
+    playTone(220, 'sawtooth', 0.35, 0.18);
+    playTone(140, 'square', 0.25, 0.14);
+  }
+
+  function playMilestoneFanfare() {
+    if (!soundEnabled) return;
+    const notes = [440, 554.37, 659.25, 880];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => playTone(freq, 'sine', 0.35, 0.18), idx * 110);
+    });
+  }
+
+  function playElementSound(cat) {
+    if (cat === 'metal')    playTone(920, 'triangle', 0.12, 0.14);
+    else if (cat === 'mineral') playTone(460, 'sine', 0.16, 0.18);
+    else if (cat === 'liquid')  playBubbleTone(380, 720, 0.14);
+    else playTone(580, 'sine', 0.18, 0.15);
+  }
 
   // ── Başarımlar Tanımı ──
   const ACHIEVEMENTS = [
@@ -786,6 +1042,15 @@
     { id: "scholar_15",       title: "Kitâbü'l-Esrâr Bilgini",icon: "📚", desc: "15 farklı elementin kilidini aç." },
     { id: "grand_scholar",    title: "Cevherler Efendisi",    icon: "👑", desc: "30 elementin tamamını keşfet." },
   ];
+
+  function getAlchemicalTitle(lvl) {
+    if (lvl >= 100) return "İksir-i Âzam Üstadı 🌌";
+    if (lvl >= 75)  return "Şeyhü'l-Etıbbâ 👑";
+    if (lvl >= 50)  return "Büyük Hekim 📜";
+    if (lvl >= 25)  return "Usta Simyager ⚗️";
+    if (lvl >= 10)  return "Kalfa Tabip 🧪";
+    return "Çırak Simyacı 🕯️";
+  }
 
   // ── Kalıcı Hafıza (LocalStorage) ──
   function getSavedDiscovered() {
@@ -816,6 +1081,7 @@
       if (ach) {
         showToast(ach.icon, `Başarım: ${ach.title}`, ach.desc);
         codexDot.classList.remove('hidden');
+        playMilestoneFanfare();
         if (navigator.vibrate) navigator.vibrate([60, 40, 100]);
       }
       renderAchievements();
@@ -838,6 +1104,7 @@
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeCategory = btn.dataset.cat;
+      playTone(500, 'sine', 0.08, 0.08);
       renderButtons();
     });
   });
@@ -926,7 +1193,7 @@
         <span class="mat-name">${el.name}</span>
       `;
 
-      btn.addEventListener('click', () => sendButton(el.id, btn));
+      btn.addEventListener('click', () => sendButton(el.id, btn, el.category));
       gridEl.appendChild(btn);
     });
 
@@ -934,11 +1201,12 @@
     unlockedNote.textContent = `${totalActive} / 30 element açık` + (activeCategory !== 'all' ? ` (${activeIds.length} gösteriliyor)` : '');
   }
 
-  function sendButton(matId, btn) {
+  function sendButton(matId, btn, cat) {
     if (gridEl.classList.contains('disabled')) return;
     btn.classList.remove('pressed');
     void btn.offsetWidth;
     btn.classList.add('pressed');
+    playElementSound(cat || 'mineral');
     if (navigator.vibrate) navigator.vibrate(22);
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ button: matId }));
@@ -960,6 +1228,7 @@
   openCodexBtn.addEventListener('click', () => {
     codexModal.classList.remove('hidden');
     codexDot.classList.add('hidden');
+    playTone(600, 'sine', 0.1, 0.1);
     renderCodex();
     renderAchievements();
   });
@@ -973,12 +1242,14 @@
     tabAchievementsBtn.classList.remove('active');
     paneElements.classList.add('active');
     paneAchievements.classList.remove('active');
+    playTone(550, 'sine', 0.08, 0.08);
   });
   tabAchievementsBtn.addEventListener('click', () => {
     tabAchievementsBtn.classList.add('active');
     tabElementsBtn.classList.remove('active');
     paneAchievements.classList.add('active');
     paneElements.classList.remove('active');
+    playTone(650, 'sine', 0.08, 0.08);
   });
 
   codexSearch.addEventListener('input', renderCodex);
@@ -1054,6 +1325,55 @@
     });
   }
 
+  // ── Oyun Sonu Modal İşlemleri ──
+  closeGameOverBtn.addEventListener('click', () => gameOverModal.classList.add('hidden'));
+  gameOverModal.addEventListener('click', (e) => {
+    if (e.target === gameOverModal) gameOverModal.classList.add('hidden');
+  });
+
+  saveScoreBtn.addEventListener('click', async () => {
+    const rawName = (playerNickname.value || '').trim();
+    const name = rawName || 'Simyacı';
+    localStorage.setItem('razi_nickname', name);
+    saveStatusMsg.textContent = 'Kaydediliyor…';
+    saveScoreBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: lastGameOverLvl,
+          player_name: name,
+          max_combo: lastGameOverCombo,
+          room_id: roomId,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        saveStatusMsg.textContent = '✅ Başarıyla liderlik tablosuna yazıldı!';
+        saveStatusMsg.style.color = 'var(--green-lt)';
+        playVictoryChime();
+      } else {
+        saveStatusMsg.textContent = 'Hata: ' + (data.error || 'Kaydedilemedi');
+        saveStatusMsg.style.color = 'var(--red-lt)';
+      }
+    } catch (e) {
+      saveStatusMsg.textContent = 'Bağlantı hatası oluştu.';
+      saveStatusMsg.style.color = 'var(--red-lt)';
+    } finally {
+      saveScoreBtn.disabled = false;
+    }
+  });
+
+  modalResetBtn.addEventListener('click', () => {
+    gameOverModal.classList.add('hidden');
+    if (navigator.vibrate) navigator.vibrate(22);
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ button: 'reset' }));
+    }
+  });
+
   // ── WebSocket ──
   const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
   const socket   = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
@@ -1079,6 +1399,7 @@
       gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
       resetBtn.classList.remove('visible');
+      gameOverModal.classList.add('hidden');
 
       if (msg.lives !== undefined) updateLives(msg.lives);
       if (msg.combo !== undefined) updateCombo(msg.combo);
@@ -1087,6 +1408,7 @@
       if (msg.recipe) {
         recipeTitle.textContent = msg.recipe;
         recipeBanner.classList.remove('hidden');
+        playMilestoneFanfare();
       } else {
         recipeBanner.classList.add('hidden');
       }
@@ -1126,6 +1448,7 @@
       if (msg.recipe_completed) unlockAchievement("recipe_master");
       if (msg.lives === 1)  unlockAchievement("clutch_win");
 
+      playVictoryChime();
       statusEl.textContent = msg.combo >= 2
         ? `Mükemmel! 🔥 x${msg.combo} Kombo!`
         : 'Doğru! Râzî onaylıyor.';
@@ -1139,6 +1462,7 @@
         if (lostFlask) lostFlask.classList.add('shake');
       }
       updateCombo(0);
+      playFlaskCrack();
       statusEl.textContent = msg.message || 'Can kaybedildi! Sırayı baştan dene.';
       statusEl.className = 'status error';
       if (navigator.vibrate) navigator.vibrate([120, 60, 160]);
@@ -1150,6 +1474,7 @@
       if (msg.lives !== undefined) updateLives(msg.lives);
       statusEl.textContent = '🧪 Ustalık ödülü: +1 Can yenilendi!';
       statusEl.className = 'status ready';
+      playVictoryChime();
       if (navigator.vibrate) navigator.vibrate([60, 60, 140]);
     }
 
@@ -1162,7 +1487,19 @@
       gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
       resetBtn.classList.add('visible');
+      playFlaskCrack();
       if (navigator.vibrate) navigator.vibrate([80, 40, 80, 40, 200]);
+
+      // Oyun sonu özet modalını aç
+      lastGameOverLvl = msg.level || 1;
+      lastGameOverCombo = msg.max_combo || 0;
+      summaryLevel.textContent = lastGameOverLvl.toString().padStart(2, '0');
+      summaryTitle.textContent = getAlchemicalTitle(lastGameOverLvl);
+      summaryCombo.textContent = lastGameOverCombo >= 2 ? `🔥 x${lastGameOverCombo}` : '—';
+      summaryElements.textContent = `${getSavedDiscovered().length}/30`;
+      playerNickname.value = localStorage.getItem('razi_nickname') || '';
+      saveStatusMsg.textContent = '';
+      gameOverModal.classList.remove('hidden');
     }
   });
 
@@ -1172,6 +1509,7 @@
       socket.send(JSON.stringify({ button: 'reset' }));
     }
     resetBtn.classList.remove('visible');
+    gameOverModal.classList.add('hidden');
   });
 </script>
 </body>

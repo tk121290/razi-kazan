@@ -127,18 +127,37 @@ def load_scores() -> list[dict]:
     return []
 
 
-def save_score(level: int, room_id: str = "") -> None:
+def get_alchemical_title(lvl: int) -> str:
+    if lvl >= 100: return "İksir-i Âzam Üstadı 🌌"
+    if lvl >= 75:  return "Şeyhü'l-Etıbbâ 👑"
+    if lvl >= 50:  return "Büyük Hekim 📜"
+    if lvl >= 25:  return "Usta Simyager ⚗️"
+    if lvl >= 10:  return "Kalfa Tabip 🧪"
+    return "Çırak Simyacı 🕯️"
+
+
+def save_score(level: int, room_id: str = "", player_name: str = "Simyacı", max_combo: int = 0) -> None:
     """Skoru yerel JSON'a ve sunucu liderlik tablosuna kaydeder."""
     # Yerel kayıt
     scores = load_scores()
-    scores.append({"level": level, "ts": int(time.time())})
+    scores.append({
+        "level": level,
+        "player_name": player_name,
+        "max_combo": max_combo,
+        "ts": int(time.time()),
+    })
     scores = sorted(scores, key=lambda s: s["level"], reverse=True)[:10]
     SCORES_FILE.write_text(json.dumps(scores, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # Sunucu liderlik tablosuna gönder (arka planda, hata sessizce yutulur)
     def _post() -> None:
         try:
-            data = json.dumps({"level": level, "room_id": room_id}).encode()
+            data = json.dumps({
+                "level": level,
+                "room_id": room_id,
+                "player_name": player_name,
+                "max_combo": max_combo,
+            }).encode()
             req = _urllib.Request(
                 f"http://localhost:{PORT}/api/scores",
                 data=data,
@@ -527,6 +546,7 @@ class Game:
         self.level     = 1
         self.lives     = 3
         self.combo     = 0
+        self.max_combo = 0
         self.recipe_name = ""
         self.best      = max((s["level"] for s in load_scores()), default=0)
         self.sequence: list[str] = []
@@ -693,6 +713,7 @@ class Game:
         self.level        = 1
         self.lives        = 3
         self.combo        = 0
+        self.max_combo    = 0
         self.recipe_name  = ""
         self.sequence     = []
         self.player_index = 0
@@ -853,10 +874,15 @@ class Game:
         self.last_message  = "Süre doldu — Kazan taştı!"
         self.phase_started = time.monotonic()
         self.speak_bubble("Vakit tükendi ve tüm şişeler kırıldı! Ateş kontrolden çıktı!", duration=3.5)
-        self.network.send({"type": "game_over", "message": self.last_message})
+        self.network.send({
+            "type": "game_over",
+            "message": self.last_message,
+            "level": self.level,
+            "max_combo": self.max_combo,
+        })
 
     def _go_game_over(self) -> None:
-        save_score(self.level, self.room_id)
+        save_score(self.level, self.room_id, max_combo=self.max_combo)
         self.best         = max(self.best, self.level)
         self.final_level  = self.level
         self.state        = GameState.GAME_OVER
@@ -902,7 +928,12 @@ class Game:
             self.round_success = False
             self.last_message  = f"Yanlış! '{name}' seçildi."
             self.phase_started = time.monotonic()
-            self.network.send({"type": "game_over", "message": self.last_message})
+            self.network.send({
+                "type": "game_over",
+                "message": self.last_message,
+                "level": self.level,
+                "max_combo": self.max_combo,
+            })
             self.speak_bubble(f"Eyvah! Tüm şişeler kırıldı, ayin bozuldu! Doğrusu {correct_tr} idi!", duration=3.5)
             return
 
@@ -918,6 +949,7 @@ class Game:
             self.state        = GameState.RESOLUTION
             self.round_success = True
             self.combo        += 1
+            self.max_combo    = max(self.max_combo, self.combo)
             self.last_message  = "Doğru! Ebû Bekir er-Râzî onaylıyor."
             self.phase_started = time.monotonic()
             self.level        += 1
@@ -1176,7 +1208,21 @@ class Game:
             x = target_x
             y = target_y
             if 0.70 <= progress < 0.78:
-                self._spawn_particles(target_x, target_y, color, 5)
+                # Malzeme-spesifik simyasal alev ve kıvılcım reaksiyonu
+                if material in ("bakir", "tenkar", "zumrut"):
+                    spark_color = (50, 240, 140)
+                elif material in ("kukurt", "zirnik", "altin", "bal"):
+                    spark_color = (255, 235, 50)
+                elif material in ("civa", "gumus", "kursun", "inci"):
+                    spark_color = (195, 235, 255)
+                elif material in ("tuz", "kirec", "kafur", "saf_tuz"):
+                    spark_color = (255, 255, 255)
+                elif material in ("zac", "sirke", "buyuk_iksir", "afyon"):
+                    spark_color = (230, 80, 245)
+                else:
+                    spark_color = color_lt
+                self._spawn_particles(target_x, target_y - 12, spark_color, 8)
+                self._spawn_particles(target_x, target_y, color, 6)
 
         pw, ph   = 26, 36
         bottle   = pygame.Surface((pw, ph), pygame.SRCALPHA)
@@ -1273,31 +1319,36 @@ class Game:
     def _draw_game_over_screen(self) -> None:
         # Karartma
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 160))
+        overlay.fill((0, 0, 0, 175))
         self.pixel_surface.blit(overlay, (0, 0))
 
         cx = WIDTH // 2
         # Kutu
-        box = pygame.Rect(cx - 260, 180, 520, 320)
+        box = pygame.Rect(cx - 260, 160, 520, 350)
         self._draw_panel(box, radius=16)
         pygame.draw.rect(self.pixel_surface, RED, box, 2, border_radius=16)
 
         # Başlık
-        self._text_center("OYUN BİTTİ", self.font_title, RED_LT, cx, 210)
-        self._draw_separator(box.x + 20, 248, box.right - 20)
+        self._text_center("AYİN SONA ERDİ", self.font_title, RED_LT, cx, 185)
+        self._draw_separator(box.x + 20, 220, box.right - 20)
 
         # Ulaşılan seviye
-        self._text_center("ULAŞILAN SEVİYE", self.font_small, TEXT_DIM, cx, 268)
-        self._text_center(f"{self.final_level:02d}", self.font_title, GOLD_LT, cx, 294)
+        self._text_center("ULAŞILAN SEVİYE", self.font_tiny, TEXT_DIM, cx, 236)
+        self._text_center(f"{self.final_level:02d}", self.font_title, GOLD_LT, cx, 258)
 
-        # En iyi skor
-        self._draw_separator(box.x + 20, 336, box.right - 20)
-        self._text_center(f"EN İYİ  {self.best:02d}", self.font_medium, GOLD, cx, 352)
+        # Simyacı Unvanı
+        title = get_alchemical_title(self.final_level)
+        self._text_center(title, self.font_medium, GOLD, cx, 296)
+
+        # Kombo & En iyi skor
+        self._draw_separator(box.x + 20, 326, box.right - 20)
+        combo_str = f"EN ÇOK SERİ: {self.max_combo}x" if self.max_combo >= 2 else "SERİ: —"
+        self._text_center(f"{combo_str}   ·   EN İYİ: {self.best:02d}", self.font_small, TEXT, cx, 344)
 
         # Yeniden başlat ipucu
-        self._text_center("Telefondan 'Yeni Oyun' butonuna bas", self.font_tiny, TEXT_DIM, cx, 398)
-        secs_left = max(0, 4 - int(time.monotonic() - self.game_over_time))
-        self._text_center(f"veya {secs_left}s sonra otomatik", self.font_tiny, TEXT_DIM, cx, 422)
+        self._text_center("Telefondan 'Yeni Oyun' butonuna bas", self.font_tiny, TEXT_DIM, cx, 396)
+        secs_left = max(0, 6 - int(time.monotonic() - self.game_over_time))
+        self._text_center(f"veya {secs_left}s sonra otomatik lobiye döner", self.font_tiny, TEXT_DIM, cx, 420)
 
     # ── Malzeme not kartı ────────────────────────────────────────────────────
 
