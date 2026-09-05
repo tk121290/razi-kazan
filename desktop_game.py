@@ -2813,19 +2813,23 @@ class Game:
         self._draw_separator(c2_x, box.y + 126, c2_x + 430)
 
         ekm_bio = (
-            "Ekmeleddîn Tabîb el-Nahcivânî (13. yüzyıl), Anadolu Selçuklu Devleti'nin başhekimi, "
-            "Konya Dârüşşifası'nın reisi ve Hz. Mevlânâ Celâleddîn-i Rûmî'nin yakın dostu ve özel hekimidir. "
-            "Tıp ilminde devrinin kutbu olup nabız teşhisi (ilm-i nabz) ve bitkisel terkiplerde mahirdir."
+            "Ekmeleddîn Tabîb el-Nahcivânî (13. yy); Anadolu Selçuklu Melikü'l-Hükemâ'sı, Konya Dârüşşifası'nın "
+            "baştabibi ve Hz. Mevlânâ'nın hekimidir. İbn Sînâ (El-Kânûn) ve Ebû Bekir er-Râzî (El-Hâvî) ekollerinin "
+            "rasyonel klinik tanı, yatak başı (bedside) eğitim ve semiyoloji geleneğini Anadolu'da kurumsallaştırmıştır."
         )
-        self._draw_multiline_text(ekm_bio, self.font_body, TEXT, c2_x, box.y + 140, 430, line_spacing=5)
+        self._draw_multiline_text(ekm_bio, self.font_body, TEXT, c2_x, box.y + 135, 430, line_spacing=5)
 
-        self._text("🌿 Selçuklu Tababeti & Konya Dârüşşifası:", self.font_body_bold, GOLD_LT, (c2_x, box.y + 245))
-        ekm_detail = (
-            "\"Hekim, hastanın yalnız bedenine değil; ruhuna, mizacına ve nabzına nazar eyler. "
-            "Anadolu Selçuklu dârüşşifalarında musiki, su sesi, şifalı otlar ve simyevi terkipler "
-            "bütüncül bir şifa kaynağı olarak harmanlanmıştır.\""
-        )
-        self._draw_multiline_text(ekm_detail, self.font_body, TEXT_DIM, c2_x, box.y + 275, 430, line_spacing=5)
+        self._text("🩺 Klinik Semiyoloji, Nabız & Farmakoloji:", self.font_body_bold, GOLD_LT, (c2_x, box.y + 225))
+        ekm_med_points = [
+            "• Sfigmoloji (İlm-i Nabz): A. radialis palpasyonu ile 10 parametreli nabız analizi (sür'at, tevatür, dikrotik/ipliksi nabız tespiti).",
+            "• Uroskopi (İlm-i Karûre): İdrar dansitesi, renk spektrumu ve sedimantasyon (rusûb) ile nefrolitiyazis ve pyüri ayrıcı tanısı.",
+            "• Terkîb-i Edviye: Müfredât/Mürekkebât sistemi, Sekencebîn (oxymel) ile asit-baz/elektrolit regülasyonu, Tiryâk-ı Kebîr polifarmasisi.",
+            "• Nöropsikiyatri & Müzikoterapi: Mâlihulyâda (melankoli) makamların otonom sinir sistemi etkileri (Rast, Nihavend, Rehavî) ve su sesi.",
+            "• Selçuklu Dârüşşifa Triyajı: Çapraz hava koridorları, bulaşıcı tecrit koğuşları, cerrahi ve bimarhane koğuşlanması.",
+        ]
+        my = box.y + 250
+        for pt in ekm_med_points:
+            my = self._draw_multiline_text(pt, self.font_tiny, TEXT_DIM, c2_x, my, 430, line_spacing=3) + 4
 
         # Alt Eylem Butonları
         self._draw_separator(box.x + 30, box.bottom - 118, box.right - 30)

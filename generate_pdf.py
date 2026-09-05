@@ -15,7 +15,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm, mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import HRFlowable, PageBreak, Paragraph, SimpleDocTemplate, Spacer
 
 BASE_DIR = Path(__file__).parent
 OUTPUT_PDF = BASE_DIR / "assets" / "tabib_ekmeleddin_kimdir.pdf"
@@ -54,7 +54,7 @@ def draw_background_and_border(canvas, doc):
     canvas.saveState()
     w, h = doc.pagesize
 
-    # Hafif antik parşömen arka planı
+    # Antik parşömen arka planı
     canvas.setFillColor(HexColor("#faf6ee"))
     canvas.rect(0, 0, w, h, fill=1, stroke=0)
 
@@ -68,7 +68,7 @@ def draw_background_and_border(canvas, doc):
     canvas.setLineWidth(0.8)
     canvas.rect(14.5 * mm, 14.5 * mm, w - 29 * mm, h - 29 * mm)
 
-    # Dört köşe tezhip süslemeleri (Selçuklu yıldızı ve çember motifi)
+    # Dört köşe tezhip süslemeleri (Selçuklu sekizgen ve çember motifi)
     corners = [
         (14.5 * mm, 14.5 * mm),
         (w - 14.5 * mm, 14.5 * mm),
@@ -83,10 +83,10 @@ def draw_background_and_border(canvas, doc):
         canvas.setLineWidth(0.8)
         canvas.circle(x, y, 1.8 * mm, stroke=1, fill=0)
 
-    # Alt bilgi
+    # Sayfa ve alt bilgi
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(C_MUTED)
-    footer_text = "Tabîb Ekmeleddin'in Kazanı — Erciyes Üniversitesi & Anadolu Tıp Tarihi Projesi"
+    footer_text = f"Tabîb Ekmeleddin'in Kazanı · Klinik Tıp Tarihi Monografisi — Sayfa {doc.page}"
     canvas.drawCentredString(w / 2.0, 7 * mm, footer_text)
 
     canvas.restoreState()
@@ -101,10 +101,10 @@ def build_pdf() -> Path:
     doc = SimpleDocTemplate(
         str(OUTPUT_PDF),
         pagesize=A4,
-        leftMargin=20 * mm,
-        rightMargin=20 * mm,
-        topMargin=20 * mm,
-        bottomMargin=20 * mm,
+        leftMargin=18 * mm,
+        rightMargin=18 * mm,
+        topMargin=18 * mm,
+        bottomMargin=18 * mm,
     )
 
     styles = getSampleStyleSheet()
@@ -112,18 +112,18 @@ def build_pdf() -> Path:
     s_top_kicker = ParagraphStyle(
         "TopKicker",
         fontName=font_bold,
-        fontSize=9,
-        leading=12,
+        fontSize=8.5,
+        leading=11,
         textColor=C_TURQUOISE,
         alignment=1,
-        spaceAfter=3 * mm,
+        spaceAfter=2 * mm,
     )
 
     s_title = ParagraphStyle(
         "MainTitle",
         fontName=font_bold,
-        fontSize=18,
-        leading=22,
+        fontSize=15.5,
+        leading=19,
         textColor=C_GOLD,
         alignment=1,
         spaceAfter=2 * mm,
@@ -132,127 +132,189 @@ def build_pdf() -> Path:
     s_subtitle = ParagraphStyle(
         "SubTitle",
         fontName=font_name,
-        fontSize=11,
-        leading=15,
+        fontSize=9.5,
+        leading=13,
         textColor=C_MUTED,
         alignment=1,
-        spaceAfter=5 * mm,
+        spaceAfter=3 * mm,
     )
 
     s_section = ParagraphStyle(
         "SectionHeader",
         fontName=font_bold,
-        fontSize=12,
-        leading=16,
+        fontSize=10.5,
+        leading=14,
         textColor=C_TURQUOISE,
-        spaceBefore=4 * mm,
-        spaceAfter=2 * mm,
+        spaceBefore=3 * mm,
+        spaceAfter=1.5 * mm,
+    )
+
+    s_subsection = ParagraphStyle(
+        "SubSectionHeader",
+        fontName=font_bold,
+        fontSize=9,
+        leading=12,
+        textColor=HexColor("#8a4b12"),
+        spaceBefore=1.5 * mm,
+        spaceAfter=1 * mm,
     )
 
     s_body = ParagraphStyle(
         "Body",
         fontName=font_name,
-        fontSize=9.5,
-        leading=14.5,
+        fontSize=8.5,
+        leading=12.5,
         textColor=C_INK,
-        spaceAfter=2.5 * mm,
+        spaceAfter=2 * mm,
         alignment=4,  # Justified
     )
 
     s_quote = ParagraphStyle(
         "Quote",
         fontName=font_name,
-        fontSize=9.5,
-        leading=14.5,
+        fontSize=8.5,
+        leading=12.5,
         textColor=HexColor("#4a3622"),
-        leftIndent=8 * mm,
-        rightIndent=8 * mm,
-        spaceBefore=3 * mm,
-        spaceAfter=3 * mm,
+        leftIndent=6 * mm,
+        rightIndent=6 * mm,
+        spaceBefore=2 * mm,
+        spaceAfter=2 * mm,
     )
 
     story = []
 
-    # Üst Bilgi & Başlık
-    story.append(Paragraph("ANADOLU SELÇUKLU TIP TARİHİ VE KÜLTÜR MİRASI", s_top_kicker))
-    story.append(Paragraph("TABÎB EKMELEDDİN (BEY HEKİM) KİMDİR?", s_title))
-    story.append(Paragraph("13. Yüzyıl Selçuklu Saray Başhekimi, Dârüşşifa Üstadı ve Hz. Mevlânâ'nın Tabibi", s_subtitle))
-    story.append(HRFlowable(width="90%", thickness=1.2, color=C_GOLD, spaceBefore=1 * mm, spaceAfter=4 * mm))
+    # ══════════════════════════════════════════════════════════════════════════
+    # SAYFA 1: BAŞLIK, BİYOGRAFİ & KLİNİK SEMİYOLOJİ (TEŞHİS METODLARI)
+    # ══════════════════════════════════════════════════════════════════════════
+    story.append(Paragraph("ANADOLU SELÇUKLU KLİNİK TIP TARİHİ · AKADEMİK VE HEKİMLİK MONOGRAFİSİ", s_top_kicker))
+    story.append(Paragraph("TABÎB EKMELEDDİN (BEY HEKİM) VE 13. YY. KLİNİK TIP DOKTRİNİ", s_title))
+    story.append(Paragraph("Klinik Semiyoloji, Sfigmoloji, Galenik Farmakoloji ve Selçuklu Dârüşşifası Tıp Pratiği", s_subtitle))
+    story.append(HRFlowable(width="95%", thickness=1.0, color=C_GOLD, spaceBefore=1 * mm, spaceAfter=2.5 * mm))
 
-    # Bölüm 1: Tarihî Şahsiyeti ve Menşei
-    story.append(Paragraph("1. Tarihî Şahsiyeti ve Selçuklu Sarayındaki Yeri", s_section))
+    # Bölüm 1: Biyografik Arka Plan ve Ekol
+    story.append(Paragraph("1. Tarihî Kimliği, Tıbbî Formasyonu ve Selçuklu Saray Riyaseti", s_section))
     story.append(Paragraph(
-        "Asıl adı <b>Ekmeleddîn Tabîb el-Nahcivânî</b> olan ve Anadolu'da hürmetle <b>Bey Hekim</b> (Beyhekim) "
-        "olarak anılan bu usta tabip, 13. yüzyılda Anadolu Selçuklu Devleti'nin payitahtı Konya'da yaşamış "
-        "en muteber hekim ve ilim adamlarındandır. Selçuklu sultanları II. İzzeddin Keykavus ve "
-        "IV. Rükneddin Kılıçarslan devirlerinde saray başhekimliği (Melikü'l-Hükemâ) makamında bulunmuş; "
-        "yalnızca hükümdarların değil, ordu ve halkın sıhhatini de idare etmiştir.",
-        s_body
-    ))
-    story.append(Paragraph(
-        "Konya'daki Dârüşşifa'nın baştabipliğini yürütmüş, yüksek tıbbî ahlakı, derin teşhis mahareti ve cömertliği "
-        "sebebiyle halk arasında 'hekimlerin efendisi' manasında 'Bey Hekim' lakabıyla şöhret bulmuştur. "
-        "Konya'da günümüze kadar ulaşan tarihî <b>Beyhekim Mescidi</b> ve <b>Beyhekim Mahallesi</b>, "
-        "onun Anadolu tıbbına ve şehir kültürüne bıraktığı ölümsüz mirasın nişaneleridir.",
+        "Asıl künyesi <b>Ekmeleddîn Tabîb el-Nahcivânî</b> olan ve tıp mahareti sebebiyle hem Selçuklu sarayında "
+        "hem de halk nezdinde hürmetle <b>Bey Hekim</b> (Melikü'l-Hükemâ / Reisü'l-Etıbbâ) unvanıyla anılan usta hekim, "
+        "13. yüzyılda Anadolu Selçuklu Devleti'nin başkenti Konya'da tıp ilminin zirvesini temsil etmiştir. "
+        "Sultan II. İzzeddin Keykavus ve IV. Rükneddin Kılıçarslan devirlerinde saray baştabipliği görevini üstlenmiş; "
+        "Konya Dârüşşifası'nın ve ordu sıhhiyesinin idaresini yürütmüştür. İbn Sînâ'nın <i>El-Kânûn fî't-Tıbb</i> ve "
+        "Ebû Bekir er-Râzî'nin <i>Kitâbü'l-Hâvî</i> ekollerindeki rasyonel, ampirik ve klinik gözleme dayalı tanı geleneğini "
+        "Anadolu coğrafyasında kurumsallaştırmış; Konya'da günümüze ulaşan tarihî <b>Beyhekim Mescidi</b> ve dârüşşifa "
+        "külliyesini inşa ettirerek hekimlik namzetlerine bizzat yatak başında (bedside medicine) klinik eğitim vermiştir.",
         s_body
     ))
 
-    # Bölüm 2: Hz. Mevlânâ ile Dostluğu
-    story.append(Paragraph("2. Hz. Mevlânâ Celâleddîn-i Rûmî ile Sırdaşlığı ve Özel Tabipliği", s_section))
+    # Bölüm 2: Klinik Semiyoloji ve Tanı Metodolojisi
+    story.append(Paragraph("2. Klinik Semiyoloji ve İleri Teşhis Metodolojisi (İlm-i Teşhis)", s_section))
     story.append(Paragraph(
-        "Tabîb Ekmeleddin, Hz. Mevlânâ'nın yalnızca bedenî hekimi değil, aynı zamanda onun yüksek maneviyat "
-        "meclislerinde bulunan en yakın gönül dostlarındandır. Ahmed Eflâkî'nin <i>Menâkıbü'l-Ârifîn</i> adlı "
-        "meşhur eserinde anlatıldığı üzere; Mevlânâ hastalandığında derhâl Tabîb Ekmeleddin davet edilir, "
-        "hastalığın mizaç ve ruh üzerindeki tesirleri birlikte istişare edilirdi.",
+        "Tabîb Ekmeleddin'in hekimlik yaklaşımı, modern tıptaki fizik muayene ve semiyoloji prensipleriyle büyük paralellik "
+        "gösteren çok katmanlı bir teşhis algoritmasına dayanmaktaydı:",
+        s_body
+    ))
+
+    story.append(Paragraph("A. İlm-i Nabz (Klinik Sfigmoloji / Arteriyel Nabız Analizi):", s_subsection))
+    story.append(Paragraph(
+        "Tabîb Ekmeleddin, <i>arteria radialis</i> palpasyonunu yalnızca bir nabız sayımı değil, kardiyovasküler sistemin, "
+        "vasküler tonusun ve iç organlardaki hemodinamik disfonksiyonların birincil göstergesi olarak kullanmıştır. "
+        "Nabzı 10 majör parametre üzerinden değerlendirirdi: <b>Sür'at</b> (frekans/dakika atımı), <b>Tevatür</b> (ritim simetrisi ve aritmiler), "
+        "<b>Kuvvet</b> (vuruş amplitüdü), <b>İmtilâ</b> (arteriyel gerim ve dolgunluk), <b>Salâbet</b> (damar duvarı elastikiyeti ve sertliği).<br/>"
+        "• <i>Nabz-ı Müşirî (Dikrotik Nabız):</i> Vasküler direncin düştüğü septik durumlar ve aort kapak yetmezliklerinde tanımlanmıştır.<br/>"
+        "• <i>Pulsus Serratus (Testere Dişi Nabız):</i> Akut hummiyat (akut febril enfeksiyonlar) ve bakteriyel toksikasyon tablolarında tespit edilmiştir.<br/>"
+        "• <i>Pulsus Filiformis (İpliksi/Filiform Nabız):</i> Hipovolemi, masif kan kaybı ve vazomotor kollaps (şok) göstergesi olarak kaydedilmiştir.",
+        s_body
+    ))
+
+    story.append(Paragraph("B. İlm-i Karûre (Klinik Uroskopi ve Biyokimyasal Gözlem):", s_subsection))
+    story.append(Paragraph(
+        "İdrar muayenesinde sabah aç karna alınan orta akım numunesi şeffaf cam fanuslarda (karûre) incelenirdi. "
+        "Değerlendirmede 7 tanısal kriter esas alınırdı: <b>Renk Spektrumu</b> (ashab/sarı, ahmar/kırmızı, esved/koyu — sarılık, "
+        "hematüri ve hemoglobinüri ayrımı), <b>Dansite ve Kıvam</b> (proteinüri ve osmolarite göstergesi), <b>Şeffaflık</b>, "
+        "<b>Köpürme Nitelikleri</b> (safra asitleri ve nefrotik sendrom düşündüren inatçı mikroköpükler) ve <b>Rusûb (Sedimantasyon)</b> "
+        "(kalsiyum oksalat/ürat kristalleriyle seyreden nefrolitiyazis ve pyüri/lökositüri ayrımı).",
+        s_body
+    ))
+
+    story.append(Paragraph("C. Humoral Patoloji ve Mizaç Dengesi (Homeostaz Kuramı):", s_subsection))
+    story.append(Paragraph(
+        "Klasik <i>Ahlat-ı Erba'a</i> (Dört Sıvı: Kan/Dem, Balgam, Sarı Safra, Kara Safra/Sevda) doktrinini hücresel ve metabolik "
+        "bir homeostaz dengesi olarak yorumlamıştır. Vücut sıvılarındaki biyokimyasal bozulmayı (<i>dyscrasia</i>) akut inflamasyon "
+        "ve lokal doku nekrozunun kaynağı kabul etmiş; tedavide temel amacı immün mekanizmaları (<i>kuvvet-i müdebbire</i>) aktive "
+        "ederek iç dengeyi yeniden tesis etmek olarak belirlemiştir.",
+        s_body
+    ))
+
+    # Sayfa sonu geçişi
+    story.append(PageBreak())
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SAYFA 2: FARMAKOLOJİ, NÖROPSİKİYATRİ, HASTANE TRİYAJI & DEONTOLOJİ
+    # ══════════════════════════════════════════════════════════════════════════
+    story.append(Paragraph("3. Terkîb-i Edviye, Galenik Farmakoloji ve Tıbbi Kimya", s_section))
+    story.append(Paragraph(
+        "Tabîb Ekmeleddin, Selçuklu dârüşşifa eczanesinde (<i>saydalan</i>) majistral ilaç hazırlama sanatının büyük bir üstadıydı. "
+        "İlaç tertibinde <b>Müfredât</b> (tekil etken maddeler) ve <b>Mürekkebât</b> (kompleks farmasötik terkipler) sistematiğini uygulamıştır:",
+        s_body
+    ))
+
+    story.append(Paragraph(
+        "<b>• Farmakodinamik Derecelendirme:</b> Drogları etki güçlerine göre 1. dereceden (fizyolojik destekleyiciler) 4. dereceye "
+        "(yüksek toksisiteye sahip kuvvetli ajanlar) kadar sınıflandırmış; dar terapötik indekse sahip maddeleri kesin dozimetriyle kullanmıştır.<br/>"
+        "<b>• Sekencebîn (Oxymel) Terapisi:</b> Sirke (asit) ve süzme bal (glukoz/antioksidan) matriksinden hazırlanan bu solüsyon, "
+        "asit-baz dengesini regüle eden, hepatobilier sekresyonu artıran ve elektrolit kaybını önleyen bir hidrasyon ajanıydı.<br/>"
+        "<b>• Tiryâk-ı Kebîr (Polifarmasi Panzehir):</b> 60'tan fazla drog içeren, içerisinde mürver, afyon, centiyana, zencefil ve kükürt "
+        "fraksiyonları barındıran; septik tablolarda, zehirlenmelerde ve immünsüpresif tükenişlerde kullanılan kombine bir formülasyondu.<br/>"
+        "<b>• İmbik ile Distilasyon ve Ekstraksiyon:</b> Uçucu yağların ve alkolik tentürlerin elde edilmesinde imbik damıtmasını "
+        "kullanarak etken maddelerin saflaştırılmasını ve biyoyararlanımının artırılmasını sağlamıştır.",
+        s_body
+    ))
+
+    story.append(Paragraph("4. Nöropsikiyatri, Müzikoterapi ve Hz. Mevlânâ ile Psikosomatik Yaklaşım", s_section))
+    story.append(Paragraph(
+        "Tabîb Ekmeleddin, psikosomatik hastalıkların ve nöropsikiyatrik tabloların (mâlihulyâ/melankoli, mania, anksiyete ve somatoform bozukluklar) "
+        "tedavisinde çağının yüzyıllarca ilerisinde bir nörobilişsel vizyon sergilemiştir. Ahmed Eflâkî'nin <i>Menâkıbü'l-Ârifîn</i> eserinde "
+        "belgelendiği üzere Hz. Mevlânâ'nın özel hekimi ve sırdaşı olan Bey Hekim, keder ve duygusal dalgalanmaların otonom sinir sistemi ve "
+        "vasküler direnç üzerindeki yıkıcı etkilerini yakından gözlemlemiştir.",
         s_body
     ))
     story.append(Paragraph(
-        "<i>«Mevlânâ son demlerinde yatağındayken Tabîb Ekmeleddin onun mübarek nabzını tutmuş, "
-        "bedeninin ateş ve zaafını görünce gözyaşlarını tutamamıştı. Mevlânâ ise kadim hekime tebessümle: "
-        "'Ekmeleddin! Bu aşk derdidir, ona şurup da çare etmez, merhem de... Bizi Dost'a vuslattan men etme' "
-        "diyerek hekimine olan muhabbetini ve vuslat neşesini dile getirmiştir.»</i>",
+        "Selçuklu Dârüşşifası'nda makamların otonom sinir sistemi üzerindeki farmakomimetik sedatif/stimülan etkilerini klinik olarak reçetelendirmiştir:<br/>"
+        "• <b>Rast Makamı:</b> Motor innervasyonu uyarıcı, parapleji ve spastik kas spazmlarında kas tonusunu düzenleyici.<br/>"
+        "• <b>Nihavend Makamı:</b> Hipertansiyon, kardiyak aritmi ve vasküler hiperaktivitede belirgin sedatif ve tansiyon regüle edici.<br/>"
+        "• <b>Rehavî Makamı:</b> Kronik sefalji (gerilim ve migren tipi baş ağrıları) ile dirençli uykusuzlukta (insomnia) analjezik tesir.<br/>"
+        "• <b>Hicaz Makamı:</b> Sempatik deşarjı baskılayan, ürogenital spazmları ve panik benzeri göğüs darlıklarını teskin edici.",
+        s_body
+    ))
+    story.append(Paragraph(
+        "<i>«Mevlânâ'nın terminal dönemdeki febril tablosunda başucunda nabzını tutan Tabîb Ekmeleddin, hekimlik çaresizliğinin ve "
+        "metafizik teslimiyetin sınırlarını Hz. Mevlânâ ile paylaşmış; hekim-hasta ilişkisini salt biyolojik bir mekanizmadan "
+        "yüksek bir ahlaki ve felsefi tesanüde taşımıştır.»</i>",
         s_quote
     ))
 
-    # Bölüm 3: Tıp İlmindeki Mahareti ve Teşhis Usulleri
-    story.append(Paragraph("3. Teşhis İlmi, Bitkisel Simya ve Terkîb-i Edviye (İlaç Sanatı)", s_section))
+    story.append(Paragraph("5. Dârüşşifa Mimarisi, Triyaj ve Hastane Enfeksiyon Kontrolü", s_section))
     story.append(Paragraph(
-        "Tabîb Ekmeleddin, İbn Sînâ (Avicenna) ve Râzî'nin tıp geleneklerini Selçuklu Anadolu'sunda geliştirerek "
-        "uygulamış bir hekimdir. Başlıca maharet sahaları şunlardır:",
-        s_body
-    ))
-    story.append(Paragraph(
-        "<b>• İlm-i Nabz (Nabız ile Teşhis):</b> Parmak uçlarıyla hastanın nabız ritmini, atış derinliğini ve süratini "
-        "okuyarak organlardaki humma, tıkanıklık ve iltihabı alet olmaksızın en ince ayrıntısıyla tespit edebilirdi.<br/>"
-        "<b>• Terkîb-i Edviye ve Simya:</b> Şifalı bitkilerin, madensel tuzların ve doğal cevherlerin imbiklerde "
-        "damıtılmasıyla özel terkipler, kuvvet macunları ve şuruplar hazırlamıştır. Anadolu'nun endemik şifa nebatlarını "
-        "tedavide sistemleştirmiştir.<br/>"
-        "<b>• Dârüşşifa Eğitimi:</b> Konya Dârüşşifası'nda hekim namzetlerine anatomi, mizaç dengesi ve hekimlik ahlakı dersleri "
-        "vermiş, çıraklarını hasta başında bizzat yetiştirmiştir.",
+        "Selçuklu tıp kurumları günümüz modern hastane triyaj ve enfeksiyon kontrol standartlarının tarihsel öncüsüdür. "
+        "Konya Dârüşşifası'nda açık avlulu ve çapraz hava koridorlu mimari sayesinde solunum yolu patojenlerinin seyreltilmesi sağlanmış; "
+        "akut ateşli hastalar, cerrahi vakalar ve akıl hastaları (<i>bimarhane</i>) ayrı koğuşlarda tecrit (izolasyon) edilmiştir. "
+        "Cerrahi müdahalelerde koterizasyon, flebotomi (venöz dekompresyon) ve antiseptik olarak gümüş suyu, kükürt ve şap solüsyonları kullanılmıştır.",
         s_body
     ))
 
-    # Bölüm 4: Hekimlik Ahlakı ve Çağlar Aşan Mirası
-    story.append(Paragraph("4. Bey Hekim'in Tıp Ahlakı ve Şifa Felsefesi", s_section))
+    story.append(Paragraph("6. Tıbbî Deontoloji ve Hekimlik Ahlakı", s_section))
     story.append(Paragraph(
-        "Tabîb Ekmeleddin'e göre hekimlik, bir kazanç kapısı değil; Cenâb-ı Hakk'ın 'Şâfî' ismine hürmeten "
-        "insana merhametle hizmet etme sanatıdır. Zengin hastadan aldığı ücreti yoksul hastaların dermanı için "
-        "vakfetmiş, dârüşşifasında garip ve kimsesizleri karşılıksız tedavi etmiştir.",
-        s_body
-    ))
-    story.append(Paragraph(
-        "<i>«Gerçek hekim, hastanın yalnızca nabzına değil, kalbine ve kederine de tabip olandır. "
-        "Güleryüz, tatlı dil ve tevekkül bulunmayan reçetenin tesiri eksik kalır.»</i> anlayışıyla Anadolu tıbbının "
-        "insan merkezli şifa geleneğine rehberlik etmiştir.",
+        "<i>«Tıbbın gayesi, yalnız uzvun marazını gidermek değil; hastanın zihnini, mizacını ve yaşama şevkini ihya etmektir. "
+        "Şefkatsiz, tefekkürsüz ve tekebbür dolu bir hekimin sunduğu ilaç, devadan ziyade dert üretir.»</i> düsturunu şiar edinen "
+        "Tabîb Ekmeleddin, varsıl hastalardan aldığı ücreti yoksulların dermanına vakfederek sosyal hekimliğin en asil örneğini vermiştir.",
         s_quote
     ))
 
-    story.append(Spacer(1, 4 * mm))
-    story.append(HRFlowable(width="100%", thickness=0.8, color=C_GOLD_LT, spaceBefore=2 * mm, spaceAfter=3 * mm))
+    story.append(Spacer(1, 2 * mm))
+    story.append(HRFlowable(width="100%", thickness=0.8, color=C_GOLD_LT, spaceBefore=1 * mm, spaceAfter=2 * mm))
     story.append(Paragraph(
-        "<b>Erciyes Üniversitesi Proje Kurulu</b> · Bu vesika, kadim Anadolu tıp mirasının ve büyük Selçuklu hekimi "
-        "Tabîb Ekmeleddin'in (Bey Hekim) aziz hatırasını genç nesillere aktarmak gayesiyle dijitalleştirilmiştir.",
-        ParagraphStyle("Footnote", fontName=font_name, fontSize=8, leading=11, textColor=C_MUTED, alignment=1)
+        "<b>Erciyes Üniversitesi Bilişim & Tıp Topluluğu</b> · Bu akademik vesika, tıp fakültesi hekim namzetleri ve hekimlerimiz için "
+        "Anadolu Selçuklu Başhekimi Tabîb Ekmeleddin'in (Bey Hekim) klinik mirasını bilimsel tıp tarihi perspektifiyle belgelemek üzere hazırlanmıştır.",
+        ParagraphStyle("Footnote", fontName=font_name, fontSize=7.5, leading=10.5, textColor=C_MUTED, alignment=1)
     ))
 
     doc.build(story, onFirstPage=draw_background_and_border, onLaterPages=draw_background_and_border)
@@ -262,3 +324,4 @@ def build_pdf() -> Path:
 if __name__ == "__main__":
     pdf_path = build_pdf()
     print(f"Tabîb Ekmeleddin PDF başarıyla üretildi: {pdf_path} ({os.path.getsize(pdf_path)} bayt)")
+

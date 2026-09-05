@@ -1197,38 +1197,59 @@
 
 <!-- ── Tabîb Ekmeleddin (Bey Hekim) Kimdir? Modalı ── -->
 <div class="modal-backdrop hidden" id="ekmeleddinBioModal">
-  <div class="modal-card" style="max-width: 480px;">
+  <div class="modal-card" style="max-width: 520px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
-        <h2 style="color: var(--gold-lt); font-size: 1.15rem;">📜 Tabîb Ekmeleddin (Bey Hekim) Kimdir?</h2>
-        <span class="modal-sub">13. Yüzyıl · Selçuklu Başhekimi & Mevlânâ'nın Tabibi</span>
+        <h2 style="color: var(--gold-lt); font-size: 1.15rem;">🩺 Tabîb Ekmeleddin (Bey Hekim) Kimdir?</h2>
+        <span class="modal-sub">13. Yüzyıl Selçuklu Saray Başhekimi · Klinik Tıp & Semiyoloji Monografisi</span>
       </div>
       <button class="modal-close" id="closeEkmeleddinBioBtn" aria-label="Kapat">✕</button>
     </div>
-    <div class="modal-body" style="padding: 14px 18px; font-size: .82rem; line-height: 1.55; color: var(--ink); max-height: 68vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
-      <p><strong style="color: var(--gold);">Ekmeleddîn Tabîb el-Nahcivânî</strong> (halk arasındaki hürmetli unvanıyla <strong>Bey Hekim</strong>), 13. yüzyılda Anadolu Selçuklu Devleti'nin başkenti Konya'da yaşamış devrin en büyük hekim ve filozoflarındandır.</p>
+    <div class="modal-body" style="padding: 14px 18px; font-size: .80rem; line-height: 1.55; color: var(--ink); max-height: 72vh; overflow-y: auto; display: flex; flex-direction: column; gap: 11px;">
+      <p><strong style="color: var(--gold);">Ekmeleddîn Tabîb el-Nahcivânî</strong> (halk ve tıp çevrelerindeki unvanıyla <strong>Bey Hekim</strong> / <em>Melikü'l-Hükemâ</em>), 13. yüzyılda Anadolu Selçuklu Devleti'nin başkenti Konya'da yaşamış; İbn Sînâ ve Râzî ekollerini Selçuklu klinik pratiğinde sentezlemiş en büyük tabiptir.</p>
       
-      <div style="background: #21160e; padding: 10px; border-radius: 6px; border-left: 3px solid var(--gold);">
-        <strong style="color: var(--gold-lt); display: block; margin-bottom: 3px;">🏛️ Selçuklu Saray Başhekimi:</strong>
-        • Sultan II. İzzeddin Keykavus ve IV. Rükneddin Kılıçarslan devirlerinde sarayın ve ordunun başhekimliğini yürütmüştür.<br/>
-        • Konya Dârüşşifası'nda sayısız hekim namzedi yetiştirmiş, tıp ve cerrahi mektebi kurmuştur.<br/>
-        • Konya'daki tarihî <strong>Beyhekim Mescidi</strong> ve <strong>Beyhekim Mahallesi</strong> onun aziz hatırasını taşır.
+      <!-- Klinik Semiyoloji & Sfigmoloji -->
+      <div style="background: #21160e; padding: 11px 13px; border-radius: 6px; border-left: 3px solid var(--gold);">
+        <strong style="color: var(--gold-lt); display: block; margin-bottom: 4px; font-size: .84rem;">🩺 İlm-i Nabz (Klinik Sfigmoloji & Arteriyel Analiz):</strong>
+        • <em>A. radialis</em> palpasyonunda 10 tanısal parametreyi esas alırdı: <strong>Sür'at</strong> (frekans), <strong>Tevatür</strong> (ritm simetrisi), <strong>Kuvvet</strong> (amplitüd), <strong>İmtilâ</strong> (arteriyel gerim/volüm), <strong>Salâbet</strong> (damar elastikiyeti).<br/>
+        • <strong>Pulsus Dicroticus (Dikrotik Nabız):</strong> Vazomotor tonusun çöktüğü septik tablolarda ve kapak patolojilerinde tespit edilirdi.<br/>
+        • <strong>Pulsus Serratus (Testere Dişi Nabız):</strong> Akut hummiyat (febril enfeksiyonlar) ve bakteriyel toksikasyon bulgusu olarak kaydedilirdi.<br/>
+        • <strong>Pulsus Filiformis (İpliksi Nabız):</strong> Masif hipovolemi, hemoraji ve vasküler şok göstergesi olarak değerlendirilirdi.
       </div>
 
-      <div style="background: #21160e; padding: 10px; border-radius: 6px; border-left: 3px solid var(--green);">
-        <strong style="color: var(--green-lt); display: block; margin-bottom: 3px;">🕊️ Hz. Mevlânâ ile Sırdaşlığı:</strong>
-        • Ahmed Eflâkî'nin <em>Menâkıbü'l-Ârifîn</em> eserinde nakledildiği üzere, Hz. Mevlânâ'nın en yakın dostu ve özel hekimidir.<br/>
-        • Mevlânâ'nın son hastalığında başucunda bulunmuş, derin sevgisi ve hekimlik titizliğiyle tarihe geçmiştir.
+      <!-- İlm-i Karûre & Humoral Patoloji -->
+      <div style="background: #21160e; padding: 11px 13px; border-radius: 6px; border-left: 3px solid #2a9d8f;">
+        <strong style="color: #48cae4; display: block; margin-bottom: 4px; font-size: .84rem;">🧪 İlm-i Karûre (Klinik Uroskopi) & Humoral Patoloji:</strong>
+        • Sabah aç karna alınan orta akım idrar numunesi cam karûrelerde 7 kriterle tetkik edilirdi: <strong>Dansite/Kıvam</strong> (proteinüri/osmolarite), <strong>Renk</strong> (ashab/ahmar/esved ile sarılık, hematüri ve hemoglobinüri ayrımı), <strong>Köpürme</strong> (safra asitleri ve nefrotik mikroköpükler) ve <strong>Rusûb</strong> (kalsiyum ürat/oksalat kristalürisi ve pyüri).<br/>
+        • <strong>Ahlat-ı Erba'a (Dört Sıvı Kuramı):</strong> Kan, Balgam, Sarı Safra ve Kara Safra (Sevda) dengesini hücresel ve metabolik homeostaz olarak yorumlamış; <em>dyscrasia</em> (sıvı dengesizliği) zemininde gelişen inflamasyonları hedeflemiştir.
       </div>
 
-      <div style="background: #21160e; padding: 10px; border-radius: 6px; border-left: 3px solid var(--gold-lt);">
-        <strong style="color: var(--gold-lt); display: block; margin-bottom: 3px;">🧪 İlm-i Nabz & Bitkisel Farmakoloji:</strong>
-        • Hastanın nabız vuruşlarından ve mizaç dengesinden hastalıkları teşhis etmede benzersiz bir dehadır.<br/>
-        • Şifalı bitkiler, mineraller ve damıtılmış şuruplarla (terkîb-i edviye) Anadolu tıbbını zenginleştirmiştir.
+      <!-- Terkîb-i Edviye & Galenik Farmakoloji -->
+      <div style="background: #21160e; padding: 11px 13px; border-radius: 6px; border-left: 3px solid #e76f51;">
+        <strong style="color: #f4a261; display: block; margin-bottom: 4px; font-size: .84rem;">🌿 Terkîb-i Edviye (Galenik Farmakoloji & Tıbbi Kimya):</strong>
+        • <strong>Müfredât & Mürekkebât:</strong> Drogları farmakodinamik güçlerine göre 1. dereceden (fizyolojik ajanlar) 4. dereceye (yüksek toksisiteye sahip kuvvetli ajanlar) sınıflandırmıştır.<br/>
+        • <strong>Sekencebîn (Oxymel) Formülasyonu:</strong> Sirke ve süzme bal matriksiyle hazırlanan asit-baz ve elektrolit düzenleyici, hepatobilier drenaj ajanı.<br/>
+        • <strong>Tiryâk-ı Kebîr (Polifarmasi Panzehir):</strong> 60'tan fazla drog, kükürt, afyon ve mürver içeren kombine antitoksik ve immünomodülatör terkip.<br/>
+        • <strong>İmbik Distilasyonu:</strong> Uçucu yağların fraksiyonlanması ve alkolik tentürlerin saflaştırılmasında öncü kimyasal teknikler.
+      </div>
+
+      <!-- Nöropsikiyatri & Müzikoterapi -->
+      <div style="background: #21160e; padding: 11px 13px; border-radius: 6px; border-left: 3px solid #b5838d;">
+        <strong style="color: #e5989b; display: block; margin-bottom: 4px; font-size: .84rem;">🧠 Nöropsikiyatri, Müzikoterapi & Hz. Mevlânâ:</strong>
+        • Melankoli (mâlihulyâ), mania ve somatoform bozukluklarda psikosomatik yaklaşım sergilemiştir.<br/>
+        • <strong>Makamların Otonom Sinir Sistemi Etkileri:</strong> <em>Rast</em> (motor nöron uyarımı ve kas tonusu), <em>Nihavend</em> (hipertansiyon ve kardiyak sedasyon), <em>Rehavî</em> (migren tipi sefalji ve insomnia tedavisi), <em>Hicaz</em> (sempatik deşarjı baskılama).<br/>
+        • Hz. Mevlânâ'nın özel tabibi ve sırdaşı olarak terminal dönemdeki febril pulmoner krizinde hekimlik konsültasyonunu yürütmüştür.
+      </div>
+
+      <!-- Dârüşşifa Triyajı & Deontoloji -->
+      <div style="background: #21160e; padding: 11px 13px; border-radius: 6px; border-left: 3px solid var(--gold-lt);">
+        <strong style="color: var(--gold-lt); display: block; margin-bottom: 4px; font-size: .84rem;">🏥 Dârüşşifa Mimarisi, Triyaj & Deontoloji:</strong>
+        • Konya Dârüşşifası'nda çapraz hava sirkülasyonu, bulaşıcı hastalık tecridi (izolasyon), bimarhane (psikiyatri servisi) ve yatak başı (bedside) klinik tıp eğitimi verilmiştir.<br/>
+        • Cerrahi müdahalelerde koterizasyon, flebotomi ve antiseptik olarak gümüş suyu ve şap solüsyonları kullanılmıştır.
       </div>
       
-      <a href="/download/tabib_ekmeleddin_kimdir.pdf" download class="leaderboard-link-btn" style="text-align: center; text-decoration: none; padding: 10px; background: var(--gold); color: #110d0b; font-weight: 700; margin-top: 4px;">
-        📥 "Tabîb Ekmeleddin Kimdir?" Tezhipli PDF'ini İndir
+      <a href="/download/tabib_ekmeleddin_kimdir.pdf" download class="leaderboard-link-btn" style="text-align: center; text-decoration: none; padding: 12px; background: linear-gradient(135deg, var(--gold), #996d1c); color: #110d0b; font-weight: 800; font-size: .85rem; margin-top: 4px; border-radius: 6px;">
+        📥 Tezhipli Klinik Tıp Monografisi PDF'ini İndir (2 Sayfa)
       </a>
     </div>
   </div>
