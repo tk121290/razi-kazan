@@ -164,6 +164,26 @@ async def get_razi_elements():
     return JSONResponse({"error": "not found"}, status_code=404)
 
 
+@app.get("/download/tibbiye_nasihatleri.pdf")
+async def download_tibbiye_pdf():
+    """Ebû Bekir er-Râzî'nin Tıbbiyeli Bir Dostuna Nasihatler PDF'ini indirir."""
+    path = Path(__file__).parent / "assets" / "tibbiye_nasihatleri.pdf"
+    if not path.exists():
+        try:
+            from generate_pdf import build_pdf
+            build_pdf()
+        except Exception as e:
+            log.error("PDF auto-generation error: %s", e)
+    if path.exists():
+        return FileResponse(
+            path,
+            media_type="application/pdf",
+            filename="Ebu_Bekir_er-Razi_Tibbiyeli_Bir_Dostuna_Nasihatler.pdf",
+        )
+    return JSONResponse({"error": "PDF bulunamadı"}, status_code=404)
+
+
+
 # ── Liderlik Tablosu ──────────────────────────────────────────────────────────
 
 @app.post("/api/scores")
@@ -408,6 +428,18 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
         players = room.setdefault("players", {})
         sockets = room.setdefault("sockets", {})
 
+        room_mode = room.get("mode", "single")
+
+        # Tek kişilik modda 1'den fazla oyuncu bağlanamaz
+        if room_mode == "single" and len(players) >= 1:
+            log.info("Room %s is in single player mode and already has a player", clean_id)
+            await safe_send(websocket, {
+                "type": "error",
+                "message": "Bu oda Tek Kişilik Mod olarak başlatıldı (Oda dolu).",
+            })
+            await websocket.close(code=4003)
+            return
+
         # 2 oyuncu sınırı (Çırak 1 ve Çırak 2)
         if "player_1" not in players:
             assigned_id = "player_1"
@@ -430,7 +462,7 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
         }
         sockets[websocket] = assigned_id
         player_num = 1 if assigned_id == "player_1" else 2
-        log.info("Mobile %s connected as %s — room %s", assigned_id, players[assigned_id]["name"], clean_id)
+        log.info("Mobile %s connected as %s (mode=%s) — room %s", assigned_id, players[assigned_id]["name"], room_mode, clean_id)
 
         desktop = room.get("desktop")
         player_summary = {pid: {"name": p["name"], "emblem": p["emblem"], "ready": p["ready"]} for pid, p in players.items()}
@@ -441,6 +473,7 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
                 "player_num": player_num,
                 "player_count": len(players),
                 "players": player_summary,
+                "mode": room_mode,
             })
 
         await safe_send(websocket, {
@@ -450,6 +483,7 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
             "player_num": player_num,
             "player_count": len(players),
             "players": player_summary,
+            "mode": room_mode,
         })
 
         # Diğer bağlı oyuncuya yeni rakibi bildir
@@ -461,6 +495,7 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
                     "player_num": player_num,
                     "player_count": len(players),
                     "players": player_summary,
+                    "mode": room_mode,
                 })
 
     # Mesaj işleme döngüsü (Rate limiting & Type validation)
@@ -485,7 +520,7 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
 
             desktop = room.get("desktop")
             if role != "desktop":
-                p_id = room.get("sockets", {}).get(websocket, "player_1")
+                p_id = message.get("player_id") or room.get("sockets", {}).get(websocket, "player_1")
                 msg_type = message.get("type")
 
                 # 1. Buton basımı
@@ -500,7 +535,15 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
                                 "button": btn_str,
                             })
 
-                # 2. Lobi isim/amblem güncellemesi
+                # 2. Başla butonu
+                elif msg_type == "start_game":
+                    if isinstance(desktop, WebSocket):
+                        await safe_send(desktop, {
+                            "type": "start_game",
+                            "player_id": p_id,
+                        })
+
+                # 3. Lobi isim/amblem güncellemesi
                 elif msg_type == "join_lobby":
                     name_raw = str(message.get("name", "")).strip()
                     name = re.sub(r"[^\w\s\-çğıöşüÇĞİÖŞÜ]", "", name_raw)[:20].strip() or f"Çırak {1 if p_id == 'player_1' else 2}"
@@ -528,7 +571,7 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
                                 "players": player_summary,
                             })
 
-                # 3. Hazır durumu
+                # 4. Hazır durumu
                 elif msg_type == "player_ready":
                     ready_val = bool(message.get("ready", True))
                     if p_id in room.get("players", {}):
@@ -551,7 +594,15 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
                                 "players": player_summary,
                             })
             else:
-                await broadcast_mobile(room, message)
+                msg_type = message.get("type")
+                if msg_type == "mode_set":
+                    room["mode"] = message.get("mode", "single")
+                    log.info("Room %s mode explicitly set to %s", clean_id, room["mode"])
+                elif msg_type == "mode_changed":
+                    room["mode"] = message.get("mode", "single")
+                    await broadcast_mobile(room, message)
+                else:
+                    await broadcast_mobile(room, message)
 
     except WebSocketDisconnect:
         pass
@@ -588,3 +639,9 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
         if room.get("desktop") is None and not room.get("players"):
             rooms.pop(clean_id, None)
             log.info("Room %s cleaned up", clean_id)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=False)
+

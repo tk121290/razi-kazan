@@ -10,6 +10,7 @@ import tempfile
 import threading
 import time
 import urllib.request as _urllib
+import webbrowser
 from enum import Enum, auto
 from pathlib import Path
 
@@ -110,13 +111,34 @@ class GameMode(Enum):
 
 
 class GameState(Enum):
+    MODE_SELECT        = auto()
     WAITING_FOR_PLAYER = auto()
+    PROLOGUE           = auto()
     DUEL_LOBBY         = auto()
     RHAZI_TURN         = auto()
     PLAYER_TURN        = auto()
     RESOLUTION         = auto()
     GAME_OVER          = auto()
     DUEL_MATCH_OVER    = auto()
+    CREDITS_VIEW       = auto()
+
+
+RHAZI_PROLOGUE_SINGLE = (
+    "Hoş geldin hekim namzedi! Ben Ebû Bekir Muhammed bin Zekeriyyâ er-Râzî. "
+    "Kitâbü'l-Esrâr'ın sırlarını ve kadim hekimliği öğrenmek için kazanın başına geçtin. "
+    "Birazdan kazana şifalı cevherler, tuzlar ve asitler ekleyeceğim. Bu sırayı dikkatle aklında tut! "
+    "Sıra sana geldiğinde telefonundaki butonlarla aynı sırayla kazana ekle. 3 şişe kırma hakkın var. "
+    "Her 3 elementte bir süren artacak. Zihnini topla ve hazır olduğunda Başla'ya bas!"
+)
+
+RHAZI_PROLOGUE_DUEL = (
+    "Huzuruma hoş geldiniz çıraklar! Ben Ebû Bekir er-Râzî. "
+    "Hanginizin Kitâbü'l-Esrâr'ın yeni baş hekimi ve vârisi olacağını görmek için bu yarışı tertip ettim. "
+    "Kazana atacağım malzemeleri dikkatle izleyin. Sıra size geldiğinde aynı sırayı ilk ve eksiksiz "
+    "tamamlayan çırak raundu ve 1 yıldızı ⭐ kazanır. Yanlış malzeme seçen 1.2 saniye sersemler ve sırası başa döner! "
+    "Toplam 3 raunt kazanan şampiyon ilan edilir. Hazırsanız Başla'ya basın!"
+)
+
 
 
 
@@ -513,6 +535,9 @@ class Game:
         self.font_tiny   = pygame.font.Font(_fp, 7)    # Timer, ipucu
         self.font_symbol = pygame.font.SysFont("segoeuisymbol,segoeuiemoji,arial", 16)
         self.font_symbol_large = pygame.font.SysFont("segoeuisymbol,segoeuiemoji,arial", 28)
+        self.font_body = pygame.font.SysFont("segoeui,arial,sans-serif", 15)
+        self.font_body_bold = pygame.font.SysFont("segoeui,arial,sans-serif", 16, bold=True)
+        self.font_body_large = pygame.font.SysFont("segoeui,arial,sans-serif", 20, bold=True)
 
         # ── Sprite Animasyonları ─────────────────────────────────────────────
         self.anim_master = SpriteAnimation(
@@ -552,7 +577,7 @@ class Game:
         # ── Durum ────────────────────────────────────────────────────────────
         self.events: queue.Queue[dict] = queue.Queue()
         self.room_id   = make_room_id()
-        self.state     = GameState.WAITING_FOR_PLAYER
+        self.state     = GameState.MODE_SELECT
         self.level     = 1
         self.lives     = 3
         self.combo     = 0
@@ -563,8 +588,14 @@ class Game:
         self.player_index  = 0
         self.phase_started = time.monotonic()
         self.phase_cursor  = 0
-        self.last_message  = "Telefon bağlanması bekleniyor"
+        self.last_message  = "Oyun modu seçin"
         self.round_success = False
+
+        # Prologue (Anlatım) Durumu
+        self.prologue_started = 0.0
+        self.prologue_text    = ""
+        self.prologue_readies = {"player_1": False, "player_2": False}
+        self._prev_credits_state = GameState.MODE_SELECT
 
         # Konuşma balonu & Alev patlaması & Bilgi kartları
         self.bubble_text     = ""
@@ -604,8 +635,8 @@ class Game:
         # ── 1v1 Çırak Düellosu (Multiplayer) Durumu ───────────────────────────
         self.mode = GameMode.SINGLE
         self.players: dict[str, dict] = {
-            "player_1": {"name": "Çırak 1", "emblem": "☿", "ready": False},
-            "player_2": {"name": "Çırak 2", "emblem": "🜍", "ready": False},
+            "player_1": {"name": "Çırak 1", "emblem": "☿", "ready": False, "connected": False},
+            "player_2": {"name": "Çırak 2", "emblem": "🜍", "ready": False, "connected": False},
         }
         self.duel_scores = {"player_1": 0, "player_2": 0}
         self.duel_round = 1
@@ -644,8 +675,42 @@ class Game:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         running = False
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                        running = False
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                            if self.state == GameState.CREDITS_VIEW:
+                                self._close_credits_view()
+                            elif self.state == GameState.MODE_SELECT:
+                                running = False
+                            elif self.state in (GameState.WAITING_FOR_PLAYER, GameState.PROLOGUE, GameState.DUEL_LOBBY):
+                                self._return_to_mode_select()
+                            elif self.state in (GameState.GAME_OVER, GameState.DUEL_MATCH_OVER):
+                                self._return_to_mode_select()
+                            else:
+                                running = False
+                        elif event.key == pygame.K_1:
+                            if self.state == GameState.MODE_SELECT:
+                                self._select_mode(GameMode.SINGLE)
+                        elif event.key == pygame.K_2:
+                            if self.state == GameState.MODE_SELECT:
+                                self._select_mode(GameMode.DUEL)
+                        elif event.key in (pygame.K_c, pygame.K_k):
+                            if self.state == GameState.CREDITS_VIEW:
+                                self._close_credits_view()
+                            else:
+                                self._open_credits_view()
+                        elif event.key in (pygame.K_SPACE, pygame.K_RETURN):
+                            if self.state == GameState.PROLOGUE:
+                                self._start_game_from_prologue()
+                            elif self.state == GameState.GAME_OVER:
+                                self._reset_game()
+                            elif self.state == GameState.DUEL_MATCH_OVER:
+                                self._reset_duel()
+                        elif event.key == pygame.K_m:
+                            if self.state in (GameState.GAME_OVER, GameState.DUEL_MATCH_OVER, GameState.WAITING_FOR_PLAYER):
+                                self._return_to_mode_select()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        self._handle_mouse_click(event.pos)
+
                 self._consume_network_events()
                 self._update()
                 self._draw()
@@ -655,7 +720,154 @@ class Game:
             self.network.stop()
             pygame.quit()
 
-    # ── Network olayları ─────────────────────────────────────────────────────
+    # ── Fare Tıklama Yönetimi ────────────────────────────────────────────────
+
+    def _handle_mouse_click(self, pos: tuple[int, int]) -> None:
+        x, y = pos
+        if self.state == GameState.MODE_SELECT:
+            # Kart 1: Tek Kişilik Macera (90, 160, 430, 390)
+            if 90 <= x <= 520 and 160 <= y <= 550:
+                self._select_mode(GameMode.SINGLE)
+            # Kart 2: 1v1 Çırak Düellosu (580, 160, 430, 390)
+            elif 580 <= x <= 1010 and 160 <= y <= 550:
+                self._select_mode(GameMode.DUEL)
+            # Alt bar: Kulüp & Künye Butonu
+            elif (WIDTH // 2 - 200) <= x <= (WIDTH // 2 + 200) and 580 <= y <= 626:
+                self._open_credits_view()
+
+        elif self.state == GameState.WAITING_FOR_PLAYER:
+            # Geri Dön Butonu
+            if 452 <= x <= 712 and 530 <= y <= 572:
+                self._return_to_mode_select()
+            # Kulüp & Künye Butonu
+            elif 730 <= x <= 990 and 530 <= y <= 572:
+                self._open_credits_view()
+
+        elif self.state == GameState.PROLOGUE:
+            # Başla Butonu (Kullanıcı şartı: Sadece "BAŞLA")
+            btn_rect = pygame.Rect(WIDTH // 2 - 160, 580, 320, 54)
+            if btn_rect.collidepoint(pos):
+                self._start_game_from_prologue()
+            # Sol üst Geri butonu
+            elif 30 <= x <= 180 and 20 <= y <= 56:
+                self._return_to_mode_select()
+
+        elif self.state == GameState.GAME_OVER:
+            cx = WIDTH // 2
+            # Tekrar Oyna: (cx - 240, 316, 220, 42)
+            if (cx - 240) <= x <= (cx - 20) and 316 <= y <= 358:
+                self._reset_game()
+            # Mod Seçimi: (cx + 20, 316, 220, 42)
+            elif (cx + 20) <= x <= (cx + 240) and 316 <= y <= 358:
+                self._return_to_mode_select()
+            # Kulüp & Künye: (cx - 200, 374, 400, 42)
+            elif (cx - 200) <= x <= (cx + 200) and 374 <= y <= 416:
+                self._open_credits_view()
+
+        elif self.state == GameState.DUEL_MATCH_OVER:
+            cx = WIDTH // 2
+            # Yeni Karşılaşma: (cx - 240, 325, 220, 42)
+            if (cx - 240) <= x <= (cx - 20) and 325 <= y <= 367:
+                self._reset_duel()
+            # Mod Seçimi: (cx + 20, 325, 220, 42)
+            elif (cx + 20) <= x <= (cx + 240) and 325 <= y <= 367:
+                self._return_to_mode_select()
+            # Kulüp & Künye: (cx - 200, 383, 400, 42)
+            elif (cx - 200) <= x <= (cx + 200) and 383 <= y <= 425:
+                self._open_credits_view()
+
+        elif self.state == GameState.CREDITS_VIEW:
+            # Erciyes Kulüp Kayıt Butonu (110 <= x <= 380, 572 <= y <= 618)
+            if 110 <= x <= 380 and 572 <= y <= 618:
+                try:
+                    webbrowser.open("https://erubilisim.erciyes.edu.tr")
+                except Exception:
+                    pass
+            # Nasihatler PDF İndir Butonu (410 <= x <= 710, 572 <= y <= 618)
+            elif 410 <= x <= 710 and 572 <= y <= 618:
+                try:
+                    webbrowser.open(f"http://localhost:{PORT}/download/tibbiye_nasihatleri.pdf")
+                except Exception:
+                    pass
+            # Kapat / Geri Dön Butonu (740 <= x <= 990, 572 <= y <= 618)
+            elif 740 <= x <= 990 and 572 <= y <= 618:
+                self._close_credits_view()
+
+    # ── Mod & Ekran Geçiş Yardımcıları ───────────────────────────────────────
+
+    def _select_mode(self, mode: GameMode) -> None:
+        self.mode = mode
+        self.state = GameState.WAITING_FOR_PLAYER
+        self.wait_started = time.monotonic()
+        self.player_connected = False
+        for p in self.players.values():
+            p["connected"] = False
+            p["ready"] = False
+        self.network.send({"type": "mode_set", "mode": mode.value})
+        if mode == GameMode.DUEL:
+            self.speak_bubble("1v1 Çırak Düellosu! Her iki çırak da QR kodu okutsun.", duration=4.0)
+        else:
+            self.speak_bubble("Tek kişilik macera! Telefonunla QR kodu okut.", duration=4.0)
+
+    def _return_to_mode_select(self) -> None:
+        self.state = GameState.MODE_SELECT
+        self.mode = GameMode.SINGLE
+        self.player_connected = False
+        for p in self.players.values():
+            p["connected"] = False
+            p["ready"] = False
+        self.network.send({"type": "mode_set", "mode": "single"})
+        self.speak_bubble("Oyun modunu seçin: 1 (Tek Kişilik) veya 2 (Düello).", duration=4.0)
+
+    def _start_prologue(self) -> None:
+        self.state = GameState.PROLOGUE
+        self.prologue_started = time.monotonic()
+        self.prologue_readies = {"player_1": False, "player_2": False}
+        if self.mode == GameMode.DUEL:
+            self.prologue_text = RHAZI_PROLOGUE_DUEL
+            self.network.send({
+                "type": "prologue",
+                "mode": "duel",
+                "title": "Ebû Bekir er-Râzî'nin Talimatları",
+                "text": RHAZI_PROLOGUE_DUEL,
+                "button_text": "BAŞLA",
+            })
+            self.speak_bubble("Huzuruma hoş geldiniz çıraklar! Dikkatle dinleyin.", duration=5.0)
+        else:
+            self.prologue_text = RHAZI_PROLOGUE_SINGLE
+            self.network.send({
+                "type": "prologue",
+                "mode": "single",
+                "title": "Ebû Bekir er-Râzî'nin Talimatları",
+                "text": RHAZI_PROLOGUE_SINGLE,
+                "button_text": "BAŞLA",
+            })
+            self.speak_bubble("Hoş geldin hekim namzedi! Kitâbü'l-Esrâr'ın sırlarını öğrenmeye hazır mısın?", duration=5.0)
+
+    def _start_game_from_prologue(self) -> None:
+        if self.state != GameState.PROLOGUE:
+            return
+        if self.mode == GameMode.DUEL:
+            self.duel_round = 1
+            self.duel_scores = {"player_1": 0, "player_2": 0}
+            self._start_rhazi_turn()
+        else:
+            self.level = 1
+            self.lives = 3
+            self.combo = 0
+            self.max_combo = 0
+            self._start_rhazi_turn()
+
+    def _open_credits_view(self) -> None:
+        if self.state != GameState.CREDITS_VIEW:
+            self._prev_credits_state = self.state
+            self.state = GameState.CREDITS_VIEW
+
+    def _close_credits_view(self) -> None:
+        if self.state == GameState.CREDITS_VIEW:
+            self.state = self._prev_credits_state
+
+    # ── Network Olayları ─────────────────────────────────────────────────────
 
     def _consume_network_events(self) -> None:
         while True:
@@ -666,26 +878,32 @@ class Game:
             t = msg.get("type")
             if t == "player_connected":
                 pid = msg.get("player_id", "player_1")
+                if pid in self.players:
+                    self.players[pid]["connected"] = True
                 players_data = msg.get("players", {})
                 for k, v in players_data.items():
                     if k in self.players:
                         self.players[k].update(v)
                     else:
                         self.players[k] = v
-                p_count = msg.get("player_count", len(self.players))
+                p_count = msg.get("player_count", sum(1 for p in self.players.values() if p.get("connected")))
 
-                if p_count >= 2:
-                    self.mode = GameMode.DUEL
-                    if self.state != GameState.DUEL_LOBBY:
-                        self.state = GameState.DUEL_LOBBY
-                        self.duel_scores = {"player_1": 0, "player_2": 0}
-                        self.duel_round = 1
-                        self.lobby_countdown_start = None
-                        self.speak_bubble("İki Simyacı katıldı! 1v1 Çırak Düellosu Lobisi açıldı.", duration=4.0)
+                if self.mode == GameMode.DUEL:
+                    # Düello modunda 2 oyuncu da bağlanana kadar QR açık kalır
+                    if p_count >= 2:
+                        if self.state == GameState.WAITING_FOR_PLAYER:
+                            self.state = GameState.DUEL_LOBBY
+                            self.duel_scores = {"player_1": 0, "player_2": 0}
+                            self.duel_round = 1
+                            self.lobby_countdown_start = None
+                            self.speak_bubble("İki Çırak da katıldı! 1v1 Çırak Düellosu Lobisi açıldı.", duration=4.0)
+                    else:
+                        self.speak_bubble("1. Çırak bağlandı! 2. Çırağın QR kodu okutması bekleniyor...", duration=4.0)
                 else:
+                    # Tek kişilik modda 1 oyuncu bağlandığı an anlatım ekranına (Prologue) geçer
                     if self.state == GameState.WAITING_FOR_PLAYER:
                         self.player_connected = True
-                        self._start_rhazi_turn()
+                        self._start_prologue()
 
             elif t in ("player_updated", "player_ready"):
                 pid = msg.get("player_id")
@@ -701,16 +919,21 @@ class Game:
                     if k in self.players:
                         self.players[k].update(v)
 
-                # Lobi hazır durumu kontrolü
-                if self.state == GameState.DUEL_LOBBY and len(self.players) >= 2:
+                # Lobi hazır durumu kontrolü -> Hazır olunca Prologue'a geçilir
+                if self.state == GameState.DUEL_LOBBY:
                     p1_ready = self.players.get("player_1", {}).get("ready", False)
                     p2_ready = self.players.get("player_2", {}).get("ready", False)
                     if p1_ready and p2_ready:
                         if not self.lobby_countdown_start:
                             self.lobby_countdown_start = time.monotonic()
-                            self.speak_bubble("Her iki çırak da hazır! Ayin 3 saniye içinde başlıyor!", duration=3.0)
+                            self.speak_bubble("Her iki çırak da hazır! Talimatlar geliyor...", duration=3.0)
                     else:
                         self.lobby_countdown_start = None
+
+            elif t == "start_game":
+                # Mobilde 'BAŞLA' butonuna basıldı
+                if self.state == GameState.PROLOGUE:
+                    self._start_game_from_prologue()
 
             elif t == "button":
                 btn = msg.get("button", "")
@@ -729,13 +952,13 @@ class Game:
                 pid = msg.get("player_id")
                 p_count = msg.get("player_count", 0)
                 if pid in self.players:
+                    self.players[pid]["connected"] = False
                     self.players[pid]["ready"] = False
-                if self.mode == GameMode.DUEL and p_count < 2:
-                    self.mode = GameMode.SINGLE
-                    self.state = GameState.WAITING_FOR_PLAYER
-                    self.wait_started = time.monotonic()
-                    self.speak_bubble("Bir çırak ayrıldı. Tek kişilik moda dönüldü.", duration=4.0)
-                    self.network.send({"type": "mode_changed", "mode": "single"})
+                if self.mode == GameMode.DUEL:
+                    if self.state in (GameState.DUEL_LOBBY, GameState.PROLOGUE, GameState.RHAZI_TURN, GameState.PLAYER_TURN):
+                        self.state = GameState.WAITING_FOR_PLAYER
+                        self.wait_started = time.monotonic()
+                        self.speak_bubble("Bir çırak ayrıldı. Yeni çırak bekleniyor...", duration=4.0)
                 else:
                     self.player_connected = False
 
@@ -932,7 +1155,7 @@ class Game:
             if self.lobby_countdown_start:
                 if now - self.lobby_countdown_start >= 3.0:
                     self.lobby_countdown_start = None
-                    self._start_rhazi_turn()
+                    self._start_prologue()
             return
 
         if self.state == GameState.RHAZI_TURN:
@@ -979,10 +1202,10 @@ class Game:
                     self._start_rhazi_turn()
                 else:
                     self._go_game_over()
-        elif self.state == GameState.GAME_OVER and now - self.game_over_time >= 4:
-            self._return_to_qr_screen()
-        elif self.state == GameState.DUEL_MATCH_OVER and now - self.game_over_time >= 15:
-            self._reset_duel()
+        elif self.state == GameState.GAME_OVER and now - self.game_over_time >= 120:
+            self._return_to_mode_select()
+        elif self.state == GameState.DUEL_MATCH_OVER and now - self.game_over_time >= 180:
+            self._return_to_mode_select()
         elif self.state == GameState.WAITING_FOR_PLAYER:
             # Hiç kimse bağlanmazsa timeout — yeni oda oluştur
             if now - self.wait_started > self.PLAYER_TIMEOUT:
@@ -1329,7 +1552,13 @@ class Game:
         self.pixel_surface.fill(BG)
         self.pixel_surface.blit(self.background, (0, 0))
 
-        if self.state == GameState.WAITING_FOR_PLAYER:
+        if self.state == GameState.MODE_SELECT:
+            self._draw_mode_select_screen()
+        elif self.state == GameState.PROLOGUE:
+            self._draw_prologue_screen()
+        elif self.state == GameState.CREDITS_VIEW:
+            self._draw_credits_screen()
+        elif self.state == GameState.WAITING_FOR_PLAYER:
             self._draw_waiting_screen()
         elif self.state == GameState.DUEL_LOBBY:
             self._draw_duel_lobby()
@@ -1440,51 +1669,94 @@ class Game:
 
     def _draw_waiting_screen(self) -> None:
         # Başlık
-        self._text_shadow("EBÛ BEKİR ER-RÂZÎ'NİN KAZANI", self.font_title, GOLD, (50, 44))
-        self._text("Bir hafıza ve dikkat ayini", self.font_medium, TEXT_DIM, (60, 88))
+        mode_title = "1v1 ÇIRAK DÜELLOSU" if self.mode == GameMode.DUEL else "TEK KİŞİLİK MACERA"
+        self._text_shadow(f"EBÛ BEKİR ER-RÂZÎ'NİN KAZANI · {mode_title}", self.font_title, GOLD, (50, 44))
+        self._text("Mobil cihazınızdan QR kodu okutarak ayine bağlanın", self.font_body, TEXT_DIM, (52, 88))
 
-        # QR kutusu
-        panel_rect = pygame.Rect(48, 164, 368, 450)
+        # QR kutusu (Sol Panel)
+        panel_rect = pygame.Rect(48, 140, 368, 470)
         self._draw_panel(panel_rect, radius=14)
         qr_scaled = pygame.transform.scale(self.qr_surface, (296, 296))
-        # Beyaz arka plan QR arka planı için
-        pygame.draw.rect(self.pixel_surface, (245, 245, 245), (72, 184, 296, 296), border_radius=6)
-        self.pixel_surface.blit(qr_scaled, (72, 184))
-        self._text("ODA KODU", self.font_small, TEXT_DIM, (100, 494))
-        self._text(self.room_id, self.font_large, GOLD_LT, (80, 516))
-        self._text("Aynı Wi-Fi ağında tarayın", self.font_tiny, TEXT_DIM, (68, 554))
+        pygame.draw.rect(self.pixel_surface, (245, 245, 245), (72, 160, 296, 296), border_radius=6)
+        self.pixel_surface.blit(qr_scaled, (72, 160))
+        self._text("ODA KODU", self.font_small, TEXT_DIM, (100, 474))
+        self._text(self.room_id, self.font_large, GOLD_LT, (80, 496))
+        self._text(f"Aynı Wi-Fi ağında: {PLAY_URL}/{self.room_id}"[:50], self.font_tiny, TEXT_DIM, (60, 534))
+        self._text("Kamera ile QR kodu okutun", self.font_body, GOLD, (108, 564))
 
-        # Sağ panel — talimatlar
+        # Sağ panel
         rx = 452
-        self._text_shadow("NASIL OYNANIR", self.font_medium, GOLD, (rx, 170))
-        self._draw_separator(rx, 200, 610)
+        if self.mode == GameMode.DUEL:
+            self._text_shadow("DÜELLO BAĞLANTI DURUMU", self.font_medium, GOLD, (rx, 150))
+            self._draw_separator(rx, 178, 1020)
 
-        steps = [
-            ("1", "QR kodu telefonunla tara"),
-            ("2", "Ebû Bekir er-Râzî malzemeleri gösterir"),
-            ("3", "Sırayı ezberle"),
-            ("4", "Telefondaki butonlarla"),
-            ("",  "aynı sırayla bas"),
-            ("5", "Her tur daha uzun ve hızlı"),
-        ]
-        sy = 220
-        for num, text in steps:
-            if num:
-                pygame.draw.circle(self.pixel_surface, GOLD, (rx + 10, sy + 6), 8)
-                pygame.draw.circle(self.pixel_surface, PANEL, (rx + 10, sy + 6), 6)
-                self._text(num, self.font_tiny, GOLD, (rx + 7, sy + 1))
-            self._text(text, self.font_tiny, TEXT if num else TEXT_DIM, (rx + 26, sy))
-            sy += 28
+            p1_info = self.players.get("player_1", {})
+            p2_info = self.players.get("player_2", {})
+            p1_conn = p1_info.get("connected", False)
+            p2_conn = p2_info.get("connected", False)
+            conn_count = (1 if p1_conn else 0) + (1 if p2_conn else 0)
 
-        # En iyi skor
-        self._draw_separator(rx, sy + 8, 610)
-        self._text("EN İYİ SKOR", self.font_small, TEXT_DIM, (rx, sy + 20))
-        best_str = f"SEVİYE  {self.best:02d}" if self.best > 0 else "—"
-        self._text(best_str, self.font_large, GOLD_LT, (rx, sy + 40))
+            # Çırak 1 Kutusu
+            b1 = pygame.Rect(rx, 196, 568, 64)
+            self._draw_panel(b1, radius=10)
+            pygame.draw.rect(self.pixel_surface, GREEN if p1_conn else BORDER, b1, 2, border_radius=10)
+            self._text("☿", self.font_symbol_large, GOLD_LT if p1_conn else TEXT_DIM, (rx + 16, 210))
+            self._text(f"1. ÇIRAK: {p1_info.get('name', 'Çırak 1')}", self.font_body_bold, TEXT, (rx + 56, 206))
+            status_p1 = "✅ Bağlandı — Hazır" if p1_conn else "⏳ QR Kodu Okutması Bekleniyor..."
+            self._text(status_p1, self.font_body, GREEN if p1_conn else GOLD, (rx + 56, 230))
 
-        # URL
-        url_text = f"{PLAY_URL}/{self.room_id}"
-        self._text(url_text[:40], self.font_tiny, TEXT_DIM, (rx, HEIGHT - 60))
+            # Çırak 2 Kutusu
+            b2 = pygame.Rect(rx, 274, 568, 64)
+            self._draw_panel(b2, radius=10)
+            pygame.draw.rect(self.pixel_surface, GREEN if p2_conn else BORDER, b2, 2, border_radius=10)
+            self._text("🜍", self.font_symbol_large, GOLD_LT if p2_conn else TEXT_DIM, (rx + 16, 288))
+            self._text(f"2. ÇIRAK: {p2_info.get('name', 'Çırak 2')}", self.font_body_bold, TEXT, (rx + 56, 284))
+            status_p2 = "✅ Bağlandı — Hazır" if p2_conn else "⏳ 2. Telefon Bekleniyor (Aynı QR'ı okutun)..."
+            self._text(status_p2, self.font_body, GREEN if p2_conn else GOLD, (rx + 56, 308))
+
+            # Bilgilendirme
+            self._draw_separator(rx, 356, 1020)
+            self._text(f"Durum: {conn_count} / 2 Çırak Bağlandı", self.font_body_bold, GOLD_LT, (rx, 370))
+            self._text("• İki oyuncu da bağlandığında 1v1 Düello Lobisi açılacaktır.", self.font_body, TEXT_DIM, (rx, 398))
+            self._text("• Her iki oyuncu da kendi telefonundan amblem seçip yarışır.", self.font_body, TEXT_DIM, (rx, 424))
+            self._text("• İlk 3 raundu (yıldızı) kazanan şampiyon olur!", self.font_body, TEXT_DIM, (rx, 450))
+
+        else:
+            self._text_shadow("NASIL OYNANIR", self.font_medium, GOLD, (rx, 150))
+            self._draw_separator(rx, 178, 1020)
+
+            steps = [
+                ("1", "QR kodu telefonunun kamerasıyla tara ve bağlan."),
+                ("2", "Ebû Bekir er-Râzî'nin talimatlarını dinle ve 'BAŞLA'ya bas."),
+                ("3", "Râzî kazana şifalı cevherleri atarken sırayı aklında tut."),
+                ("4", "Sıra sana geldiğinde telefondan aynı sırayla ekle."),
+                ("5", "3 can hakkın var. Her 3 elementte bir süren uzar!"),
+            ]
+            sy = 196
+            for num, text in steps:
+                pygame.draw.circle(self.pixel_surface, GOLD, (rx + 12, sy + 10), 10)
+                pygame.draw.circle(self.pixel_surface, PANEL, (rx + 12, sy + 10), 8)
+                self._text(num, self.font_tiny, GOLD, (rx + 8, sy + 4))
+                self._text(text, self.font_body, TEXT, (rx + 32, sy))
+                sy += 36
+
+            # En iyi skor
+            self._draw_separator(rx, sy + 10, 1020)
+            best_str = f"SEVİYE  {self.best:02d}" if self.best > 0 else "—"
+            self._text(f"EN İYİ REKOR: {best_str}", self.font_body_bold, GOLD_LT, (rx, sy + 24))
+
+        # Alt Butonlar
+        # Buton 1: Mod Seçimine Dön
+        btn_back = pygame.Rect(rx, 530, 260, 42)
+        self._draw_panel(btn_back, radius=8)
+        pygame.draw.rect(self.pixel_surface, BORDER, btn_back, 2, border_radius=8)
+        self._text_center("◀ Mod Seçimi (ESC)", self.font_body_bold, TEXT, btn_back.centerx, btn_back.y + 11)
+
+        # Buton 2: Kulüp & Künye
+        btn_cred = pygame.Rect(rx + 280, 530, 260, 42)
+        self._draw_panel(btn_cred, radius=8)
+        pygame.draw.rect(self.pixel_surface, GOLD, btn_cred, 2, border_radius=8)
+        self._text_center("🏛️ Kulüp & Künye (C)", self.font_body_bold, GOLD_LT, btn_cred.centerx, btn_cred.y + 11)
 
     # ── Oyun başlık çubuğu ───────────────────────────────────────────────────
 
@@ -1681,36 +1953,54 @@ class Game:
     def _draw_game_over_screen(self) -> None:
         # Karartma
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 175))
+        overlay.fill((0, 0, 0, 185))
         self.pixel_surface.blit(overlay, (0, 0))
 
         cx = WIDTH // 2
         # Kutu
-        box = pygame.Rect(cx - 260, 160, 520, 350)
+        box = pygame.Rect(cx - 280, 95, 560, 480)
         self._draw_panel(box, radius=16)
         pygame.draw.rect(self.pixel_surface, RED, box, 2, border_radius=16)
 
         # Başlık
-        self._text_center("AYİN SONA ERDİ", self.font_title, RED_LT, cx, 185)
-        self._draw_separator(box.x + 20, 220, box.right - 20)
+        self._text_center("AYİN SONA ERDİ", self.font_title, RED_LT, cx, 120)
+        self._draw_separator(box.x + 20, 155, box.right - 20)
 
         # Ulaşılan seviye
-        self._text_center("ULAŞILAN SEVİYE", self.font_tiny, TEXT_DIM, cx, 236)
-        self._text_center(f"{self.final_level:02d}", self.font_title, GOLD_LT, cx, 258)
+        self._text_center("ULAŞILAN SEVİYE", self.font_tiny, TEXT_DIM, cx, 170)
+        self._text_center(f"{self.final_level:02d}", self.font_title, GOLD_LT, cx, 192)
 
         # Simyacı Unvanı
         title = get_alchemical_title(self.final_level)
-        self._text_center(title, self.font_medium, GOLD, cx, 296)
+        self._text_center(title, self.font_medium, GOLD, cx, 228)
 
         # Kombo & En iyi skor
-        self._draw_separator(box.x + 20, 326, box.right - 20)
+        self._draw_separator(box.x + 20, 258, box.right - 20)
         combo_str = f"EN ÇOK SERİ: {self.max_combo}x" if self.max_combo >= 2 else "SERİ: —"
-        self._text_center(f"{combo_str}   ·   EN İYİ: {self.best:02d}", self.font_small, TEXT, cx, 344)
+        self._text_center(f"{combo_str}   ·   EN İYİ: {self.best:02d}", self.font_small, TEXT, cx, 276)
 
-        # Yeniden başlat ipucu
-        self._text_center("Telefondan 'Yeni Oyun' butonuna bas", self.font_tiny, TEXT_DIM, cx, 396)
-        secs_left = max(0, 6 - int(time.monotonic() - self.game_over_time))
-        self._text_center(f"veya {secs_left}s sonra otomatik lobiye döner", self.font_tiny, TEXT_DIM, cx, 420)
+        # Buton 1 & 2: Tekrar Oyna & Mod Seçimi
+        b_retry = pygame.Rect(cx - 240, 316, 220, 42)
+        self._draw_panel(b_retry, radius=8)
+        pygame.draw.rect(self.pixel_surface, GREEN, b_retry, 2, border_radius=8)
+        self._text_center("🔄 Tekrar Oyna (SPACE)", self.font_body_bold, GREEN_LT, b_retry.centerx, b_retry.y + 11)
+
+        b_mode = pygame.Rect(cx + 20, 316, 220, 42)
+        self._draw_panel(b_mode, radius=8)
+        pygame.draw.rect(self.pixel_surface, BORDER, b_mode, 2, border_radius=8)
+        self._text_center("◀ Mod Seçimi (M)", self.font_body_bold, TEXT, b_mode.centerx, b_mode.y + 11)
+
+        # Buton 3: Kulüp & Künye & Risale
+        b_cred = pygame.Rect(cx - 200, 374, 400, 42)
+        self._draw_panel(b_cred, radius=8)
+        pygame.draw.rect(self.pixel_surface, GOLD, b_cred, 2, border_radius=8)
+        self._text_center("🏛️ Kulüp, Künye & Risale (C)", self.font_body_bold, GOLD_LT, b_cred.centerx, b_cred.y + 11)
+
+        # İpuçları
+        self._draw_separator(box.x + 20, 436, box.right - 20)
+        self._text_center("Telefondan 'Yeni Oyun' butonuna basabilir veya ekrandan seçebilirsiniz", self.font_tiny, TEXT_DIM, cx, 452)
+        secs_left = max(0, 120 - int(time.monotonic() - self.game_over_time))
+        self._text_center(f"veya {secs_left}s sonra otomatik ana menüye döner", self.font_tiny, TEXT_DIM, cx, 474)
 
     # ── Düello Çizim Metotları ───────────────────────────────────────────────
 
@@ -2021,12 +2311,12 @@ class Game:
         self.pixel_surface.blit(overlay, (0, 0))
 
         cx = WIDTH // 2
-        box = pygame.Rect(cx - 320, 130, 640, 420)
+        box = pygame.Rect(cx - 320, 75, 640, 520)
         self._draw_panel(box, radius=18)
         pygame.draw.rect(self.pixel_surface, GOLD, box, 3, border_radius=18)
 
-        self._text_center("👑  DÜELLO ŞAMPİYONU  👑", self.font_title, GOLD_LT, cx, box.y + 30)
-        self._draw_separator(box.x + 30, box.y + 68, box.right - 30)
+        self._text_center("👑  DÜELLO ŞAMPİYONU  👑", self.font_title, GOLD_LT, cx, box.y + 24)
+        self._draw_separator(box.x + 30, box.y + 58, box.right - 30)
 
         winner_id = self.duel_match_winner or "player_1"
         w_info = self.players.get(winner_id, {})
@@ -2034,23 +2324,42 @@ class Game:
         w_emblem = w_info.get("emblem", "👑")
 
         emb_s = self.font_symbol_large.render(w_emblem, True, GOLD_LT)
-        self.pixel_surface.blit(emb_s, (cx - emb_s.get_width() // 2, box.y + 90))
+        self.pixel_surface.blit(emb_s, (cx - emb_s.get_width() // 2, box.y + 74))
 
-        self._text_center(w_name.upper(), self.font_large, TEXT, cx, box.y + 140)
-        self._text_center("Kitâbü'l-Esrâr'ın Yeni Üstadı ve Baş Simyacısı!", self.font_small, GOLD, cx, box.y + 175)
+        self._text_center(w_name.upper(), self.font_large, TEXT, cx, box.y + 118)
+        self._text_center("Kitâbü'l-Esrâr'ın Yeni Üstadı ve Baş Simyacısı!", self.font_small, GOLD, cx, box.y + 148)
 
-        self._draw_separator(box.x + 30, box.y + 210, box.right - 30)
+        self._draw_separator(box.x + 30, box.y + 178, box.right - 30)
 
         s1 = self.duel_scores.get("player_1", 0)
         s2 = self.duel_scores.get("player_2", 0)
         p1_n = self.players.get("player_1", {}).get("name", "Çırak 1")
         p2_n = self.players.get("player_2", {}).get("name", "Çırak 2")
-        score_text = f"{p1_n}: {s1}  —  {s2} :{p2_n}"
-        self._text_center(score_text, self.font_medium, TEXT_DIM, cx, box.y + 240)
+        score_text = f"{p1_n}: {s1} ⭐  —  ⭐ {s2} :{p2_n}"
+        self._text_center(score_text, self.font_medium, TEXT_DIM, cx, box.y + 200)
 
-        self._text_center("Telefondan 'Yeniden Düello' butonuna bas", self.font_small, GOLD_LT, cx, box.y + 310)
-        secs_left = max(0, 15 - int(time.monotonic() - self.game_over_time))
-        self._text_center(f"veya {secs_left}s sonra otomatik lobiye döner", self.font_tiny, TEXT_DIM, cx, box.y + 345)
+        # Buton 1 & 2: Yeni Karşılaşma & Mod Seçimi
+        b_rematch = pygame.Rect(cx - 240, box.y + 250, 220, 42)
+        self._draw_panel(b_rematch, radius=8)
+        pygame.draw.rect(self.pixel_surface, GREEN, b_rematch, 2, border_radius=8)
+        self._text_center("🔄 Yeni Düello (SPACE)", self.font_body_bold, GREEN_LT, b_rematch.centerx, b_rematch.y + 11)
+
+        b_mode = pygame.Rect(cx + 20, box.y + 250, 220, 42)
+        self._draw_panel(b_mode, radius=8)
+        pygame.draw.rect(self.pixel_surface, BORDER, b_mode, 2, border_radius=8)
+        self._text_center("◀ Mod Seçimi (M)", self.font_body_bold, TEXT, b_mode.centerx, b_mode.y + 11)
+
+        # Buton 3: Kulüp & Künye & Risale
+        b_cred = pygame.Rect(cx - 200, box.y + 308, 400, 42)
+        self._draw_panel(b_cred, radius=8)
+        pygame.draw.rect(self.pixel_surface, GOLD, b_cred, 2, border_radius=8)
+        self._text_center("🏛️ Kulüp, Künye & Risale (C)", self.font_body_bold, GOLD_LT, b_cred.centerx, b_cred.y + 11)
+
+        # İpuçları
+        self._draw_separator(box.x + 30, box.y + 372, box.right - 30)
+        self._text_center("Telefondan 'Yeniden Düello' butonuna basabilir veya ekrandan seçebilirsiniz", self.font_tiny, TEXT_DIM, cx, box.y + 390)
+        secs_left = max(0, 180 - int(time.monotonic() - self.game_over_time))
+        self._text_center(f"veya {secs_left}s sonra otomatik ana menüye döner", self.font_tiny, TEXT_DIM, cx, box.y + 412)
 
     # ── Malzeme not kartı ────────────────────────────────────────────────────
 
@@ -2308,7 +2617,236 @@ class Game:
         s = font.render(text, True, color)
         self.pixel_surface.blit(s, (cx - s.get_width() // 2, y))
 
-    # ── Parçacıklar ──────────────────────────────────────────────────────────
+    def _draw_multiline_text(self, text: str, font: pygame.font.Font,
+                             color: tuple, x: int, y: int, max_width: int,
+                             line_spacing: int = 6) -> int:
+        words = text.split()
+        lines = []
+        current_line: list[str] = []
+        for word in words:
+            test_line = " ".join(current_line + [word])
+            if font.size(test_line)[0] <= max_width:
+                current_line.append(word)
+            else:
+                if current_line:
+                    lines.append(" ".join(current_line))
+                current_line = [word]
+        if current_line:
+            lines.append(" ".join(current_line))
+
+        cur_y = y
+        for line in lines:
+            s = font.render(line, True, color)
+            self.pixel_surface.blit(s, (x, cur_y))
+            cur_y += font.get_height() + line_spacing
+        return cur_y
+
+    def _draw_mode_select_screen(self) -> None:
+        mouse_pos = pygame.mouse.get_pos()
+
+        # Başlık ve Üst Panel
+        self._text_shadow("EBÛ BEKİR ER-RÂZÎ'NİN KAZANI", self.font_title, GOLD_LT, (WIDTH // 2 - 270, 48))
+        self._text_center("Kadim Tıp ve Simya Mirası · Bir Hafıza ve Dikkat Ayini", self.font_body, TEXT_DIM, WIDTH // 2, 86)
+        self._draw_separator(80, 118, WIDTH - 80)
+
+        # Kart 1: Tek Kişilik Macera (x=90, y=145, w=430, h=410)
+        c1 = pygame.Rect(90, 145, 430, 410)
+        c1_hover = c1.collidepoint(mouse_pos)
+        self._draw_panel(c1, radius=16)
+        pygame.draw.rect(self.pixel_surface, GOLD_LT if c1_hover else BORDER, c1, 3 if c1_hover else 2, border_radius=16)
+
+        # Kart 1 İçerik
+        self._text_center("🧪", self.font_symbol_large, GOLD if c1_hover else TEXT_DIM, c1.centerx, c1.y + 24)
+        self._text_center("TEK KİŞİLİK MACERA", self.font_medium, GOLD_LT, c1.centerx, c1.y + 68)
+        self._text_center("100 Seviyeli Kadim İksir Yolculuğu", self.font_body_bold, TEXT, c1.centerx, c1.y + 98)
+        self._draw_separator(c1.x + 30, c1.y + 128, c1.right - 30)
+
+        c1_bullets = [
+            "• 1 Oyuncu (Mobil cihazla kumanda)",
+            "• 3 İksir şişesi (can) kırılma hakkı",
+            "• 30 Simya cevheri & Tarihi reçeteler",
+            "• Her 3 elementte bir artan süre ve kombo",
+            "• Râzî'nin talimatlarını dinle ve başla!",
+        ]
+        by = c1.y + 144
+        for b in c1_bullets:
+            self._text(b, self.font_body, TEXT if c1_hover else TEXT_DIM, (c1.x + 32, by))
+            by += 32
+
+        # Kart 1 Buton
+        btn1 = pygame.Rect(c1.x + 30, c1.bottom - 64, c1.width - 60, 44)
+        self._draw_panel(btn1, radius=10)
+        pygame.draw.rect(self.pixel_surface, GOLD if c1_hover else GREEN, btn1, 2, border_radius=10)
+        self._text_center("▶ 1 Tuşu veya TIKLA: BAŞLAT", self.font_body_bold, GOLD_LT if c1_hover else GREEN_LT, btn1.centerx, btn1.y + 12)
+
+        # Kart 2: 1v1 Çırak Düellosu (x=580, y=145, w=430, h=410)
+        c2 = pygame.Rect(580, 145, 430, 410)
+        c2_hover = c2.collidepoint(mouse_pos)
+        self._draw_panel(c2, radius=16)
+        pygame.draw.rect(self.pixel_surface, GOLD_LT if c2_hover else BORDER, c2, 3 if c2_hover else 2, border_radius=16)
+
+        # Kart 2 İçerik
+        self._text_center("⚔️", self.font_symbol_large, GOLD if c2_hover else TEXT_DIM, c2.centerx, c2.y + 24)
+        self._text_center("1v1 ÇIRAK DÜELLOSU", self.font_medium, GOLD_LT, c2.centerx, c2.y + 68)
+        self._text_center("İki Simyacının Canlı Hız & Hafıza Yarışı", self.font_body_bold, TEXT, c2.centerx, c2.y + 98)
+        self._draw_separator(c2.x + 30, c2.y + 128, c2.right - 30)
+
+        c2_bullets = [
+            "• 2 Oyuncu (2 Ayrı mobil cihaz kumandası)",
+            "• Canlı & eşzamanlı hafıza düellosu",
+            "• İlk 3 raundu (yıldızı) kazanan şampiyon",
+            "• Yanlış malzeme seçiminde 1.2s sersemleme",
+            "• Kitâbü'l-Esrâr'ın yeni vârisi belirlensin!",
+        ]
+        by2 = c2.y + 144
+        for b in c2_bullets:
+            self._text(b, self.font_body, TEXT if c2_hover else TEXT_DIM, (c2.x + 32, by2))
+            by2 += 32
+
+        # Kart 2 Buton
+        btn2 = pygame.Rect(c2.x + 30, c2.bottom - 64, c2.width - 60, 44)
+        self._draw_panel(btn2, radius=10)
+        pygame.draw.rect(self.pixel_surface, GOLD if c2_hover else GREEN, btn2, 2, border_radius=10)
+        self._text_center("⚔️ 2 Tuşu veya TIKLA: BAŞLAT", self.font_body_bold, GOLD_LT if c2_hover else GREEN_LT, btn2.centerx, btn2.y + 12)
+
+        # Alt Bar: Kulüp & Künye Butonu & Çıkış
+        self._draw_separator(80, 574, WIDTH - 80)
+        btn_credits = pygame.Rect(WIDTH // 2 - 200, 588, 400, 44)
+        cred_hover = btn_credits.collidepoint(mouse_pos)
+        self._draw_panel(btn_credits, radius=10)
+        pygame.draw.rect(self.pixel_surface, GOLD_LT if cred_hover else GOLD, btn_credits, 2, border_radius=10)
+        self._text_center("🏛️ Erciyes Kulüp Bilgisi, Künye & Risale (C)", self.font_body_bold, GOLD_LT, btn_credits.centerx, btn_credits.y + 12)
+
+    def _draw_prologue_screen(self) -> None:
+        mouse_pos = pygame.mouse.get_pos()
+        now = time.monotonic()
+        elapsed = now - self.prologue_started
+
+        # Üst Başlık
+        self._text_shadow("EBÛ BEKİR ER-RÂZÎ DİYOR Kİ:", self.font_title, GOLD_LT, (WIDTH // 2 - 260, 36))
+        mode_label = "⚔️ 1v1 Çırak Düellosu Talimatları" if self.mode == GameMode.DUEL else "🧪 Tek Kişilik Macera Talimatları"
+        self._text_center(mode_label, self.font_body_bold, TEXT_DIM, WIDTH // 2, 72)
+
+        # Sol taraf: Râzî'nin animasyonu ve kazanı
+        # Râzî konuşma hareketi: 1. frame ile 4. frame arasında döngü
+        speech_frame_idx = int((elapsed * 3.5) % 4) + 1
+        frame = self.anim_master.get_frame_at(speech_frame_idx)
+        if frame:
+            self.pixel_surface.blit(frame, (60, 240))
+        # Kazanın normal ateşi
+        forge_frame = self.anim_forge.get_frame(now, fps=8.0)
+        if forge_frame:
+            self.pixel_surface.blit(forge_frame, (230, 310))
+
+        # Sağ taraf: Parşömen Diyalog Kutusu
+        box = pygame.Rect(440, 100, 610, 460)
+        self._draw_panel(box, radius=16)
+        pygame.draw.rect(self.pixel_surface, GOLD, box, 2, border_radius=16)
+
+        # Parşömen Başlığı
+        self._text("📜 ŞİFALI KAZANIN VE AYİNİN SIRRI", self.font_medium, GOLD_LT, (box.x + 30, box.y + 22))
+        self._draw_separator(box.x + 20, box.y + 52, box.right - 20)
+
+        # Açıklama Metni (Multiline)
+        body_text = self.prologue_text or (RHAZI_PROLOGUE_DUEL if self.mode == GameMode.DUEL else RHAZI_PROLOGUE_SINGLE)
+        self._draw_multiline_text(body_text, self.font_body, TEXT, box.x + 30, box.y + 68, box.width - 60, line_spacing=8)
+
+        # Alt Hatırlatma
+        self._draw_separator(box.x + 20, box.bottom - 54, box.right - 20)
+        self._text("💡 Hem ekrandan hem de telefonundaki butona basarak başlayabilirsin!", self.font_body, GOLD, (box.x + 24, box.bottom - 40))
+
+        # Ana Başlat Butonu (Kullanıcı kesin kuralı: "ayine başla yazmasın direkt başla yazsın")
+        btn_start = pygame.Rect(WIDTH // 2 - 160, 580, 320, 54)
+        btn_hover = btn_start.collidepoint(mouse_pos)
+        self._draw_panel(btn_start, radius=12)
+        pygame.draw.rect(self.pixel_surface, GOLD_LT if btn_hover else GOLD, btn_start, 3 if btn_hover else 2, border_radius=12)
+        self._text_center("▶  BAŞLA", self.font_body_large, GOLD_LT if btn_hover else (255, 235, 170), btn_start.centerx, btn_start.y + 12)
+        self._text_center("(Boşluk, Enter veya Telefondan 'BAŞLA')", self.font_tiny, TEXT_DIM, btn_start.centerx, btn_start.bottom + 6)
+
+        # Sol üst Geri Dön butonu
+        btn_back = pygame.Rect(30, 20, 150, 36)
+        self._draw_panel(btn_back, radius=6)
+        pygame.draw.rect(self.pixel_surface, BORDER, btn_back, 1, border_radius=6)
+        self._text_center("◀ Menü (ESC)", self.font_tiny, TEXT_DIM, btn_back.centerx, btn_back.y + 12)
+
+    def _draw_credits_screen(self) -> None:
+        mouse_pos = pygame.mouse.get_pos()
+
+        # Karartma Arka Plan
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 215))
+        self.pixel_surface.blit(overlay, (0, 0))
+
+        # Ana Modal Kutusu
+        box = pygame.Rect(50, 30, 1000, 640)
+        self._draw_panel(box, radius=18)
+        pygame.draw.rect(self.pixel_surface, GOLD, box, 2, border_radius=18)
+
+        # Modal Başlık
+        self._text_center("🏛️  ERCİYES ÜNİVERSİTESİ & PROJE KÜNYESİ  🏛️", self.font_title, GOLD_LT, box.centerx, box.y + 24)
+        self._text_center("Ebû Bekir er-Râzî'nin İzinde Kadim Tıp, Felsefe ve Bilişim Sentezi", self.font_body, TEXT_DIM, box.centerx, box.y + 56)
+        self._draw_separator(box.x + 30, box.y + 82, box.right - 30)
+
+        # Sütun 1: Kulüp & Proje Ekibi (Sol: 450px)
+        c1_x = box.x + 40
+        self._text("📋 PROJE VE KULÜP YÖNETİMİ", self.font_body_bold, GOLD, (c1_x, box.y + 100))
+        self._draw_separator(c1_x, box.y + 126, c1_x + 430)
+
+        entries = [
+            ("Projeyi Geliştiren Kulüp:", "Erciyes Üniversitesi Bilişim & Tıp Topluluğu"),
+            ("Proje Yönetim Ekibi:", "Proje Koordinatörlüğü & Yazılım Geliştirme Kurulu"),
+            ("Kulüp Yönetimi:", "Kulüp Başkanı, Yönetim ve Denetim Kurulu Heyeti"),
+            ("Emeği Geçen Arkadaşlarımız:", "Tasarım, Oyun Mekaniği, Tarih ve Tıp Danışmanları"),
+        ]
+        ey = box.y + 140
+        for title, val in entries:
+            self._text(title, self.font_body_bold, GOLD_LT, (c1_x, ey))
+            self._text(val, self.font_body, TEXT, (c1_x, ey + 22))
+            ey += 54
+
+        # Sütun 2: Ebû Bekir er-Râzî ve Nasihatler (Sağ: 450px)
+        c2_x = box.x + 510
+        self._text("📜 EBÛ BEKİR ER-RÂZÎ (865–925)", self.font_body_bold, GOLD, (c2_x, box.y + 100))
+        self._draw_separator(c2_x, box.y + 126, c2_x + 430)
+
+        r_bio = (
+            "Ebû Bekir er-Râzî; tıp, kimya ve felsefe alanında İslam ve dünya tarihine damga vurmuş "
+            "en büyük hekimlerden biridir. Kitâbü'l-Hâvî ve Kitâbü'l-Esrâr gibi başyapıtları yüzlerce yıl "
+            "Avrupa ve Doğu üniversitelerinde ders kitabı olarak okutulmuştur."
+        )
+        self._draw_multiline_text(r_bio, self.font_body, TEXT, c2_x, box.y + 140, 430, line_spacing=5)
+
+        self._text("📖 Tıbbiyeli Bir Dostuna Nasihatler (Felsefe Risaleleri 1. Yazısı):", self.font_body_bold, GOLD_LT, (c2_x, box.y + 240))
+        nasihat_ozet = (
+            "\"Ey ilim talibi dostum! Hekimlik sırf bir zanaat değil, bir ahlak ve şefkat mesleğidir. "
+            "Hastanın zihnine ve kalbine huzur vermeyen hekim bedenine de şifa olamaz. "
+            "İlmini zengin ve fakir arasında ayrım gözetmeksizin dağıt; kibirden sakın, hakikati araştır.\""
+        )
+        self._draw_multiline_text(nasihat_ozet, self.font_body, TEXT_DIM, c2_x, box.y + 270, 430, line_spacing=5)
+
+        # Alt Eylem Butonları
+        self._draw_separator(box.x + 30, box.bottom - 118, box.right - 30)
+
+        # Buton 1: Erciyes Kulüp Kayıt Butonu
+        btn_reg = pygame.Rect(box.x + 60, box.bottom - 98, 270, 46)
+        b_reg_hover = btn_reg.collidepoint(mouse_pos)
+        self._draw_panel(btn_reg, radius=10)
+        pygame.draw.rect(self.pixel_surface, GOLD_LT if b_reg_hover else GOLD, btn_reg, 2, border_radius=10)
+        self._text_center("🌐 Erciyes Kulüp Kayıt", self.font_body_bold, GOLD_LT, btn_reg.centerx, btn_reg.y + 13)
+
+        # Buton 2: Nasihatler Risalesi PDF İndir Butonu
+        btn_pdf = pygame.Rect(box.x + 360, box.bottom - 98, 300, 46)
+        b_pdf_hover = btn_pdf.collidepoint(mouse_pos)
+        self._draw_panel(btn_pdf, radius=10)
+        pygame.draw.rect(self.pixel_surface, GOLD_LT if b_pdf_hover else GREEN, btn_pdf, 2, border_radius=10)
+        self._text_center("📥 Nasihatler PDF İndir / Oku", self.font_body_bold, GOLD_LT if b_pdf_hover else GREEN_LT, btn_pdf.centerx, btn_pdf.y + 13)
+
+        # Buton 3: Kapat / Geri Dön
+        btn_close = pygame.Rect(box.x + 690, box.bottom - 98, 250, 46)
+        b_close_hover = btn_close.collidepoint(mouse_pos)
+        self._draw_panel(btn_close, radius=10)
+        pygame.draw.rect(self.pixel_surface, RED_LT if b_close_hover else BORDER, btn_close, 2, border_radius=10)
+        self._text_center("◀ Kapat / Geri (ESC)", self.font_body_bold, TEXT, btn_close.centerx, btn_close.y + 13)
 
     def _spawn_particles(self, x: float, y: float,
                          color: tuple, count: int) -> None:
