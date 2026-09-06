@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import os
 import queue
 import random
@@ -427,6 +428,385 @@ class SpriteAnimation:
         return self.frames[frame_idx % len(self.frames)]
 
 
+# ─── Sabuncuoğlu Şerefeddin (Amasya Dârüşşifası Başhekimi) ────────────────────
+
+class SabuncuogluState(Enum):
+    INACTIVE    = auto()
+    WALKING_IN  = auto()
+    WAVING      = auto()
+    TALKING     = auto()
+    OVERSEEING  = auto()
+    WALKING_OUT = auto()
+
+
+class SabuncuogluActor:
+    """Amasya Dârüşşifası hekimi Sabuncuoğlu Şerefeddin aktörü.
+    
+    Yürüme ve el sallama animasyonları, alt diyalog paneli ve Bey Hekim ile
+    hiçbir zaman çakışmayan sahneleme koordinatlarıyla çalışır.
+    """
+    def __init__(self, game=None):
+        self.game = game
+        self.state = SabuncuogluState.INACTIVE
+        self.x = 1150.0
+        self.target_x = 540.0
+        self.speed = 120.0
+        self.facing_left = True
+        self.mode = "none"   # "reverse" veya "guest"
+        self.dialogue_text = ""
+        self.dialogue_started = 0.0
+        self.dialogue_duration = 0.0
+        self.state_time = 0.0
+        self.last_guest_level = 0
+        self.wave_timer = 0.0
+
+        # Yüksek çözünürlüklü Selçuklu/Osmanlı tabip kareleri ve portre önbelleği
+        self.frames = self._generate_frames()
+        self.portrait = self._generate_portrait()
+
+    @property
+    def is_visible(self) -> bool:
+        return self.state != SabuncuogluState.INACTIVE
+
+    @property
+    def is_active(self) -> bool:
+        return self.state != SabuncuogluState.INACTIVE
+
+    @property
+    def is_speaking(self) -> bool:
+        return (
+            self.state in (SabuncuogluState.WAVING, SabuncuogluState.TALKING)
+            and bool(self.dialogue_text)
+            and (time.monotonic() - self.dialogue_started < self.dialogue_duration)
+        )
+
+    def _render_raw_sprite(self, action: str = "walk", phase: float = 0.0, facing_left: bool = True) -> pygame.Surface:
+        surf = pygame.Surface((120, 195), pygame.SRCALPHA)
+        cx = 60
+        base_y = 186
+
+        SARIK_GREEN  = (22, 74, 48)
+        SARIK_WHITE  = (248, 250, 252)
+        SARIK_SHADOW = (185, 195, 205)
+        SKIN         = (246, 212, 182)
+        SKIN_SHADOW  = (218, 174, 140)
+        BEARD        = (72, 78, 88)
+        BEARD_LIGHT  = (145, 150, 160)
+        ROBE_OUTER   = (26, 85, 65)
+        ROBE_SHADOW  = (18, 60, 45)
+        ROBE_INNER   = (245, 235, 215)
+        GOLD_TRIM    = (222, 178, 58)
+        SASH_RED     = (165, 30, 25)
+        BOOT_COLOR   = (58, 36, 22)
+
+        bob_y = int(math.sin(phase * 4 * math.pi) * 3) if action == "walk" else 0
+
+        # Zemin gölgesi
+        pygame.draw.ellipse(surf, (0, 0, 0, 70), (cx - 30, base_y - 6, 60, 12))
+
+        # Çizmeler ve adımlar
+        stride = math.sin(phase * 2 * math.pi) * 14 if action == "walk" else 0
+        lift_l = max(0.0, math.cos(phase * 2 * math.pi)) * 5 if action == "walk" else 0
+        lift_r = max(0.0, -math.cos(phase * 2 * math.pi)) * 5 if action == "walk" else 0
+
+        pygame.draw.polygon(surf, BOOT_COLOR, [
+            (cx - 16 - stride, base_y - 16 - lift_l),
+            (cx - 6 - stride, base_y - 16 - lift_l),
+            (cx - 4 - stride, base_y - lift_l),
+            (cx - 20 - stride, base_y - lift_l)
+        ])
+        pygame.draw.polygon(surf, (48, 28, 16), [
+            (cx + 6 + stride, base_y - 16 - lift_r),
+            (cx + 16 + stride, base_y - 16 - lift_r),
+            (cx + 20 + stride, base_y - lift_r),
+            (cx + 4 + stride, base_y - lift_r)
+        ])
+
+        # Kaftan etekleri ve dalgalanma
+        sway = math.sin(phase * 2 * math.pi) * 4 if action == "walk" else 0
+        robe_pts = [
+            (cx - 18, 98 + bob_y),
+            (cx + 18, 98 + bob_y),
+            (cx + 28 + sway, base_y - 14),
+            (cx - 28 + sway, base_y - 14)
+        ]
+        pygame.draw.polygon(surf, ROBE_OUTER, robe_pts)
+        pygame.draw.polygon(surf, ROBE_SHADOW, [robe_pts[0], (cx, 98 + bob_y), (cx + sway, base_y - 14), robe_pts[3]])
+        pygame.draw.line(surf, GOLD_TRIM, (cx - 28 + sway, base_y - 14), (cx + 28 + sway, base_y - 14), 3)
+        pygame.draw.line(surf, GOLD_TRIM, (cx, 98 + bob_y), (cx + sway, base_y - 14), 2)
+
+        # Bordo ipek kuşak & cerrah çantası
+        pygame.draw.rect(surf, SASH_RED, (cx - 20, 92 + bob_y, 40, 11), border_radius=2)
+        pygame.draw.rect(surf, GOLD_TRIM, (cx - 5, 93 + bob_y, 10, 9), 2)
+        pygame.draw.rect(surf, (105, 62, 34), (cx + 13, 100 + bob_y, 10, 13), border_radius=2)
+        pygame.draw.line(surf, GOLD_TRIM, (cx + 15, 98 + bob_y), (cx + 15, 102 + bob_y), 1)
+
+        # Gövde & Kaftan üstü
+        torso_pts = [
+            (cx - 22, 58 + bob_y),
+            (cx + 22, 58 + bob_y),
+            (cx + 19, 94 + bob_y),
+            (cx - 19, 94 + bob_y)
+        ]
+        pygame.draw.polygon(surf, ROBE_OUTER, torso_pts)
+        pygame.draw.polygon(surf, ROBE_INNER, [
+            (cx - 8, 58 + bob_y),
+            (cx + 8, 58 + bob_y),
+            (cx, 80 + bob_y)
+        ])
+        pygame.draw.line(surf, GOLD_TRIM, (cx - 9, 58 + bob_y), (cx, 81 + bob_y), 2)
+        pygame.draw.line(surf, GOLD_TRIM, (cx + 9, 58 + bob_y), (cx, 81 + bob_y), 2)
+
+        # Sol Kol (Cerrahiyyetü'l-Haniyye tıp rulosunu tutar)
+        pygame.draw.polygon(surf, ROBE_OUTER, [
+            (cx - 21, 62 + bob_y),
+            (cx - 12, 60 + bob_y),
+            (cx + 2, 80 + bob_y),
+            (cx - 10, 84 + bob_y)
+        ])
+        pygame.draw.circle(surf, SKIN, (cx + 3, 81 + bob_y), 5)
+        pygame.draw.rect(surf, (238, 224, 192), (cx - 6, 76 + bob_y, 20, 10), border_radius=2)
+        pygame.draw.line(surf, (175, 25, 20), (cx + 4, 76 + bob_y), (cx + 4, 85 + bob_y), 2)
+
+        # Sağ Kol (Yürüyüşte salınım, durduğunda el sallama)
+        if action == "wave":
+            wave_sway = math.sin(phase * 2 * math.pi) * 8
+            pygame.draw.line(surf, ROBE_OUTER, (cx + 20, 64 + bob_y), (cx + 32, 45 + bob_y), 9)
+            pygame.draw.line(surf, ROBE_OUTER, (cx + 32, 45 + bob_y), (cx + 34 + wave_sway, 25 + bob_y), 8)
+            pygame.draw.circle(surf, GOLD_TRIM, (int(cx + 34 + wave_sway), int(25 + bob_y)), 4)
+            hand_x = int(cx + 35 + wave_sway)
+            hand_y = int(18 + bob_y)
+            pygame.draw.circle(surf, SKIN, (hand_x, hand_y), 6)
+            pygame.draw.line(surf, SKIN, (hand_x - 3, hand_y), (hand_x - 4, hand_y - 6), 2)
+            pygame.draw.line(surf, SKIN, (hand_x, hand_y), (hand_x - 7, hand_y - 7), 2)
+            pygame.draw.line(surf, SKIN, (hand_x + 3, hand_y), (hand_x + 3, hand_y - 6), 2)
+        elif action == "walk":
+            arm_swing = math.sin(phase * 2 * math.pi + math.pi) * 16
+            pygame.draw.line(surf, ROBE_OUTER, (cx + 20, 64 + bob_y), (cx + 24 + arm_swing, 84 + bob_y), 8)
+            pygame.draw.circle(surf, SKIN, (int(cx + 24 + arm_swing), int(87 + bob_y)), 5)
+        else:
+            talk_gest = math.sin(phase * 2 * math.pi) * 4 if action == "talk" else 0
+            pygame.draw.line(surf, ROBE_OUTER, (cx + 20, 64 + bob_y), (cx + 26, 78 + bob_y + talk_gest), 8)
+            pygame.draw.circle(surf, SKIN, (int(cx + 27), int(81 + bob_y + talk_gest)), 5)
+
+        # Baş & Boyun
+        neck_y = 52 + bob_y
+        pygame.draw.rect(surf, SKIN_SHADOW, (cx - 6, neck_y, 12, 10))
+
+        face_y = 30 + bob_y
+        pygame.draw.ellipse(surf, SKIN, (cx - 13, face_y, 26, 26))
+
+        # Bilge hekim gözleri ve kaşlar
+        eye_y = face_y + 10
+        pygame.draw.circle(surf, (40, 30, 20), (cx - 5, eye_y), 2)
+        pygame.draw.circle(surf, (40, 30, 20), (cx + 5, eye_y), 2)
+        pygame.draw.line(surf, BEARD, (cx - 8, eye_y - 3), (cx - 3, eye_y - 4), 1)
+        pygame.draw.line(surf, BEARD, (cx + 3, eye_y - 4), (cx + 8, eye_y - 3), 1)
+        pygame.draw.line(surf, SKIN_SHADOW, (cx, eye_y - 1), (cx, eye_y + 3), 1)
+
+        # Sakal & Bıyık
+        beard_pts = [
+            (cx - 10, face_y + 14),
+            (cx + 10, face_y + 14),
+            (cx + 8, face_y + 28),
+            (cx, face_y + 32),
+            (cx - 8, face_y + 28)
+        ]
+        pygame.draw.polygon(surf, BEARD, beard_pts)
+        pygame.draw.lines(surf, BEARD_LIGHT, False, [
+            (cx - 5, face_y + 18), (cx - 2, face_y + 27), (cx, face_y + 30)
+        ], 1)
+        pygame.draw.lines(surf, BEARD_LIGHT, False, [
+            (cx + 5, face_y + 18), (cx + 2, face_y + 27), (cx, face_y + 30)
+        ], 1)
+
+        # Sarık & Amasya yeşili kavuk
+        kavuk_rect = (cx - 13, face_y - 20, 26, 22)
+        pygame.draw.ellipse(surf, SARIK_GREEN, kavuk_rect)
+        pygame.draw.circle(surf, GOLD_TRIM, (cx, face_y - 21), 3)
+
+        sarik_rect = (cx - 20, face_y - 10, 40, 18)
+        pygame.draw.ellipse(surf, SARIK_WHITE, sarik_rect)
+        pygame.draw.ellipse(surf, SARIK_SHADOW, sarik_rect, 1)
+        pygame.draw.arc(surf, SARIK_SHADOW, (cx - 18, face_y - 12, 36, 14), 3.14, 6.28, 1)
+        pygame.draw.arc(surf, SARIK_SHADOW, (cx - 16, face_y - 7, 32, 12), 3.14, 6.28, 1)
+
+        if not facing_left:
+            surf = pygame.transform.flip(surf, True, False)
+
+        return surf
+
+    def _generate_frames(self) -> dict[str, list[pygame.Surface]]:
+        frames = {}
+        for action, count in [("walk", 8), ("wave", 8), ("talk", 4), ("idle", 4)]:
+            for facing in [True, False]:
+                key = f"{action}_{'left' if facing else 'right'}"
+                frames[key] = [
+                    self._render_raw_sprite(action, i / count, facing_left=facing)
+                    for i in range(count)
+                ]
+        return frames
+
+    def _generate_portrait(self) -> pygame.Surface:
+        ps = pygame.Surface((84, 84), pygame.SRCALPHA)
+        pygame.draw.rect(ps, (20, 36, 28), (0, 0, 84, 84), border_radius=10)
+        pygame.draw.rect(ps, (214, 168, 72), (0, 0, 84, 84), 2, border_radius=10)
+        pygame.draw.rect(ps, (55, 85, 68), (3, 3, 78, 78), 1, border_radius=8)
+
+        bust = self._render_raw_sprite("idle", 0.0, facing_left=True)
+        cropped = bust.subsurface(pygame.Rect(18, 6, 84, 100))
+        scaled = pygame.transform.smoothscale(cropped, (68, 78))
+        ps.blit(scaled, (8, 4))
+        return ps
+
+    def get_frame(self, action: str, phase: float, facing_left: bool) -> pygame.Surface:
+        key = f"{action}_{'left' if facing_left else 'right'}"
+        f_list = self.frames.get(key, [])
+        if not f_list:
+            return self._render_raw_sprite(action, phase, facing_left)
+        idx = int(phase * len(f_list)) % len(f_list)
+        return f_list[idx]
+
+    def start_reverse_challenge(self, is_duel: bool = False, level: int = 13) -> None:
+        self.mode = "reverse"
+        if is_duel:
+            self.target_x = 180.0
+            self.x = -80.0
+            self.facing_left = False
+            self.dialogue_text = (
+                "Sabuncuoğlu Şerefeddin: 'Ey iki hünerli çırak! Usta hekim ezberle değil dirayetle teşhis koyar! "
+                "Cevherleri SONDAN BAŞA (TERSTEN) kazana atın! Süreniz 4 katı, telaş etmeyin!'"
+            )
+        else:
+            self.target_x = 540.0
+            self.x = 1140.0
+            self.facing_left = True
+            self.dialogue_text = (
+                "Sabuncuoğlu Şerefeddin: 'Kayseri Dârüşşifası'na Amasya'dan selam! Gerçek hekim ezber bozar! "
+                "Bey Hekim'in attığı malzemeleri TERSTEN (sondan başa) ekle! Süre 4 katı, dikkatini topla!'"
+            )
+        self.dialogue_started = time.monotonic()
+        self.dialogue_duration = 5.5
+        self.state = SabuncuogluState.WALKING_IN
+        self.state_time = 0.0
+
+    def start_guest_visit(self, is_duel: bool = False, level: int = 6) -> None:
+        self.mode = "guest"
+        self.last_guest_level = level
+        greetings = [
+            "Sabuncuoğlu Şerefeddin: 'Selam olsun Melikü'l-Hükemâ Tabîb Ekmeleddin'e ve hünerli çıraklarına! Cerrahlıkta el titremez, simyada akıl şaşmaz! Kolay gelsin!'",
+            "Sabuncuoğlu Şerefeddin: 'Amasya Dârüşşifası'ndan Kayseri'ye selam getirdim! Kadim cerrahi ve simya birleşince dertlere derman olur. Gayretiniz daim olsun!'",
+            "Sabuncuoğlu Şerefeddin: 'Mücerreb-nâme der ki: İlm-i tababet sabır ve dikkatle yoğrulur. Devam edin çıraklar, gözüm üzerinizde!'"
+        ]
+        self.dialogue_text = random.choice(greetings)
+        if is_duel:
+            self.target_x = 180.0
+            self.x = -80.0
+            self.facing_left = False
+        else:
+            self.target_x = 540.0
+            self.x = 1140.0
+            self.facing_left = True
+        self.dialogue_started = time.monotonic()
+        self.dialogue_duration = 5.0
+        self.state = SabuncuogluState.WALKING_IN
+        self.state_time = 0.0
+
+    def start_walk_out(self) -> None:
+        self.state = SabuncuogluState.WALKING_OUT
+        self.state_time = 0.0
+        if self.x < 550:
+            self.target_x = -120.0
+            self.facing_left = True
+        else:
+            self.target_x = 1180.0
+            self.facing_left = False
+
+    def reset(self) -> None:
+        self.state = SabuncuogluState.INACTIVE
+        self.dialogue_text = ""
+        self.dialogue_duration = 0.0
+        self.dialogue_started = 0.0
+        self.state_time = 0.0
+        self.mode = "reverse"
+
+    def on_round_end(self, success: bool) -> None:
+        if self.state in (SabuncuogluState.TALKING, SabuncuogluState.OVERSEEING, SabuncuogluState.WAVING):
+            if self.mode == "reverse":
+                if success:
+                    self.dialogue_text = "Sabuncuoğlu Şerefeddin: 'Aferin çırak! Tersten dizilimi bihakkın başardın! İşte hakiki hekim dirayeti!'"
+                else:
+                    self.dialogue_text = "Sabuncuoğlu Şerefeddin: 'Sağlık olsun! Düşüş de öğrenmenin bir parçasıdır. Yılma, yeniden dene!'"
+                self.dialogue_started = time.monotonic()
+                self.dialogue_duration = 3.5
+            self.start_walk_out()
+
+    def update(self, dt: float, now: float) -> None:
+        if self.state == SabuncuogluState.INACTIVE:
+            return
+        self.state_time += dt
+
+        if self.state == SabuncuogluState.WALKING_IN:
+            self.facing_left = (self.target_x < self.x)
+            direction = -1.0 if self.facing_left else 1.0
+            self.x += direction * self.speed * dt
+            if (direction < 0 and self.x <= self.target_x) or (direction > 0 and self.x >= self.target_x):
+                self.x = self.target_x
+                self.state = SabuncuogluState.WAVING
+                self.state_time = 0.0
+                self.wave_timer = now + 1.8
+                if self.game and hasattr(self.game, "_spawn_particles"):
+                    self.game._spawn_particles(int(self.x + 20), int(self.game.floor_y - 140), (245, 215, 90), 20)
+
+        elif self.state == SabuncuogluState.WAVING:
+            if random.random() < 0.25 and self.game and hasattr(self.game, "_spawn_particles"):
+                self.game._spawn_particles(int(self.x + (25 if not self.facing_left else -25)), int(self.game.floor_y - 150), (220, 180, 255), 3)
+            if now >= self.wave_timer:
+                self.state = SabuncuogluState.TALKING
+                self.state_time = 0.0
+
+        elif self.state == SabuncuogluState.TALKING:
+            if now - self.dialogue_started >= self.dialogue_duration:
+                if self.mode == "reverse":
+                    self.state = SabuncuogluState.OVERSEEING
+                    self.state_time = 0.0
+                else:
+                    self.start_walk_out()
+
+        elif self.state == SabuncuogluState.OVERSEEING:
+            pass
+
+        elif self.state == SabuncuogluState.WALKING_OUT:
+            self.facing_left = (self.target_x < self.x)
+            direction = -1.0 if self.facing_left else 1.0
+            self.x += direction * self.speed * dt
+            if (direction < 0 and self.x <= self.target_x) or (direction > 0 and self.x >= self.target_x):
+                self.state = SabuncuogluState.INACTIVE
+                self.state_time = 0.0
+
+    def draw(self, surface: pygame.Surface, floor_y: int) -> None:
+        if not self.is_visible:
+            return
+        action = "walk"
+        phase = 0.0
+        if self.state in (SabuncuogluState.WALKING_IN, SabuncuogluState.WALKING_OUT):
+            action = "walk"
+            phase = (self.state_time * 2.8) % 1.0
+        elif self.state == SabuncuogluState.WAVING:
+            action = "wave"
+            phase = (self.state_time * 1.6) % 1.0
+        elif self.state == SabuncuogluState.TALKING:
+            action = "talk"
+            phase = (self.state_time * 1.8) % 1.0
+        elif self.state == SabuncuogluState.OVERSEEING:
+            action = "idle"
+            phase = (self.state_time * 0.8) % 1.0
+
+        frame = self.get_frame(action, phase, self.facing_left)
+        rect = frame.get_rect(midbottom=(int(self.x), floor_y))
+        surface.blit(frame, rect)
+
+
 # ─── Sound ────────────────────────────────────────────────────────────────────
 
 def _synth_sound(freq: float, duration: float, volume: float = 0.4,
@@ -748,6 +1128,7 @@ class Game:
         # Sabuncuoğlu Şerefeddin Tersten Yaz Bölümü (Seviye > 12 rastgele meydan okuma)
         self.is_reverse_round = False
         self.was_reverse_last_round = False
+        self.sabuncuoglu = SabuncuogluActor(self)
 
         self.ambient_clock    = time.monotonic()
         self.animation_clock  = time.monotonic()
@@ -939,6 +1320,8 @@ class Game:
             p["connected"] = False
             p["ready"] = False
         self.network.send({"type": "mode_set", "mode": "single"})
+        if hasattr(self, "sabuncuoglu"):
+            self.sabuncuoglu.reset()
         self.speak_bubble("Oyun modunu seçin: 1 (Tek Kişilik) veya 2 (Düello).", duration=4.0)
 
     def _start_prologue(self) -> None:
@@ -1149,13 +1532,17 @@ class Game:
 
             if self.is_reverse_round:
                 self.last_message = "SABUNCUOĞLU'NUN SINAVI: TERSTEN DOLDUR! (4X SÜRE)"
-                self.speak_bubble("Sabuncuoğlu Şerefeddin: 'Usta hekim ezber bozar! Malzemeleri TERSTEN (sondan başa) kazana atın! (Süre 4 katı)'", duration=5.0)
+                if hasattr(self, "sabuncuoglu"):
+                    self.sabuncuoglu.start_reverse_challenge(is_duel=True, level=self.duel_round)
             elif self.recipe_name:
                 self.last_message = f"SEVİYE {self.duel_round}: Formül '{self.recipe_name}'"
                 self.speak_bubble(f"Seviye {self.duel_round}: Formül '{self.recipe_name}'! Dikkatle izleyin!", duration=4.0)
             else:
                 self.last_message = f"DÜELLO SEVİYE {self.duel_round}: {p1_name} VS {p2_name}"
                 self.speak_bubble(f"Düello Seviye {self.duel_round}! Malzemeleri dikkatle izleyin!", duration=3.5)
+                if self.duel_round >= 6 and hasattr(self, "sabuncuoglu") and not self.sabuncuoglu.is_active:
+                    if (self.duel_round - getattr(self.sabuncuoglu, "last_guest_level", 0) >= 4) and (random.random() < 0.22):
+                        self.sabuncuoglu.start_guest_visit(is_duel=True, level=self.duel_round)
 
             self._spawn_particles(550, 385, (230, 160, 255) if self.is_reverse_round else GOLD, 30)
 
@@ -1213,12 +1600,16 @@ class Game:
         self.state         = GameState.RHAZI_TURN
         if self.is_reverse_round:
             self.last_message = "SABUNCUOĞLU'NUN SINAVI: TERSTEN DOLDUR! (4X SÜRE)"
-            self.speak_bubble("Sabuncuoğlu Şerefeddin: 'Amasya Dârüşşifası'ndan meydan okuma! Malzemeleri TERSTEN (sondan başa) ekle! (Süre 4 katı)'", duration=5.0)
+            if hasattr(self, "sabuncuoglu"):
+                self.sabuncuoglu.start_reverse_challenge(is_duel=False, level=self.level)
         elif self.recipe_name:
             self.last_message = f"Tarihi Formül: {self.recipe_name}"
             self.speak_bubble(f"Tarihi Formül: '{self.recipe_name}'! Malzemeleri dikkatle izle.", duration=4.0)
         else:
             self.last_message = "Tabîb Ekmeleddin malzemeleri hazırlıyor..."
+            if self.level >= 6 and hasattr(self, "sabuncuoglu") and not self.sabuncuoglu.is_active:
+                if (self.level - getattr(self.sabuncuoglu, "last_guest_level", 0) >= 4) and (random.random() < 0.22):
+                    self.sabuncuoglu.start_guest_visit(is_duel=False, level=self.level)
 
         self._spawn_particles(530, 385, (230, 160, 255) if self.is_reverse_round else GOLD, 22)
 
@@ -1273,6 +1664,8 @@ class Game:
         self.phase_cursor = 0
         self.is_reverse_round = False
         self.was_reverse_last_round = False
+        if hasattr(self, "sabuncuoglu"):
+            self.sabuncuoglu.reset()
         self.state        = GameState.WAITING_FOR_PLAYER
         self.phase_started = time.monotonic()
         self.last_message  = "Yeni oyun hazırlanıyor..."
@@ -1289,6 +1682,8 @@ class Game:
         self.phase_cursor    = 0
         self.is_reverse_round = False
         self.was_reverse_last_round = False
+        if hasattr(self, "sabuncuoglu"):
+            self.sabuncuoglu.reset()
         self.state           = GameState.WAITING_FOR_PLAYER
         self.phase_started   = time.monotonic()
         self.wait_started    = time.monotonic()
@@ -1388,6 +1783,10 @@ class Game:
 
     def _update(self) -> None:
         now = time.monotonic()
+        dt = min(0.05, now - getattr(self, "_last_actor_time", now))
+        self._last_actor_time = now
+        if hasattr(self, "sabuncuoglu"):
+            self.sabuncuoglu.update(dt, now)
 
         # Kamera sallanma offset hesapla
         elapsed_shake = now - self.shake_started
@@ -1568,6 +1967,8 @@ class Game:
             })
             return
 
+        if hasattr(self, "sabuncuoglu"):
+            self.sabuncuoglu.on_round_end(success=False)
         self.state        = GameState.RESOLUTION
         self.round_success = False
         self.last_message  = "Süre doldu — Kazan taştı!"
@@ -1622,6 +2023,8 @@ class Game:
             })
 
             if s_lives <= 0:
+                if hasattr(self, "sabuncuoglu"):
+                    self.sabuncuoglu.on_round_end(success=True)
                 self.duel_match_winner = first_p
                 self.state = GameState.DUEL_MATCH_OVER
                 self.game_over_time = now
@@ -1642,6 +2045,8 @@ class Game:
         self._finish_duel_round(winner_id=first_p)
 
     def _finish_duel_round(self, winner_id: str | None) -> None:
+        if hasattr(self, "sabuncuoglu"):
+            self.sabuncuoglu.on_round_end(success=True)
         now = time.monotonic()
         self.state = GameState.RESOLUTION
         self.phase_started = now
@@ -1697,6 +2102,13 @@ class Game:
                 })
 
         # Can kontrolü
+        if p1_lives <= 0 or p2_lives <= 0:
+            if hasattr(self, "sabuncuoglu"):
+                self.sabuncuoglu.on_round_end(success=False)
+        else:
+            if hasattr(self, "sabuncuoglu"):
+                self.sabuncuoglu.on_round_end(success=True)
+
         if p1_lives <= 0 and p2_lives <= 0:
             s1 = self.duel_scores.get("player_1", 0)
             s2 = self.duel_scores.get("player_2", 0)
@@ -1771,6 +2183,8 @@ class Game:
         self.lobby_countdown_start = None
         self.is_reverse_round = False
         self.was_reverse_last_round = False
+        if hasattr(self, "sabuncuoglu"):
+            self.sabuncuoglu.reset()
         for p in self.players.values():
             p["ready"] = False
         self.state = GameState.DUEL_LOBBY
@@ -1904,6 +2318,8 @@ class Game:
 
             # CANLARI BİTTİ Mİ? (0 CAN -> ELENME!)
             if rem_lives <= 0:
+                if hasattr(self, "sabuncuoglu"):
+                    self.sabuncuoglu.on_round_end(success=False)
                 self.duel_match_winner = other_id
                 self.state = GameState.DUEL_MATCH_OVER
                 self.game_over_time = now
@@ -1961,6 +2377,8 @@ class Game:
                 })
                 return
 
+            if hasattr(self, "sabuncuoglu"):
+                self.sabuncuoglu.on_round_end(success=False)
             self.state        = GameState.RESOLUTION
             self.round_success = False
             self.last_message  = f"Yanlış! '{name}' seçildi."
@@ -1983,6 +2401,8 @@ class Game:
         self.note_started  = time.monotonic()
 
         if self.player_index == len(target_seq):
+            if hasattr(self, "sabuncuoglu"):
+                self.sabuncuoglu.on_round_end(success=True)
             self.state        = GameState.RESOLUTION
             self.round_success = True
             self.combo        += 1
@@ -2084,6 +2504,10 @@ class Game:
         self._draw_speech_bubble()
         self._draw_info_card()
 
+        # Sabuncuoğlu Şerefeddin alt konuşma paneli
+        if hasattr(self, "sabuncuoglu"):
+            self._draw_sabuncuoglu_dialogue()
+
         self._draw_particles()
         self._draw_flash()
 
@@ -2121,6 +2545,10 @@ class Game:
         if master_frame:
             # Râzî ve simya masası (genişlik 280px)
             self._blit_on_floor(master_frame, 220)
+
+        # Sabuncuoğlu Şerefeddin (merkez x = 540, Bey Hekim 220 ve Kazan 840 ile asla çakışmaz)
+        if hasattr(self, "sabuncuoglu") and self.sabuncuoglu.is_visible:
+            self.sabuncuoglu.draw(self.pixel_surface, self.floor_y)
 
         # Kazan ve Ateş Çizimi
         is_surge = now < self.fire_surge_until
@@ -2516,6 +2944,10 @@ class Game:
         master_frame = self.anim_master.get_frame_at(frame_idx)
         if master_frame:
             self._blit_on_floor(master_frame, 420)
+
+        # Sabuncuoğlu Şerefeddin (Düelloda sol alanda x = 180, Bey Hekim x = 420 ile çakışmaz)
+        if hasattr(self, "sabuncuoglu") and self.sabuncuoglu.is_visible:
+            self.sabuncuoglu.draw(self.pixel_surface, self.floor_y)
 
         is_surge = now < self.fire_surge_until
         anim_obj = self.anim_forge_surge if is_surge else self.anim_forge
@@ -3061,6 +3493,95 @@ class Game:
             ty += line_h
 
         self.pixel_surface.blit(surf, (box_x, box_y))
+
+    # ── Sabuncuoğlu Şerefeddin Alt Konuşma Paneli ─────────────────────────────
+
+    def _draw_sabuncuoglu_dialogue(self) -> None:
+        """Ekranın alt kısmında Sabuncuoğlu Şerefeddin'in zengin konuşma kutusunu çizer."""
+        if not hasattr(self, "sabuncuoglu") or not self.sabuncuoglu.is_speaking:
+            return
+
+        text = self.sabuncuoglu.dialogue_text
+        if not text:
+            return
+
+        now = time.monotonic()
+        elapsed = now - self.sabuncuoglu.dialogue_started
+        dur = self.sabuncuoglu.dialogue_duration
+        progress = min(1.0, elapsed / max(0.1, dur))
+
+        box_x = 90
+        box_y = 530
+        box_w = 920
+        box_h = 145
+
+        dialogue_surf = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+
+        # 1. Koyu parşömen & zümrüt zemin
+        pygame.draw.rect(dialogue_surf, (16, 22, 18, 245), (0, 0, box_w, box_h), border_radius=12)
+        # Çift çerçeve (Altın dış çerçeve, tunç iç çerçeve)
+        pygame.draw.rect(dialogue_surf, (214, 168, 72), (0, 0, box_w, box_h), 2, border_radius=12)
+        pygame.draw.rect(dialogue_surf, (60, 95, 75), (4, 4, box_w - 8, box_h - 8), 1, border_radius=10)
+
+        # 2. Sol köşede Sabuncuoğlu Şerefeddin Portresi
+        if hasattr(self.sabuncuoglu, "portrait") and self.sabuncuoglu.portrait:
+            dialogue_surf.blit(self.sabuncuoglu.portrait, (14, 14))
+
+        # 3. Başlık Şeridi
+        title_ts = self.font_body_bold.render("✦ SABUNCUOĞLU ŞEREFEDDİN", True, (245, 215, 110))
+        dialogue_surf.blit(title_ts, (115, 14))
+
+        sub_ts = self.font_tiny.render(
+            "Amasya Dârüşşifası Başhekimi · Mücerreb-nâme & Cerrahiyyetü'l-Haniyye Müellifi",
+            True, (175, 195, 180)
+        )
+        dialogue_surf.blit(sub_ts, (116, 36))
+
+        # Altın ayraç çizgisi
+        pygame.draw.line(dialogue_surf, (140, 110, 50), (115, 50), (box_w - 20, 50), 1)
+
+        # 4. Diyalog Metni (Satır kaydırmalı word-wrap)
+        clean_text = text
+        if clean_text.startswith("Sabuncuoğlu Şerefeddin:"):
+            clean_text = clean_text[len("Sabuncuoğlu Şerefeddin:"):].strip().strip("'\"")
+
+        words = clean_text.split()
+        lines = []
+        cur_line = []
+        max_w = box_w - 145
+        for w in words:
+            test = " ".join(cur_line + [w])
+            if self.font_body.size(test)[0] > max_w:
+                if cur_line:
+                    lines.append(" ".join(cur_line))
+                cur_line = [w]
+            else:
+                cur_line.append(w)
+        if cur_line:
+            lines.append(" ".join(cur_line))
+
+        line_y = 58
+        for line in lines[:3]:
+            s_ts = self.font_body.render(line, True, (10, 10, 10))
+            dialogue_surf.blit(s_ts, (116, line_y + 1))
+            t_ts = self.font_body.render(line, True, (252, 248, 240))
+            dialogue_surf.blit(t_ts, (115, line_y))
+            line_y += 22
+
+        # 5. Rozet & Süre Çubuğu
+        badge_text = "📜 TERS DOLDURMA SINAVI (4X SÜRE)" if self.sabuncuoglu.mode == "reverse" else "🌿 AMASYA DÂRÜŞŞİFASI ZİYARETİ"
+        badge_color = (230, 160, 255) if self.sabuncuoglu.mode == "reverse" else (120, 220, 160)
+        b_ts = self.font_tiny.render(badge_text, True, badge_color)
+        dialogue_surf.blit(b_ts, (box_w - b_ts.get_width() - 20, 16))
+
+        # Süre ilerleme çizgisi
+        bar_w = box_w - 135
+        rem_w = int(bar_w * (1.0 - progress))
+        if rem_w > 0:
+            pygame.draw.rect(dialogue_surf, (40, 60, 50), (115, box_h - 12, bar_w, 4), border_radius=2)
+            pygame.draw.rect(dialogue_surf, (212, 168, 72), (115, box_h - 12, rem_w, 4), border_radius=2)
+
+        self.pixel_surface.blit(dialogue_surf, (box_x, box_y))
 
     # ── Tarihi Bilgi Kartı ────────────────────────────────────────────────────
 
