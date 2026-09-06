@@ -1421,7 +1421,7 @@
   <div class="stun-box">
     <div class="stun-bolt">⚡</div>
     <div class="stun-heading">SERSEMLEDİN!</div>
-    <div class="stun-msg">Yanlış malzeme seçildi! Sıranız sıfırlandı ve 1.2 saniye bekletiliyorsunuz.</div>
+    <div class="stun-msg">Yanlış malzeme seçildi! 1.2 saniye sersemlediniz, doğru malzemeyi tekrar deneyin.</div>
   </div>
 </div>
 
@@ -2621,7 +2621,7 @@
       }
       updateCombo(0);
       playFlaskCrack();
-      statusEl.textContent = msg.message || (isReverseRound ? 'Can kaybedildi! Malzemeleri SONDAN BAŞA sırayla tekrar dene.' : 'Can kaybedildi! Sırayı baştan dene.');
+      statusEl.textContent = msg.message || (isReverseRound ? 'Can kaybedildi! Sıradaki malzemeyi TERSTEN tekrar dene.' : 'Can kaybedildi! Doğru malzemeyi tekrar dene.');
       statusEl.className = 'status error';
       if (navigator.vibrate) navigator.vibrate([120, 60, 160]);
       timerTotal = msg.total || timerTotal;

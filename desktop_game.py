@@ -1954,15 +1954,14 @@ class Game:
 
         if self.lives > 0:
             self.last_message = f"Zaman doldu! ({self.lives} Can kaldı)"
-            self.player_index = 0
             self.phase_started = time.monotonic()
             self._last_tick = 0.0
-            self.speak_bubble(f"Vakit tükendi! Bir iksir şişen kırıldı ({self.lives} can kaldı). Sırayı tekrar dene!", duration=4.0)
+            self.speak_bubble(f"Vakit tükendi! Bir iksir şişen kırıldı ({self.lives} can kaldı). Kaldığın yerden devam et!", duration=4.0)
             self.network.send({
                 "type": "life_lost",
                 "lives": self.lives,
                 "combo": 0,
-                "message": f"Süre tükendi! {self.lives} canın kaldı.",
+                "message": f"Süre tükendi! {self.lives} canın kaldı. Kaldığın yerden devam et!",
                 "total": round(self.player_duration, 1),
             })
             return
@@ -2287,7 +2286,7 @@ class Game:
         else:
             # YANLIŞ MALZEME! TEK KİŞİLİK MANTIĞI: 1 CAN KAYBEDİLİR
             self.player_lives[player_id] -= 1
-            self.player_cursors[player_id] = 0
+            # Kursör sıfırlanmaz, oyuncu bildiği malzemeleri korur ve kaldığı malzemeyi dener
             self.player_stuns[player_id] = now + 1.2
             self.sounds.play("wrong")
             self.shake_started = now
@@ -2304,7 +2303,7 @@ class Game:
                 "lives": rem_lives,
                 "player_lives": self.player_lives,
                 "is_reverse": getattr(self, "is_reverse_round", False),
-                "message": f"Yanlış malzeme! 1 Can kaybettin ({rem_lives} can kaldı). Sıra başa döndü!{rev_note}",
+                "message": f"Yanlış malzeme! 1 Can kaybettin ({rem_lives} can kaldı). Doğru malzemeyi tekrar dene!{rev_note}",
             })
             # Rakibe bildir
             self.network.send({
@@ -2363,16 +2362,16 @@ class Game:
             rev_note = " (Tersten gidiyordun!)" if getattr(self, "is_reverse_round", False) else ""
             if self.lives > 0:
                 self.last_message  = f"Yanlış! '{name}' seçildi ({self.lives} Can kaldı)"
-                self.player_index = 0
+                # player_index sıfırlanmaz, oyuncu bildiği elementleri korur ve kaldığı elementi dener
                 self.phase_started = time.monotonic()
                 self._last_tick = 0.0
-                self.speak_bubble(f"Dikkat et çırak! Doğrusu {correct_tr} idi.{rev_note} ({self.lives} can kaldı, baştan dene!)", duration=4.0)
+                self.speak_bubble(f"Yanlış malzeme! '{name}' değil.{rev_note} ({self.lives} can kaldı, doğru malzemeyi bul!)", duration=3.5)
                 self.network.send({
                     "type": "life_lost",
                     "lives": self.lives,
                     "combo": 0,
                     "is_reverse": getattr(self, "is_reverse_round", False),
-                    "message": f"Yanlış seçim! {self.lives} canın kaldı.{rev_note}",
+                    "message": f"Yanlış seçim! {self.lives} canın kaldı. Doğru malzemeyi tekrar dene!{rev_note}",
                     "total": round(self.player_duration, 1),
                 })
                 return
