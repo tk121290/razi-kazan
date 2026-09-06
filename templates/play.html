@@ -992,12 +992,12 @@
     /* Sinematik Film Sonu Kayan Jenerik (Credits Crawl) */
     .cinema-credits-wrapper {
       position: relative;
-      border: 1.5px solid var(--gold);
-      border-radius: 12px;
+      border: 2px solid var(--gold);
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 4px 20px rgba(0, 0, 0, 0.6);
-      background: radial-gradient(ellipse at center, #180f09 0%, #0c0704 100%);
-      height: 280px;
+      box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.95), 0 6px 24px rgba(0, 0, 0, 0.7), 0 0 15px rgba(212, 168, 72, 0.25);
+      background: radial-gradient(ellipse at center, #1b1009 0%, #080503 100%);
+      height: 380px;
     }
     .cinema-credits-wrapper::before {
       content: "";
@@ -1005,8 +1005,8 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 48px;
-      background: linear-gradient(to bottom, #0c0704 25%, rgba(12, 7, 4, 0));
+      height: 52px;
+      background: linear-gradient(to bottom, #080503 30%, rgba(8, 5, 3, 0));
       z-index: 5;
       pointer-events: none;
     }
@@ -1016,8 +1016,8 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 48px;
-      background: linear-gradient(to top, #0c0704 25%, rgba(12, 7, 4, 0));
+      height: 52px;
+      background: linear-gradient(to top, #080503 30%, rgba(8, 5, 3, 0));
       z-index: 5;
       pointer-events: none;
     }
@@ -1038,41 +1038,54 @@
     .cinema-credits-crawl {
       width: 100%;
       text-align: center;
-      padding: 24px 14px 260px 14px;
+      padding: 30px 16px 360px 16px;
       box-sizing: border-box;
       transform: translateZ(0);
       will-change: transform;
     }
     .cinema-badge {
-      font-size: .75rem;
-      font-weight: 700;
-      color: var(--gold);
+      font-size: .84rem;
+      font-weight: 800;
+      color: #ffe082;
+      background: rgba(212, 168, 72, 0.24);
+      border: 1.5px solid rgba(255, 224, 130, 0.5);
+      padding: 4px 14px;
+      border-radius: 14px;
+      display: inline-block;
+      margin-top: 22px;
+      margin-bottom: 4px;
       letter-spacing: .08em;
-      margin-top: 18px;
-      display: block;
+      text-shadow: 0 1px 4px #000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
     .cinema-role-title {
-      font-size: .92rem;
-      font-weight: 800;
-      color: var(--gold-lt);
-      margin: 2px 0 3px 0;
+      font-size: 1.10rem;
+      font-weight: 900;
+      color: #ffffff;
+      margin: 6px 0 3px 0;
+      letter-spacing: .04em;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.9);
     }
     .cinema-role-desc {
-      font-size: .72rem;
-      color: var(--muted);
+      font-size: .82rem;
+      color: #dfceb8;
       font-style: italic;
-      margin-bottom: 6px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
     }
     .cinema-name {
-      font-size: .84rem;
-      color: #f7eee2;
-      line-height: 1.6;
+      font-size: .98rem;
+      color: #ffffff;
+      line-height: 1.75;
+      font-weight: 600;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.95);
     }
     .cinema-divider {
-      width: 60px;
-      height: 1px;
-      background: var(--border);
-      margin: 12px auto;
+      width: 80px;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 16px auto;
     }
 
     .hidden { display: none !important; }
@@ -1291,7 +1304,7 @@
 
 <!-- ── Erciyes Kulüp, Künye & Portalı ── -->
 <div class="modal-backdrop hidden" id="creditsModal" style="z-index: 1200;">
-  <div class="modal-card" style="max-width: 560px;">
+  <div class="modal-card" style="max-width: 580px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
         <h2 style="color: var(--gold-lt); font-size: 1.15rem;">🏛️ Anadolu Tıp Tarihi Kulübü & Gürgen Ekibi</h2>
@@ -1299,15 +1312,15 @@
       </div>
       <button class="modal-close" id="closeCreditsBtn" aria-label="Kapat">✕</button>
     </div>
-    <div class="modal-body" style="padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; max-height: 75vh; overflow-y: auto;">
+    <div class="modal-body" style="padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; max-height: 84vh; overflow-y: auto;">
       
       <!-- Oyun Bittiğinde Görünen Tebrik/Bilgi Başlığı -->
-      <div id="creditsGameOverBanner" class="hidden" style="background: linear-gradient(135deg, #2e170c, #1a0e08); border: 1px solid var(--gold); border-radius: 8px; padding: 10px 14px; text-align: center;">
-        <span style="font-size: .70rem; color: var(--gold); font-weight: 700; letter-spacing: .08em; display: block;">🏁 OYUN SONA ERDİ</span>
-        <div style="font-size: .92rem; color: #fff; font-weight: 800; margin-top: 2px;">
+      <div id="creditsGameOverBanner" class="hidden" style="background: linear-gradient(135deg, #38190d, #1c0e07); border: 1.5px solid var(--gold); border-radius: 10px; padding: 12px 14px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+        <span style="font-size: .75rem; color: #ffd166; font-weight: 800; letter-spacing: .09em; display: block;">🏁 OYUN SONA ERDİ</span>
+        <div style="font-size: 1.02rem; color: #ffffff; font-weight: 900; margin-top: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
           Emek ve Katkılarınız İçin Teşekkür Ederiz!
         </div>
-        <div style="font-size: .72rem; color: var(--ink); margin-top: 2px;">
+        <div style="font-size: .78rem; color: #e6d8c5; margin-top: 3px; font-weight: 600;">
           Anadolu Tıp Tarihi Kulübü & Gürgen Ekibi Künyesi
         </div>
       </div>
@@ -1316,17 +1329,17 @@
       <div class="cinema-credits-wrapper">
         <div class="cinema-credits-container" id="cinemaCreditsContainer">
           <div class="cinema-credits-crawl">
-            <div style="font-size: .82rem; font-weight: 800; color: var(--gold-lt); margin-bottom: 2px;">✦ ✦ ✦ BEY HEKİM KAZANI ✦ ✦ ✦</div>
-            <div style="font-size: .88rem; font-weight: 800; color: #fff; line-height: 1.35; padding: 0 10px;">ANADOLU TIP TARİHİ KULÜBÜNÜN GÜRGEN EKİBİ TARAFINDAN HAZIRLANMIŞTIR</div>
-            <div style="font-size: .70rem; color: var(--muted); margin-top: 4px; margin-bottom: 16px;">Erciyes Üniversitesi Tıp Fakültesi · Kadim Tıp Mirası</div>
+            <div style="font-size: .95rem; font-weight: 900; color: #ffd166; margin-bottom: 4px; letter-spacing: .08em; text-shadow: 0 0 12px rgba(255, 209, 102, 0.6);">✦ ✦ ✦ BEY HEKİM KAZANI ✦ ✦ ✦</div>
+            <div style="font-size: 1.08rem; font-weight: 900; color: #ffffff; line-height: 1.4; padding: 0 8px; text-shadow: 0 2px 8px rgba(0,0,0,0.95);">ANADOLU TIP TARİHİ KULÜBÜNÜN GÜRGEN EKİBİ TARAFINDAN HAZIRLANMIŞTIR</div>
+            <div style="font-size: .84rem; color: #e6d7c3; margin-top: 6px; margin-bottom: 18px; font-weight: 600; text-shadow: 0 1px 4px #000;">Erciyes Üniversitesi Tıp Fakültesi · Kadim Tıp Mirası</div>
             <div class="cinema-divider"></div>
 
             <span class="cinema-badge">💻 PROJEDE EMEĞİ GEÇENLER</span>
             <div class="cinema-role-title">PROJE GELİŞTİRME KURULU</div>
             <div class="cinema-role-desc">Yazılım Mimarisi, Sunucu, Hosting & Tasarım</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Proje Yöneticisi:</strong> Tahsin Efe KARAKÖSE</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Web Sunucusu, Hosting, Debug:</strong> Ahmet Yasin MARŞİL</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Tasarım Destek:</strong> Mürsel Musa İLBASMIŞ, Baran PEKDOĞAN</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Proje Yöneticisi:</strong> Tahsin Efe KARAKÖSE</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Web Sunucusu, Hosting, Debug:</strong> Ahmet Yasin MARŞİL</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Tasarım Destek:</strong> Mürsel Musa İLBASMIŞ, Baran PEKDOĞAN</div>
             <div class="cinema-divider"></div>
 
             <span class="cinema-badge">🌟 TEŞEKKÜR</span>
@@ -1340,12 +1353,12 @@
             <span class="cinema-badge">👑 ANADOLU TIP YÖNETİMİ</span>
             <div class="cinema-role-title">KULÜP YÖNETİM KURULU</div>
             <div class="cinema-role-desc">Anadolu Tıp Tarihi Kulübü İdare Heyeti</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Başkan:</strong> Mustafa Safa ŞENBAK</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Başkan Yardımcısı:</strong> Elif Sude BOSTANCI</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Akademik Başkan Yardımcısı:</strong> Tahsin Efe KARAKÖSE</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Faaliyet Sorumlusu:</strong> Banu Ece PÜSKÜLLÜOĞLU</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Eğitim Sorumlusu:</strong> Baran PEKDOĞAN</div>
-            <div class="cinema-name"><strong style="color: var(--gold-lt);">Gürgen Grubu Yöneticisi:</strong> Ahmet Yasin MARŞİL</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Başkan:</strong> Mustafa Safa ŞENBAK</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Başkan Yardımcısı:</strong> Elif Sude BOSTANCI</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Akademik Başkan Yardımcısı:</strong> Tahsin Efe KARAKÖSE</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Faaliyet Sorumlusu:</strong> Banu Ece PÜSKÜLLÜOĞLU</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Eğitim Sorumlusu:</strong> Baran PEKDOĞAN</div>
+            <div class="cinema-name"><strong style="color: #ffd166; font-weight: 800;">Gürgen Grubu Yöneticisi:</strong> Ahmet Yasin MARŞİL</div>
             <div class="cinema-divider"></div>
 
             <span class="cinema-badge">📱 SOSYAL MEDYA EKİBİ</span>
@@ -1363,10 +1376,10 @@
             <div class="cinema-divider"></div>
 
             <span class="cinema-badge">📢 BÜYÜK ÇAĞRI</span>
-            <div style="font-size: .95rem; font-weight: 800; color: var(--gold-lt); margin: 10px 0 4px 0;">« Kulübümüze Üye Olmayı UNUTMAYIN! »</div>
-            <div style="font-size: .75rem; color: var(--ink); margin-bottom: 6px;">kulup.erciyes.edu.tr/uyelik/uyeol</div>
-            <div style="font-size: .88rem; font-weight: 800; color: #fff;">— ANADOLU TIP TARİHİ KULÜBÜ · GÜRGEN EKİBİ —</div>
-            <div style="font-size: .75rem; color: var(--muted); margin-top: 4px;">KAYSERİ · 2026</div>
+            <div style="font-size: 1.18rem; font-weight: 900; color: #ffe082; margin: 14px 0 6px 0; text-shadow: 0 0 14px rgba(255, 224, 130, 0.65);">« Kulübümüze Üye Olmayı UNUTMAYIN! »</div>
+            <div style="font-size: .88rem; color: #ffffff; font-weight: 800; margin-bottom: 8px; background: rgba(212, 168, 72, 0.28); border: 1px solid rgba(255, 209, 102, 0.55); border-radius: 6px; padding: 5px 12px; display: inline-block;">kulup.erciyes.edu.tr/uyelik/uyeol</div>
+            <div style="font-size: 1.02rem; font-weight: 900; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.95);">— ANADOLU TIP TARİHİ KULÜBÜ · GÜRGEN EKİBİ —</div>
+            <div style="font-size: .84rem; color: #e6d7c3; margin-top: 6px; font-weight: 600;">KAYSERİ · 2026</div>
           </div>
         </div>
       </div>
@@ -2234,7 +2247,7 @@
   let isCreditsUserTouching = false;
   let creditsTouchResumeTimer = null;
   let lastScrollTimestamp = null;
-  const CREDITS_SPEED = 38; // Saniyede 38 piksel akıcı ve net okunur hız
+  const CREDITS_SPEED = 40; // Saniyede 40 piksel akıcı ve net okunur hız
 
   function startCreditsScroll() {
     const cont = cinemaCreditsContainer || document.getElementById('cinemaCreditsContainer') || document.querySelector('.cinema-credits-container');
