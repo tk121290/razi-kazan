@@ -481,160 +481,202 @@ class SabuncuogluActor:
         )
 
     def _render_raw_sprite(self, action: str = "walk", phase: float = 0.0, facing_left: bool = True) -> pygame.Surface:
-        surf = pygame.Surface((120, 195), pygame.SRCALPHA)
-        cx = 60
-        base_y = 186
+        # 38 x 56 piksellik saf piksel sanatı tuvali (16-bit retro hekim stili)
+        W, H = 38, 56
+        s = pygame.Surface((W, H), pygame.SRCALPHA)
+        cx = 19
 
-        SARIK_GREEN  = (22, 74, 48)
-        SARIK_WHITE  = (248, 250, 252)
-        SARIK_SHADOW = (185, 195, 205)
-        SKIN         = (246, 212, 182)
-        SKIN_SHADOW  = (218, 174, 140)
-        BEARD        = (72, 78, 88)
-        BEARD_LIGHT  = (145, 150, 160)
-        ROBE_OUTER   = (26, 85, 65)
-        ROBE_SHADOW  = (18, 60, 45)
-        ROBE_INNER   = (245, 235, 215)
-        GOLD_TRIM    = (222, 178, 58)
-        SASH_RED     = (165, 30, 25)
-        BOOT_COLOR   = (58, 36, 22)
+        OUTLINE        = (22, 16, 18)
+        KAVUK_DARK     = (18, 62, 40)
+        KAVUK_MID      = (32, 105, 68)
+        KAVUK_LIGHT    = (52, 148, 96)
+        SARIK_DARK     = (140, 138, 132)
+        SARIK_MID      = (205, 202, 194)
+        SARIK_LIGHT    = (248, 246, 240)
+        GOLD_DARK      = (150, 108, 26)
+        GOLD_MID       = (215, 162, 44)
+        GOLD_LIGHT     = (252, 218, 110)
+        SKIN_DARK      = (165, 108, 76)
+        SKIN_MID       = (212, 152, 116)
+        SKIN_LIGHT     = (238, 184, 150)
+        EYE_WHITE      = (250, 250, 252)
+        EYE_DARK       = (26, 38, 48)
+        BEARD_DARK     = (80, 85, 90)
+        BEARD_MID      = (145, 150, 155)
+        BEARD_LIGHT    = (205, 210, 215)
+        ROBE_DARK      = (16, 48, 34)
+        ROBE_MID       = (28, 84, 58)
+        ROBE_LIGHT     = (46, 126, 88)
+        SASH_DARK      = (120, 18, 18)
+        SASH_MID       = (185, 32, 32)
+        SASH_LIGHT     = (225, 65, 65)
+        LEATHER_MID    = (105, 64, 32)
+        BOOT_DARK      = (26, 18, 14)
+        BOOT_MID       = (55, 38, 28)
+        PARCH_MID      = (228, 212, 182)
+        PARCH_DARK     = (170, 155, 125)
 
-        bob_y = int(math.sin(phase * 4 * math.pi) * 3) if action == "walk" else 0
+        # Bobbing
+        bob_y = 0
+        if action == "walk":
+            bob_y = 1 if (int(phase * 8) % 2 == 1) else 0
+        elif action in ("idle", "talk"):
+            bob_y = 1 if (int(phase * 4) in (1, 2)) else 0
 
-        # Zemin gölgesi
-        pygame.draw.ellipse(surf, (0, 0, 0, 70), (cx - 30, base_y - 6, 60, 12))
+        # 1. ÇİZMELER & ADIMLAR (Y: 48 to 54)
+        foot_l, foot_r = 0, 0
+        if action == "walk":
+            f_idx = int(phase * 8) % 8
+            if f_idx in (1, 2):
+                foot_l, foot_r = -1, 1
+            elif f_idx in (5, 6):
+                foot_l, foot_r = 1, -1
 
-        # Çizmeler ve adımlar
-        stride = math.sin(phase * 2 * math.pi) * 14 if action == "walk" else 0
-        lift_l = max(0.0, math.cos(phase * 2 * math.pi)) * 5 if action == "walk" else 0
-        lift_r = max(0.0, -math.cos(phase * 2 * math.pi)) * 5 if action == "walk" else 0
+        # Sol Çizme
+        pygame.draw.rect(s, OUTLINE, (cx - 7, 48 + bob_y + foot_l, 6, 7))
+        pygame.draw.rect(s, BOOT_MID, (cx - 6, 49 + bob_y + foot_l, 4, 5))
+        s.set_at((cx - 6, 54 + bob_y + foot_l), BOOT_DARK)
 
-        pygame.draw.polygon(surf, BOOT_COLOR, [
-            (cx - 16 - stride, base_y - 16 - lift_l),
-            (cx - 6 - stride, base_y - 16 - lift_l),
-            (cx - 4 - stride, base_y - lift_l),
-            (cx - 20 - stride, base_y - lift_l)
-        ])
-        pygame.draw.polygon(surf, (48, 28, 16), [
-            (cx + 6 + stride, base_y - 16 - lift_r),
-            (cx + 16 + stride, base_y - 16 - lift_r),
-            (cx + 20 + stride, base_y - lift_r),
-            (cx + 4 + stride, base_y - lift_r)
-        ])
+        # Sağ Çizme
+        pygame.draw.rect(s, OUTLINE, (cx + 1, 48 + bob_y + foot_r, 6, 7))
+        pygame.draw.rect(s, BOOT_MID, (cx + 2, 49 + bob_y + foot_r, 4, 5))
+        s.set_at((cx + 2, 54 + bob_y + foot_r), BOOT_DARK)
 
-        # Kaftan etekleri ve dalgalanma
-        sway = math.sin(phase * 2 * math.pi) * 4 if action == "walk" else 0
-        robe_pts = [
-            (cx - 18, 98 + bob_y),
-            (cx + 18, 98 + bob_y),
-            (cx + 28 + sway, base_y - 14),
-            (cx - 28 + sway, base_y - 14)
-        ]
-        pygame.draw.polygon(surf, ROBE_OUTER, robe_pts)
-        pygame.draw.polygon(surf, ROBE_SHADOW, [robe_pts[0], (cx, 98 + bob_y), (cx + sway, base_y - 14), robe_pts[3]])
-        pygame.draw.line(surf, GOLD_TRIM, (cx - 28 + sway, base_y - 14), (cx + 28 + sway, base_y - 14), 3)
-        pygame.draw.line(surf, GOLD_TRIM, (cx, 98 + bob_y), (cx + sway, base_y - 14), 2)
+        # 2. KAFTAN ETEKLERİ (Y: 34 to 48)
+        pygame.draw.rect(s, OUTLINE, (cx - 9, 34 + bob_y, 18, 15))
+        pygame.draw.rect(s, ROBE_MID, (cx - 8, 35 + bob_y, 16, 13))
+        pygame.draw.line(s, ROBE_DARK, (cx, 35 + bob_y), (cx, 47 + bob_y))
+        pygame.draw.line(s, ROBE_LIGHT, (cx - 7, 35 + bob_y), (cx - 7, 46 + bob_y))
+        pygame.draw.line(s, ROBE_LIGHT, (cx + 7, 35 + bob_y), (cx + 7, 46 + bob_y))
+        pygame.draw.line(s, GOLD_MID, (cx - 8, 47 + bob_y), (cx + 7, 47 + bob_y))
 
-        # Bordo ipek kuşak & cerrah çantası
-        pygame.draw.rect(surf, SASH_RED, (cx - 20, 92 + bob_y, 40, 11), border_radius=2)
-        pygame.draw.rect(surf, GOLD_TRIM, (cx - 5, 93 + bob_y, 10, 9), 2)
-        pygame.draw.rect(surf, (105, 62, 34), (cx + 13, 100 + bob_y, 10, 13), border_radius=2)
-        pygame.draw.line(surf, GOLD_TRIM, (cx + 15, 98 + bob_y), (cx + 15, 102 + bob_y), 1)
+        # 3. KUŞAK & ECZA TORBASI (Y: 30 to 34)
+        pygame.draw.rect(s, OUTLINE, (cx - 8, 30 + bob_y, 16, 5))
+        pygame.draw.rect(s, SASH_MID, (cx - 7, 31 + bob_y, 14, 3))
+        s.set_at((cx - 6, 31 + bob_y), SASH_LIGHT)
+        s.set_at((cx + 5, 31 + bob_y), SASH_LIGHT)
+        # Altın Toka
+        pygame.draw.rect(s, GOLD_MID, (cx - 1, 31 + bob_y, 3, 3))
+        s.set_at((cx, 32 + bob_y), GOLD_LIGHT)
+        # Deri Hekim Kesesi
+        pygame.draw.rect(s, OUTLINE, (cx + 4, 33 + bob_y, 4, 5))
+        pygame.draw.rect(s, LEATHER_MID, (cx + 5, 34 + bob_y, 2, 3))
 
-        # Gövde & Kaftan üstü
-        torso_pts = [
-            (cx - 22, 58 + bob_y),
-            (cx + 22, 58 + bob_y),
-            (cx + 19, 94 + bob_y),
-            (cx - 19, 94 + bob_y)
-        ]
-        pygame.draw.polygon(surf, ROBE_OUTER, torso_pts)
-        pygame.draw.polygon(surf, ROBE_INNER, [
-            (cx - 8, 58 + bob_y),
-            (cx + 8, 58 + bob_y),
-            (cx, 80 + bob_y)
-        ])
-        pygame.draw.line(surf, GOLD_TRIM, (cx - 9, 58 + bob_y), (cx, 81 + bob_y), 2)
-        pygame.draw.line(surf, GOLD_TRIM, (cx + 9, 58 + bob_y), (cx, 81 + bob_y), 2)
+        # 4. GÖVDE & KAFTAN ÜSTÜ (Y: 21 to 30)
+        pygame.draw.rect(s, OUTLINE, (cx - 8, 22 + bob_y, 16, 9))
+        pygame.draw.rect(s, ROBE_MID, (cx - 7, 23 + bob_y, 14, 7))
+        s.set_at((cx - 8, 22 + bob_y), (0, 0, 0, 0))
+        s.set_at((cx + 7, 22 + bob_y), (0, 0, 0, 0))
+        # Altın Sırma
+        pygame.draw.line(s, GOLD_MID, (cx - 2, 23 + bob_y), (cx, 30 + bob_y), 1)
+        pygame.draw.line(s, GOLD_MID, (cx + 2, 23 + bob_y), (cx, 30 + bob_y), 1)
+        s.set_at((cx, 27 + bob_y), GOLD_LIGHT)
+        s.set_at((cx, 29 + bob_y), GOLD_LIGHT)
 
-        # Sol Kol (Cerrahiyyetü'l-Haniyye tıp rulosunu tutar)
-        pygame.draw.polygon(surf, ROBE_OUTER, [
-            (cx - 21, 62 + bob_y),
-            (cx - 12, 60 + bob_y),
-            (cx + 2, 80 + bob_y),
-            (cx - 10, 84 + bob_y)
-        ])
-        pygame.draw.circle(surf, SKIN, (cx + 3, 81 + bob_y), 5)
-        pygame.draw.rect(surf, (238, 224, 192), (cx - 6, 76 + bob_y, 20, 10), border_radius=2)
-        pygame.draw.line(surf, (175, 25, 20), (cx + 4, 76 + bob_y), (cx + 4, 85 + bob_y), 2)
+        # 5. SOL KOL & CERRAHİ RİSALESİ (Mücerreb-nâme tomarı)
+        pygame.draw.rect(s, OUTLINE, (cx - 12, 23 + bob_y, 5, 8))
+        pygame.draw.rect(s, ROBE_MID, (cx - 11, 24 + bob_y, 3, 6))
+        pygame.draw.rect(s, OUTLINE, (cx - 13, 29 + bob_y, 6, 9))
+        pygame.draw.rect(s, PARCH_MID, (cx - 12, 30 + bob_y, 4, 7))
+        s.set_at((cx - 12, 30 + bob_y), PARCH_DARK)
+        s.set_at((cx - 9, 30 + bob_y), PARCH_DARK)
+        pygame.draw.line(s, (190, 25, 25), (cx - 12, 33 + bob_y), (cx - 9, 33 + bob_y))
+        pygame.draw.rect(s, SKIN_MID, (cx - 8, 30 + bob_y, 2, 4))
 
-        # Sağ Kol (Yürüyüşte salınım, durduğunda el sallama)
+        # 6. SAĞ KOL (Animasyonlu)
         if action == "wave":
-            wave_sway = math.sin(phase * 2 * math.pi) * 8
-            pygame.draw.line(surf, ROBE_OUTER, (cx + 20, 64 + bob_y), (cx + 32, 45 + bob_y), 9)
-            pygame.draw.line(surf, ROBE_OUTER, (cx + 32, 45 + bob_y), (cx + 34 + wave_sway, 25 + bob_y), 8)
-            pygame.draw.circle(surf, GOLD_TRIM, (int(cx + 34 + wave_sway), int(25 + bob_y)), 4)
-            hand_x = int(cx + 35 + wave_sway)
-            hand_y = int(18 + bob_y)
-            pygame.draw.circle(surf, SKIN, (hand_x, hand_y), 6)
-            pygame.draw.line(surf, SKIN, (hand_x - 3, hand_y), (hand_x - 4, hand_y - 6), 2)
-            pygame.draw.line(surf, SKIN, (hand_x, hand_y), (hand_x - 7, hand_y - 7), 2)
-            pygame.draw.line(surf, SKIN, (hand_x + 3, hand_y), (hand_x + 3, hand_y - 6), 2)
+            sway = 1 if int(phase * 8) % 4 in (1, 2) else -1
+            pygame.draw.rect(s, OUTLINE, (cx + 7, 21 + bob_y, 5, 6))
+            pygame.draw.rect(s, ROBE_MID, (cx + 8, 22 + bob_y, 3, 4))
+            pygame.draw.rect(s, OUTLINE, (cx + 8 + sway, 14 + bob_y, 5, 7))
+            pygame.draw.rect(s, ROBE_MID, (cx + 9 + sway, 15 + bob_y, 3, 5))
+            pygame.draw.rect(s, OUTLINE, (cx + 9 + sway, 8 + bob_y, 6, 6))
+            pygame.draw.rect(s, SKIN_MID, (cx + 10 + sway, 9 + bob_y, 4, 4))
+            s.set_at((cx + 10 + sway, 7 + bob_y), SKIN_LIGHT)
+            s.set_at((cx + 12 + sway, 7 + bob_y), SKIN_LIGHT)
+            s.set_at((cx + 14 + sway, 7 + bob_y), SKIN_LIGHT)
         elif action == "walk":
-            arm_swing = math.sin(phase * 2 * math.pi + math.pi) * 16
-            pygame.draw.line(surf, ROBE_OUTER, (cx + 20, 64 + bob_y), (cx + 24 + arm_swing, 84 + bob_y), 8)
-            pygame.draw.circle(surf, SKIN, (int(cx + 24 + arm_swing), int(87 + bob_y)), 5)
+            swing = 1 if int(phase * 8) in (1, 2, 3) else (-1 if int(phase * 8) in (5, 6, 7) else 0)
+            pygame.draw.rect(s, OUTLINE, (cx + 7, 23 + bob_y, 5, 8))
+            pygame.draw.rect(s, ROBE_MID, (cx + 8, 24 + bob_y, 3, 6))
+            pygame.draw.rect(s, OUTLINE, (cx + 8 + swing, 30 + bob_y, 4, 5))
+            pygame.draw.rect(s, SKIN_MID, (cx + 9 + swing, 31 + bob_y, 2, 3))
+        elif action == "talk":
+            t_y = 1 if int(phase * 4) in (1, 2) else 0
+            pygame.draw.rect(s, OUTLINE, (cx + 7, 23 + bob_y, 5, 6))
+            pygame.draw.rect(s, ROBE_MID, (cx + 8, 24 + bob_y, 3, 4))
+            pygame.draw.rect(s, OUTLINE, (cx + 8, 27 + bob_y + t_y, 5, 5))
+            pygame.draw.rect(s, SKIN_MID, (cx + 9, 28 + bob_y + t_y, 3, 3))
+            s.set_at((cx + 11, 27 + bob_y + t_y), SKIN_LIGHT)
         else:
-            talk_gest = math.sin(phase * 2 * math.pi) * 4 if action == "talk" else 0
-            pygame.draw.line(surf, ROBE_OUTER, (cx + 20, 64 + bob_y), (cx + 26, 78 + bob_y + talk_gest), 8)
-            pygame.draw.circle(surf, SKIN, (int(cx + 27), int(81 + bob_y + talk_gest)), 5)
+            pygame.draw.rect(s, OUTLINE, (cx + 7, 23 + bob_y, 5, 8))
+            pygame.draw.rect(s, ROBE_MID, (cx + 8, 24 + bob_y, 3, 6))
+            pygame.draw.rect(s, OUTLINE, (cx + 8, 31 + bob_y, 4, 4))
+            pygame.draw.rect(s, SKIN_MID, (cx + 9, 32 + bob_y, 2, 2))
 
-        # Baş & Boyun
-        neck_y = 52 + bob_y
-        pygame.draw.rect(surf, SKIN_SHADOW, (cx - 6, neck_y, 12, 10))
+        # 7. BOYUN & YÜZ (Y: 12 to 22)
+        pygame.draw.rect(s, OUTLINE, (cx - 3, 20 + bob_y, 6, 4))
+        pygame.draw.rect(s, SKIN_DARK, (cx - 2, 21 + bob_y, 4, 2))
 
-        face_y = 30 + bob_y
-        pygame.draw.ellipse(surf, SKIN, (cx - 13, face_y, 26, 26))
+        pygame.draw.rect(s, OUTLINE, (cx - 6, 12 + bob_y, 12, 10))
+        pygame.draw.rect(s, SKIN_MID, (cx - 5, 13 + bob_y, 10, 8))
+        s.set_at((cx - 6, 12 + bob_y), (0, 0, 0, 0))
+        s.set_at((cx + 5, 12 + bob_y), (0, 0, 0, 0))
 
-        # Bilge hekim gözleri ve kaşlar
-        eye_y = face_y + 10
-        pygame.draw.circle(surf, (40, 30, 20), (cx - 5, eye_y), 2)
-        pygame.draw.circle(surf, (40, 30, 20), (cx + 5, eye_y), 2)
-        pygame.draw.line(surf, BEARD, (cx - 8, eye_y - 3), (cx - 3, eye_y - 4), 1)
-        pygame.draw.line(surf, BEARD, (cx + 3, eye_y - 4), (cx + 8, eye_y - 3), 1)
-        pygame.draw.line(surf, SKIN_SHADOW, (cx, eye_y - 1), (cx, eye_y + 3), 1)
+        # Gözler (Bey Hekim tarzı canlı pikseller)
+        s.set_at((cx - 4, 15 + bob_y), EYE_WHITE)
+        s.set_at((cx - 3, 15 + bob_y), EYE_DARK)
+        s.set_at((cx + 2, 15 + bob_y), EYE_WHITE)
+        s.set_at((cx + 1, 15 + bob_y), EYE_DARK)
 
-        # Sakal & Bıyık
-        beard_pts = [
-            (cx - 10, face_y + 14),
-            (cx + 10, face_y + 14),
-            (cx + 8, face_y + 28),
-            (cx, face_y + 32),
-            (cx - 8, face_y + 28)
-        ]
-        pygame.draw.polygon(surf, BEARD, beard_pts)
-        pygame.draw.lines(surf, BEARD_LIGHT, False, [
-            (cx - 5, face_y + 18), (cx - 2, face_y + 27), (cx, face_y + 30)
-        ], 1)
-        pygame.draw.lines(surf, BEARD_LIGHT, False, [
-            (cx + 5, face_y + 18), (cx + 2, face_y + 27), (cx, face_y + 30)
-        ], 1)
+        # Kaşlar
+        s.set_at((cx - 4, 14 + bob_y), BEARD_DARK)
+        s.set_at((cx - 3, 14 + bob_y), BEARD_DARK)
+        s.set_at((cx + 1, 14 + bob_y), BEARD_DARK)
+        s.set_at((cx + 2, 14 + bob_y), BEARD_DARK)
 
-        # Sarık & Amasya yeşili kavuk
-        kavuk_rect = (cx - 13, face_y - 20, 26, 22)
-        pygame.draw.ellipse(surf, SARIK_GREEN, kavuk_rect)
-        pygame.draw.circle(surf, GOLD_TRIM, (cx, face_y - 21), 3)
+        # Burun
+        s.set_at((cx - 1, 16 + bob_y), SKIN_DARK)
+        s.set_at((cx, 16 + bob_y), SKIN_MID)
 
-        sarik_rect = (cx - 20, face_y - 10, 40, 18)
-        pygame.draw.ellipse(surf, SARIK_WHITE, sarik_rect)
-        pygame.draw.ellipse(surf, SARIK_SHADOW, sarik_rect, 1)
-        pygame.draw.arc(surf, SARIK_SHADOW, (cx - 18, face_y - 12, 36, 14), 3.14, 6.28, 1)
-        pygame.draw.arc(surf, SARIK_SHADOW, (cx - 16, face_y - 7, 32, 12), 3.14, 6.28, 1)
+        # 8. SAKAL & BIYIK (Y: 17 to 23)
+        pygame.draw.line(s, BEARD_DARK, (cx - 4, 17 + bob_y), (cx + 3, 17 + bob_y))
+        if action == "talk" and (int(phase * 4) % 2 == 1):
+            s.set_at((cx - 1, 18 + bob_y), (50, 20, 20))
+            s.set_at((cx, 18 + bob_y), (50, 20, 20))
+        else:
+            s.set_at((cx - 1, 18 + bob_y), BEARD_DARK)
+            s.set_at((cx, 18 + bob_y), BEARD_DARK)
+
+        pygame.draw.rect(s, BEARD_MID, (cx - 4, 19 + bob_y, 8, 4))
+        pygame.draw.line(s, BEARD_LIGHT, (cx - 3, 19 + bob_y), (cx + 2, 19 + bob_y))
+        pygame.draw.line(s, BEARD_LIGHT, (cx - 2, 21 + bob_y), (cx + 1, 21 + bob_y))
+        pygame.draw.line(s, OUTLINE, (cx - 5, 18 + bob_y), (cx - 5, 21 + bob_y))
+        pygame.draw.line(s, OUTLINE, (cx + 4, 18 + bob_y), (cx + 4, 21 + bob_y))
+        pygame.draw.line(s, OUTLINE, (cx - 3, 23 + bob_y), (cx + 2, 23 + bob_y))
+
+        # 9. AMASYA KAVUĞU & SARIK (Y: 2 to 13)
+        pygame.draw.rect(s, OUTLINE, (cx - 5, 2 + bob_y, 10, 5))
+        pygame.draw.rect(s, KAVUK_MID, (cx - 4, 3 + bob_y, 8, 3))
+        s.set_at((cx - 5, 2 + bob_y), (0, 0, 0, 0))
+        s.set_at((cx + 4, 2 + bob_y), (0, 0, 0, 0))
+        s.set_at((cx - 3, 3 + bob_y), KAVUK_LIGHT)
+        s.set_at((cx, 2 + bob_y), GOLD_LIGHT)
+        s.set_at((cx, 3 + bob_y), GOLD_MID)
+
+        pygame.draw.rect(s, OUTLINE, (cx - 8, 6 + bob_y, 16, 7))
+        pygame.draw.rect(s, SARIK_MID, (cx - 7, 7 + bob_y, 14, 5))
+        s.set_at((cx - 8, 6 + bob_y), (0, 0, 0, 0))
+        s.set_at((cx + 7, 6 + bob_y), (0, 0, 0, 0))
+        pygame.draw.line(s, SARIK_LIGHT, (cx - 6, 7 + bob_y), (cx + 5, 7 + bob_y))
+        pygame.draw.line(s, SARIK_DARK, (cx - 7, 9 + bob_y), (cx + 6, 9 + bob_y))
+        pygame.draw.line(s, SARIK_LIGHT, (cx - 6, 10 + bob_y), (cx + 5, 10 + bob_y))
 
         if not facing_left:
-            surf = pygame.transform.flip(surf, True, False)
+            s = pygame.transform.flip(s, True, False)
 
-        return surf
+        # 3x Nearest Neighbor tam piksel ölçeklemesi -> 114 x 168 px
+        return pygame.transform.scale(s, (38 * 3, 56 * 3))
 
     def _generate_frames(self) -> dict[str, list[pygame.Surface]]:
         frames = {}
@@ -649,14 +691,14 @@ class SabuncuogluActor:
 
     def _generate_portrait(self) -> pygame.Surface:
         ps = pygame.Surface((84, 84), pygame.SRCALPHA)
-        pygame.draw.rect(ps, (20, 36, 28), (0, 0, 84, 84), border_radius=10)
-        pygame.draw.rect(ps, (214, 168, 72), (0, 0, 84, 84), 2, border_radius=10)
-        pygame.draw.rect(ps, (55, 85, 68), (3, 3, 78, 78), 1, border_radius=8)
+        pygame.draw.rect(ps, (20, 36, 28), (0, 0, 84, 84), border_radius=8)
+        pygame.draw.rect(ps, (214, 168, 72), (0, 0, 84, 84), 2, border_radius=8)
+        pygame.draw.rect(ps, (55, 85, 68), (3, 3, 78, 78), 1, border_radius=6)
 
         bust = self._render_raw_sprite("idle", 0.0, facing_left=True)
-        cropped = bust.subsurface(pygame.Rect(18, 6, 84, 100))
-        scaled = pygame.transform.smoothscale(cropped, (68, 78))
-        ps.blit(scaled, (8, 4))
+        # Portre için baş ve omuz bölgesini al
+        cropped = bust.subsurface(pygame.Rect(21, 3, 72, 72))
+        ps.blit(cropped, (6, 6))
         return ps
 
     def get_frame(self, action: str, phase: float, facing_left: bool) -> pygame.Surface:

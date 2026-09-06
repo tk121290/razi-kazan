@@ -1,4 +1,4 @@
-"""
+r"""
 ✦ Tabîb Ekmeleddin & Sabuncuoğlu Şerefeddin - Canlı Sahne Testi ✦
 
 Çalıştırmak için terminalden:
