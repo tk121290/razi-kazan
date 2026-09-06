@@ -239,6 +239,35 @@
       100% { box-shadow: 0 0 16px rgba(247, 127, 0, 0.5); }
     }
 
+    .sabuncuoglu-banner {
+      width: 100%;
+      max-width: 540px;
+      margin-bottom: 8px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1.5px solid #d6a848;
+      background: linear-gradient(135deg, #18281f, #0f1a14);
+      box-shadow: 0 0 12px rgba(214, 168, 72, 0.35);
+      animation: reverse-pulse 2s infinite alternate;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: all 0.3s ease;
+    }
+    .sabuncuoglu-banner.hidden { display: none; }
+    .sab-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #ffd56b;
+      letter-spacing: 0.04em;
+    }
+    .sab-text {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #e4f4ea;
+      line-height: 1.3;
+    }
+
     .timer-wrap {
       width: 100%;
       max-width: 540px;
@@ -1104,6 +1133,11 @@
     <div class="recipe-label">TARİHİ KADİM REÇETE</div>
     <div class="recipe-title" id="recipeTitle">Tuz Ruhu Damıtımı</div>
   </div>
+</div>
+
+<div class="sabuncuoglu-banner hidden" id="sabuncuogluBanner">
+  <div class="sab-badge">SABUNCUOĞLU ŞEREFEDDİN MEYDAN OKUMASI</div>
+  <div class="sab-text">"Malzemeleri SONDAN BAŞA (TERSTEN) ekle! Dikkatini topla, süre 4 katı!"</div>
 </div>
 
 <div class="status-wrap">
@@ -2333,10 +2367,13 @@
     // ── Oyun Turu Mesajları ──
     if (msg.type === 'round_started') {
       isReverseRound = !!msg.is_reverse;
+      const sabBanner = document.getElementById('sabuncuogluBanner');
       if (isReverseRound) {
+        if (sabBanner) sabBanner.classList.remove('hidden');
         statusEl.textContent = 'SABUNCUOĞLU ŞEREFEDDİN: "Malzemeleri SONDAN BAŞA (TERSTEN) ekle! (4x Süre)"';
         statusEl.className   = 'status reverse';
       } else {
+        if (sabBanner) sabBanner.classList.add('hidden');
         statusEl.textContent = 'Tabîb Ekmeleddin hazırlanıyor… (İzle)';
         statusEl.className   = 'status';
       }
@@ -2412,13 +2449,16 @@
     }
 
     if (msg.type === 'player_turn') {
+      const sabBanner = document.getElementById('sabuncuogluBanner');
       if (msg.is_reverse || isReverseRound) {
         isReverseRound = true;
+        if (sabBanner) sabBanner.classList.remove('hidden');
         statusEl.textContent = isDuelMode
           ? 'SABUNCUOĞLU DÜELLOSU: SONDAN BAŞA (TERSTEN) DOLDUR! (4x Süre)'
           : 'SABUNCUOĞLU SINAVI: Malzemeleri SONDAN BAŞA (TERSTEN) seç! (4x Süre)';
         statusEl.className   = 'status reverse-ready';
       } else {
+        if (sabBanner) sabBanner.classList.add('hidden');
         statusEl.textContent = isDuelMode ? 'Hızlı Ol! Sırayı ilk tamamlayan kazanır!' : 'Sıra Sende! Malzemeleri seç.';
         statusEl.className   = 'status ready';
       }
@@ -2588,6 +2628,8 @@
     }
 
     if (msg.type === 'round_success') {
+      const sabBanner = document.getElementById('sabuncuogluBanner');
+      if (sabBanner) sabBanner.classList.add('hidden');
       if (msg.combo !== undefined) updateCombo(msg.combo);
       if (msg.lives !== undefined) updateLives(msg.lives);
 

@@ -450,7 +450,7 @@ class SabuncuogluActor:
         self.state = SabuncuogluState.INACTIVE
         self.x = 1150.0
         self.target_x = 540.0
-        self.speed = 120.0
+        self.speed = 240.0
         self.facing_left = True
         self.mode = "none"   # "reverse" veya "guest"
         self.dialogue_text = ""
@@ -475,7 +475,7 @@ class SabuncuogluActor:
     @property
     def is_speaking(self) -> bool:
         return (
-            self.state in (SabuncuogluState.WAVING, SabuncuogluState.TALKING)
+            self.state != SabuncuogluState.INACTIVE
             and bool(self.dialogue_text)
             and (time.monotonic() - self.dialogue_started < self.dialogue_duration)
         )
@@ -728,7 +728,7 @@ class SabuncuogluActor:
                 "Bey Hekim'in attığı malzemeleri TERSTEN (sondan başa) ekle! Süre 4 katı, dikkatini topla!'"
             )
         self.dialogue_started = time.monotonic()
-        self.dialogue_duration = 5.5
+        self.dialogue_duration = 8.5
         self.state = SabuncuogluState.WALKING_IN
         self.state_time = 0.0
 
@@ -750,7 +750,7 @@ class SabuncuogluActor:
             self.x = 1140.0
             self.facing_left = True
         self.dialogue_started = time.monotonic()
-        self.dialogue_duration = 5.0
+        self.dialogue_duration = 7.5
         self.state = SabuncuogluState.WALKING_IN
         self.state_time = 0.0
 
@@ -780,7 +780,7 @@ class SabuncuogluActor:
                 else:
                     self.dialogue_text = "Sabuncuoğlu Şerefeddin: 'Sağlık olsun! Düşüş de öğrenmenin bir parçasıdır. Yılma, yeniden dene!'"
                 self.dialogue_started = time.monotonic()
-                self.dialogue_duration = 3.5
+                self.dialogue_duration = 4.5
             self.start_walk_out()
 
     def update(self, dt: float, now: float) -> None:
@@ -797,6 +797,9 @@ class SabuncuogluActor:
                 self.state = SabuncuogluState.WAVING
                 self.state_time = 0.0
                 self.wave_timer = now + 1.8
+                # Sahne merkezine ulaştığı an diyalog sayacı sıfırlanır; oyuncu tam süreyi rahatça okur!
+                self.dialogue_started = now
+                self.dialogue_duration = 8.5 if self.mode == "reverse" else 7.0
                 if self.game and hasattr(self.game, "_spawn_particles"):
                     self.game._spawn_particles(int(self.x + 20), int(self.game.floor_y - 140), (245, 215, 90), 20)
 
@@ -2970,6 +2973,7 @@ class Game:
     def _draw_duel_sprites(self) -> None:
         now = time.monotonic()
         frame_idx = 0
+        progress = 0.0
         if self.state == GameState.RHAZI_TURN:
             progress = (now - self.phase_started) / self.reveal_duration
             if 0.10 <= progress < 0.70:
@@ -2982,41 +2986,93 @@ class Game:
             idle_loop = [0, 0, 1, 1, 2, 2, 1, 0, 3, 3, 4, 4, 3, 0]
             frame_idx = idle_loop[int(now * 3) % len(idle_loop)]
 
+        # 1. Tabîb Ekmeleddin (Bey Hekim) ve simya masası (Kayseri Dârüşşifası · 1. Çırak, x = 340)
         master_frame = self.anim_master.get_frame_at(frame_idx)
         if master_frame:
-            self._blit_on_floor(master_frame, 420)
+            self._blit_on_floor(master_frame, 340)
 
-        # Sabuncuoğlu Şerefeddin (Düelloda sol alanda x = 180, Bey Hekim x = 420 ile çakışmaz)
-        if hasattr(self, "sabuncuoglu") and self.sabuncuoglu.is_visible:
-            self.sabuncuoglu.draw(self.pixel_surface, self.floor_y)
-
+        # 2. Büyük İksir Kazanı (Sahne merkezinde, x = 550)
         is_surge = now < self.fire_surge_until
         anim_obj = self.anim_forge_surge if is_surge else self.anim_forge
         fps = 10 if is_surge else 6
         forge_frame = anim_obj.get_frame(now, fps)
         if forge_frame:
-            self._blit_on_floor(forge_frame, 680)
+            self._blit_on_floor(forge_frame, 550)
 
         if is_surge and random.random() < 0.7:
             self._spawn_particles(
-                random.randint(645, 715),
+                random.randint(515, 585),
                 int(self.floor_y - random.randint(80, 190)),
                 random.choice([(255, 140, 20), (255, 50, 10), (255, 230, 60), (220, 30, 10)]),
                 3
             )
 
+        # 3. Sabuncuoğlu Şerefeddin (Amasya Dârüşşifası · 2. Çırak, x = 760, sola dönük)
+        if hasattr(self, "sabuncuoglu"):
+            if self.state == GameState.RHAZI_TURN:
+                if 0.10 <= progress < 0.70:
+                    sab_act = "wave"
+                    sab_phase = 0.3
+                elif progress < 0.10:
+                    sab_act = "idle"
+                    sab_phase = 0.1
+                else:
+                    sab_act = "idle"
+                    sab_phase = 0.0
+            elif self.state == GameState.RESOLUTION and self.round_winner in ("player_2", None):
+                sab_act = "wave"
+                sab_phase = (now * 2.0) % 1.0
+            else:
+                sab_act = "idle"
+                sab_phase = (now * 0.8) % 1.0
+
+            sab_frame = self.sabuncuoglu.get_frame(sab_act, sab_phase, facing_left=True)
+            sab_rect = sab_frame.get_rect(midbottom=(760, self.floor_y))
+            self.pixel_surface.blit(sab_frame, sab_rect)
+
+            # Sabuncuoğlu'nun 16-bit ahşap ecza masası (x = 760)
+            self._draw_sabuncuoglu_duel_table(760, self.floor_y)
+
+    def _draw_sabuncuoglu_duel_table(self, cx: int, floor_y: int) -> None:
+        """Düello sahnesinde Sabuncuoğlu Şerefeddin'in önündeki 16-bit ahşap ecza masasını çizer."""
+        surf = self.pixel_surface
+        tw, th = 96, 48
+        tx = cx - tw // 2
+        ty = floor_y - th + 2
+        pygame.draw.rect(surf, (45, 28, 18), (tx, ty + 12, tw, th - 12), border_radius=3)
+        pygame.draw.rect(surf, (68, 44, 28), (tx + 3, ty + 15, tw - 6, th - 17), border_radius=2)
+        pygame.draw.rect(surf, (92, 58, 36), (tx - 4, ty + 6, tw + 8, 9), border_radius=2)
+        pygame.draw.rect(surf, (135, 90, 55), (tx - 3, ty + 7, tw + 6, 2), border_radius=1)
+        pygame.draw.rect(surf, (25, 16, 10), (tx - 4, ty + 6, tw + 8, 9), 1, border_radius=2)
+        pygame.draw.rect(surf, (214, 168, 72), (tx - 2, ty + 7, 3, 7))
+        pygame.draw.rect(surf, (214, 168, 72), (tx + tw - 1, ty + 7, 3, 7))
+        # Masadaki ecza malzemeleri:
+        # Pirinç havan & havan eli
+        pygame.draw.ellipse(surf, (195, 150, 45), (tx + 8, ty + 1, 14, 8))
+        pygame.draw.rect(surf, (155, 115, 30), (tx + 10, ty + 5, 10, 5), border_radius=1)
+        pygame.draw.line(surf, (235, 195, 80), (tx + 18, ty - 3), (tx + 12, ty + 4), 2)
+        # Zümrüt şifa şişesi
+        pygame.draw.rect(surf, (28, 125, 75), (tx + 30, ty - 5, 10, 12), border_radius=2)
+        pygame.draw.rect(surf, (65, 205, 130), (tx + 32, ty - 3, 3, 8), border_radius=1)
+        pygame.draw.rect(surf, (130, 90, 50), (tx + 33, ty - 8, 4, 4), border_radius=1)
+        # Amasya hekimlik risalesi
+        pygame.draw.rect(surf, (225, 210, 180), (tx + 48, ty + 1, 22, 6), border_radius=1)
+        pygame.draw.line(surf, (180, 40, 40), (tx + 56, ty + 1), (tx + 59, ty + 6), 2)
+
     def _draw_duel_material_animation(self, m1: str, m2: str) -> None:
         now = time.monotonic()
         progress = min(1.0, (now - self.phase_started) / self.reveal_duration)
 
-        hand_x1 = 384
+        # 1. Şişe: Tabîb Ekmeleddin'in elinden (x=304) kazana (x=530)
+        hand_x1 = 304
         hand_y1 = int(self.floor_y - 172)
-        target_x1 = 660
+        target_x1 = 530
         target_y1 = int(self.floor_y - 188)
 
-        hand_x2 = 980
-        hand_y2 = int(self.floor_y - 172)
-        target_x2 = 700
+        # 2. Şişe: Şerefeddin Sabuncuoğlu'nun elinden (x=730) kazana (x=570)
+        hand_x2 = 730
+        hand_y2 = int(self.floor_y - 136)
+        target_x2 = 570
         target_y2 = int(self.floor_y - 188)
 
         for (hx, hy, tx, ty, mat, side) in [
@@ -3034,7 +3090,7 @@ class Game:
             elif progress < 0.70:
                 t = (progress - 0.10) / 0.60
                 x = int(hx + (tx - hx) * t)
-                arc = 110 * 4 * t * (1 - t)
+                arc = 100 * 4 * t * (1 - t)
                 y = int(hy + (ty - hy) * t - arc)
                 if random.random() < 0.40:
                     self._spawn_particles(x, y, color_lt, 1)
@@ -3082,17 +3138,17 @@ class Game:
 
         if m1:
             col1 = COLORS.get(m1, GOLD)
-            pygame.draw.circle(self.pixel_surface, col1, (40, y + 22), 10)
-            pygame.draw.circle(self.pixel_surface, COLORS_LT.get(m1, GOLD_LT), (37, y + 19), 4)
-            self._text(f"{p1_name.upper()} MALZEMESİ", self.font_tiny, TEXT_DIM, (58, y + 6))
-            self._text_shadow(MATERIAL_NAMES.get(m1, m1).upper(), self.font_large, col1, (58, y + 22))
+            pygame.draw.circle(self.pixel_surface, col1, (34, y + 22), 10)
+            pygame.draw.circle(self.pixel_surface, COLORS_LT.get(m1, GOLD_LT), (31, y + 19), 4)
+            self._text(f"{p1_name.upper()} (KAYSERİ)", self.font_tiny, TEXT_DIM, (52, y + 6))
+            self._text_shadow(MATERIAL_NAMES.get(m1, m1).upper(), self.font_large, col1, (52, y + 22))
 
         if m2:
             col2 = COLORS.get(m2, GOLD)
-            rx = WIDTH - 260
+            rx = WIDTH - 270
             pygame.draw.circle(self.pixel_surface, col2, (rx, y + 22), 10)
             pygame.draw.circle(self.pixel_surface, COLORS_LT.get(m2, GOLD_LT), (rx - 3, y + 19), 4)
-            self._text(f"{p2_name.upper()} MALZEMESİ", self.font_tiny, TEXT_DIM, (rx + 18, y + 6))
+            self._text(f"{p2_name.upper()} (AMASYA)", self.font_tiny, TEXT_DIM, (rx + 18, y + 6))
             self._text_shadow(MATERIAL_NAMES.get(m2, m2).upper(), self.font_large, col2, (rx + 18, y + 22))
 
     def _draw_duel_hud(self) -> None:
@@ -3119,58 +3175,60 @@ class Game:
         if self.grace_period_end:
             rem_grace = max(0.0, self.grace_period_end - now)
             self._text_center(f"[!] BİRİ TAMAMLADI! SON ŞANS: {rem_grace:.1f}s", self.font_tiny, RED_LT, WIDTH // 2, 56)
+        elif is_rev:
+            self._text_center("SABUNCUOĞLU'NUN SINAVI: SONDAN BAŞA SEÇ! (4X SÜRE)", self.font_tiny, (245, 185, 255), WIDTH // 2, 56)
         else:
-            self._text_center(self.last_message, self.font_tiny, TEXT_DIM, WIDTH // 2, 56)
+            self._text_center("Tabîb Ekmeleddin (Kayseri) vs Şerefeddin Sabuncuoğlu (Amasya)", self.font_tiny, (205, 185, 140), WIDTH // 2, 56)
 
-        # ── 1. Çırak Paneli (Sol) ──
+        # ── 1. Çırak Paneli (Sol · Kayseri) ──
         p1 = self.players.get("player_1", {"name": "Çırak 1", "emblem": "I"})
-        p1_box = pygame.Rect(16, 88, 256, 460)
-        self._draw_panel(p1_box, radius=12)
-        pygame.draw.rect(self.pixel_surface, BORDER, p1_box, 1, border_radius=12)
+        p1_box = pygame.Rect(14, 88, 210, 460)
+        self._draw_panel(p1_box, radius=10)
+        pygame.draw.rect(self.pixel_surface, BORDER, p1_box, 1, border_radius=10)
 
-        self._text("1. ÇIRAK", self.font_tiny, TEXT_DIM, (p1_box.x + 16, p1_box.y + 14))
-        p1_name = p1.get("name", "Çırak 1")[:14]
-        self._text_shadow(p1_name, self.font_large, GOLD_LT, (p1_box.x + 16, p1_box.y + 30))
+        self._text("1. ÇIRAK (KAYSERİ)", self.font_tiny, TEXT_DIM, (p1_box.x + 12, p1_box.y + 14))
+        p1_name = p1.get("name", "Çırak 1")[:12]
+        self._text_shadow(p1_name, self.font_large, GOLD_LT, (p1_box.x + 12, p1_box.y + 30))
         emb_surf = self.font_body_bold.render(f"[{p1.get('emblem', 'I')}]", True, GOLD)
-        self.pixel_surface.blit(emb_surf, (p1_box.right - 44, p1_box.y + 24))
+        self.pixel_surface.blit(emb_surf, (p1_box.right - 38, p1_box.y + 24))
 
-        self._draw_separator(p1_box.x + 14, p1_box.y + 60, p1_box.right - 14)
+        self._draw_separator(p1_box.x + 10, p1_box.y + 60, p1_box.right - 10)
 
         # KALAN CANLAR (3 Can Mekaniği)
         p1_lives = self.player_lives.get("player_1", 3)
-        self._text("KALAN CAN", self.font_tiny, TEXT_DIM, (p1_box.x + 16, p1_box.y + 70))
+        self._text("KALAN CAN", self.font_tiny, TEXT_DIM, (p1_box.x + 12, p1_box.y + 70))
         for i in range(3):
-            fx = p1_box.x + 20 + i * 36
+            fx = p1_box.x + 16 + i * 32
             fy = p1_box.y + 88
             active = i < p1_lives
             flask_col = (220, 60, 50) if active else (55, 32, 26)
-            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 10, fy + 14), 9)
+            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 10, fy + 14), 8)
             pygame.draw.rect(self.pixel_surface, flask_col, (fx + 7, fy + 4, 6, 7))
             pygame.draw.rect(self.pixel_surface, GOLD if active else (45, 28, 22), (fx + 5, fy + 1, 10, 4), border_radius=1)
 
         if p1_lives <= 0:
-            self._text("ELENDİ", self.font_small, RED_LT, (p1_box.x + 142, p1_box.y + 92))
+            self._text("ELENDİ", self.font_small, RED_LT, (p1_box.x + 124, p1_box.y + 92))
         else:
             lives_col = GREEN_LT if p1_lives >= 2 else RED_LT
-            self._text(f"{p1_lives}/3 Can", self.font_small, lives_col, (p1_box.x + 142, p1_box.y + 92))
+            self._text(f"{p1_lives}/3 Can", self.font_small, lives_col, (p1_box.x + 124, p1_box.y + 92))
 
-        self._draw_separator(p1_box.x + 14, p1_box.y + 124, p1_box.right - 14)
+        self._draw_separator(p1_box.x + 10, p1_box.y + 124, p1_box.right - 10)
 
-        self._text("KAZANILAN SEVİYELER", self.font_tiny, TEXT_DIM, (p1_box.x + 16, p1_box.y + 134))
-        self._text(f"Skor: {s1} Seviye", self.font_body_bold, GOLD_LT, (p1_box.x + 16, p1_box.y + 150))
+        self._text("KAZANILAN SEVİYELER", self.font_tiny, TEXT_DIM, (p1_box.x + 12, p1_box.y + 134))
+        self._text(f"Skor: {s1} Seviye", self.font_body_bold, GOLD_LT, (p1_box.x + 12, p1_box.y + 150))
 
-        self._draw_separator(p1_box.x + 14, p1_box.y + 176, p1_box.right - 14)
+        self._draw_separator(p1_box.x + 10, p1_box.y + 176, p1_box.right - 10)
 
         p1_cur = self.player_cursors.get("player_1", 0)
         p1_orig = self.player_sequences.get("player_1", self.sequence)
         p1_seq = list(reversed(p1_orig)) if (is_rev and self.state != GameState.RHAZI_TURN) else p1_orig
         tot_seq1 = len(p1_seq) if p1_seq else 1
         lbl1 = "REÇETE (TERSTEN):" if is_rev else "REÇETE:"
-        self._text(f"{lbl1} {p1_cur}/{tot_seq1}", self.font_tiny, (245, 185, 255) if is_rev else TEXT, (p1_box.x + 16, p1_box.y + 188))
+        self._text(f"{lbl1} {p1_cur}/{tot_seq1}", self.font_tiny, (245, 185, 255) if is_rev else TEXT, (p1_box.x + 12, p1_box.y + 188))
         if p1_seq:
             for i, mat in enumerate(p1_seq):
-                dot_x = p1_box.x + 18 + (i % 6) * 38
-                dot_y = p1_box.y + 208 + (i // 6) * 28
+                dot_x = p1_box.x + 14 + (i % 5) * 36
+                dot_y = p1_box.y + 208 + (i // 5) * 28
                 if self.state == GameState.RHAZI_TURN:
                     c = COLORS.get(mat, GOLD) if i <= self.phase_cursor else (50, 36, 28)
                 else:
@@ -3187,79 +3245,79 @@ class Game:
 
         if self.state == GameState.RHAZI_TURN and self.phase_cursor < len(p1_seq):
             m1_cur = p1_seq[self.phase_cursor]
-            self._text(f"EKLE: {MATERIAL_NAMES.get(m1_cur, m1_cur)}", self.font_small, GOLD_LT, (p1_box.x + 16, p1_box.y + 280))
+            self._text(f"EKLE: {MATERIAL_NAMES.get(m1_cur, m1_cur)}", self.font_small, GOLD_LT, (p1_box.x + 12, p1_box.y + 280))
 
         is_stunned = now < self.player_stuns.get("player_1", 0.0)
         status_y = p1_box.bottom - 44
         if p1_lives <= 0:
-            pygame.draw.rect(self.pixel_surface, (70, 15, 15), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (70, 15, 15), (p1_box.x + 10, status_y, p1_box.width - 20, 30), border_radius=6)
             self._text_center("3 CAN BİTTİ (ELENDİ)", self.font_tiny, RED_LT, p1_box.centerx, status_y + 9)
         elif is_stunned:
             rem_stun = self.player_stuns.get("player_1", 0.0) - now
-            pygame.draw.rect(self.pixel_surface, (70, 20, 15), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (70, 20, 15), (p1_box.x + 10, status_y, p1_box.width - 20, 30), border_radius=6)
             self._text_center(f"SERSEMLENDİ ({rem_stun:.1f}s)", self.font_tiny, RED_LT, p1_box.centerx, status_y + 9)
         elif self.player_completed.get("player_1", False):
-            pygame.draw.rect(self.pixel_surface, (20, 60, 30), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (20, 60, 30), (p1_box.x + 10, status_y, p1_box.width - 20, 30), border_radius=6)
             self._text_center("TAMAMLADI! [OK]", self.font_tiny, GREEN_LT, p1_box.centerx, status_y + 9)
         elif self.first_completer and not self.player_completed.get("player_1", False):
-            pygame.draw.rect(self.pixel_surface, (65, 35, 15), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (65, 35, 15), (p1_box.x + 10, status_y, p1_box.width - 20, 30), border_radius=6)
             self._text_center("SON ŞANS! BİTİR!", self.font_tiny, GOLD_LT, p1_box.centerx, status_y + 9)
         elif self.state == GameState.RHAZI_TURN:
-            pygame.draw.rect(self.pixel_surface, (35, 28, 20), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (35, 28, 20), (p1_box.x + 10, status_y, p1_box.width - 20, 30), border_radius=6)
             self._text_center(f"HAZIRLANIYOR... ({self.phase_cursor+1}/{tot_seq1})", self.font_tiny, GOLD, p1_box.centerx, status_y + 9)
         else:
-            pygame.draw.rect(self.pixel_surface, (40, 30, 20), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (40, 30, 20), (p1_box.x + 10, status_y, p1_box.width - 20, 30), border_radius=6)
             self._text_center("YARIŞIYOR...", self.font_tiny, GOLD, p1_box.centerx, status_y + 9)
 
-        # ── 2. Çırak Paneli (Sağ) ──
+        # ── 2. Çırak Paneli (Sağ · Amasya) ──
         p2 = self.players.get("player_2", {"name": "Çırak 2", "emblem": "II"})
-        p2_box = pygame.Rect(WIDTH - 256 - 16, 88, 256, 460)
-        self._draw_panel(p2_box, radius=12)
-        pygame.draw.rect(self.pixel_surface, BORDER, p2_box, 1, border_radius=12)
+        p2_box = pygame.Rect(WIDTH - 210 - 14, 88, 210, 460)
+        self._draw_panel(p2_box, radius=10)
+        pygame.draw.rect(self.pixel_surface, BORDER, p2_box, 1, border_radius=10)
 
-        self._text("2. ÇIRAK", self.font_tiny, TEXT_DIM, (p2_box.x + 16, p2_box.y + 14))
-        p2_name = p2.get("name", "Çırak 2")[:14]
-        self._text_shadow(p2_name, self.font_large, GOLD_LT, (p2_box.x + 16, p2_box.y + 30))
+        self._text("2. ÇIRAK (AMASYA)", self.font_tiny, TEXT_DIM, (p2_box.x + 12, p2_box.y + 14))
+        p2_name = p2.get("name", "Çırak 2")[:12]
+        self._text_shadow(p2_name, self.font_large, GOLD_LT, (p2_box.x + 12, p2_box.y + 30))
         emb_surf2 = self.font_body_bold.render(f"[{p2.get('emblem', 'II')}]", True, GOLD)
-        self.pixel_surface.blit(emb_surf2, (p2_box.right - 44, p2_box.y + 24))
+        self.pixel_surface.blit(emb_surf2, (p2_box.right - 38, p2_box.y + 24))
 
-        self._draw_separator(p2_box.x + 14, p2_box.y + 60, p2_box.right - 14)
+        self._draw_separator(p2_box.x + 10, p2_box.y + 60, p2_box.right - 10)
 
         # KALAN CANLAR (3 Can Mekaniği)
         p2_lives = self.player_lives.get("player_2", 3)
-        self._text("KALAN CAN", self.font_tiny, TEXT_DIM, (p2_box.x + 16, p2_box.y + 70))
+        self._text("KALAN CAN", self.font_tiny, TEXT_DIM, (p2_box.x + 12, p2_box.y + 70))
         for i in range(3):
-            fx = p2_box.x + 20 + i * 36
+            fx = p2_box.x + 16 + i * 32
             fy = p2_box.y + 88
             active = i < p2_lives
             flask_col = (220, 60, 50) if active else (55, 32, 26)
-            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 10, fy + 14), 9)
+            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 10, fy + 14), 8)
             pygame.draw.rect(self.pixel_surface, flask_col, (fx + 7, fy + 4, 6, 7))
             pygame.draw.rect(self.pixel_surface, GOLD if active else (45, 28, 22), (fx + 5, fy + 1, 10, 4), border_radius=1)
 
         if p2_lives <= 0:
-            self._text("ELENDİ", self.font_small, RED_LT, (p2_box.x + 142, p2_box.y + 92))
+            self._text("ELENDİ", self.font_small, RED_LT, (p2_box.x + 124, p2_box.y + 92))
         else:
             lives_col2 = GREEN_LT if p2_lives >= 2 else RED_LT
-            self._text(f"{p2_lives}/3 Can", self.font_small, lives_col2, (p2_box.x + 142, p2_box.y + 92))
+            self._text(f"{p2_lives}/3 Can", self.font_small, lives_col2, (p2_box.x + 124, p2_box.y + 92))
 
-        self._draw_separator(p2_box.x + 14, p2_box.y + 124, p2_box.right - 14)
+        self._draw_separator(p2_box.x + 10, p2_box.y + 124, p2_box.right - 10)
 
-        self._text("KAZANILAN SEVİYELER", self.font_tiny, TEXT_DIM, (p2_box.x + 16, p2_box.y + 134))
-        self._text(f"Skor: {s2} Seviye", self.font_body_bold, GOLD_LT, (p2_box.x + 16, p2_box.y + 150))
+        self._text("KAZANILAN SEVİYELER", self.font_tiny, TEXT_DIM, (p2_box.x + 12, p2_box.y + 134))
+        self._text(f"Skor: {s2} Seviye", self.font_body_bold, GOLD_LT, (p2_box.x + 12, p2_box.y + 150))
 
-        self._draw_separator(p2_box.x + 14, p2_box.y + 176, p2_box.right - 14)
+        self._draw_separator(p2_box.x + 10, p2_box.y + 176, p2_box.right - 10)
 
         p2_cur = self.player_cursors.get("player_2", 0)
         p2_orig = self.player_sequences.get("player_2", self.sequence)
         p2_seq = list(reversed(p2_orig)) if (is_rev and self.state != GameState.RHAZI_TURN) else p2_orig
         tot_seq2 = len(p2_seq) if p2_seq else 1
         lbl2 = "REÇETE (TERSTEN):" if is_rev else "REÇETE:"
-        self._text(f"{lbl2} {p2_cur}/{tot_seq2}", self.font_tiny, (245, 185, 255) if is_rev else TEXT, (p2_box.x + 16, p2_box.y + 188))
+        self._text(f"{lbl2} {p2_cur}/{tot_seq2}", self.font_tiny, (245, 185, 255) if is_rev else TEXT, (p2_box.x + 12, p2_box.y + 188))
         if p2_seq:
             for i, mat in enumerate(p2_seq):
-                dot_x = p2_box.x + 18 + (i % 6) * 38
-                dot_y = p2_box.y + 208 + (i // 6) * 28
+                dot_x = p2_box.x + 14 + (i % 5) * 36
+                dot_y = p2_box.y + 208 + (i // 5) * 28
                 if self.state == GameState.RHAZI_TURN:
                     c = COLORS.get(mat, GOLD) if i <= self.phase_cursor else (50, 36, 28)
                 else:
@@ -3276,28 +3334,28 @@ class Game:
 
         if self.state == GameState.RHAZI_TURN and self.phase_cursor < len(p2_seq):
             m2_cur = p2_seq[self.phase_cursor]
-            self._text(f"EKLE: {MATERIAL_NAMES.get(m2_cur, m2_cur)}", self.font_small, GOLD_LT, (p2_box.x + 16, p2_box.y + 280))
+            self._text(f"EKLE: {MATERIAL_NAMES.get(m2_cur, m2_cur)}", self.font_small, GOLD_LT, (p2_box.x + 12, p2_box.y + 280))
 
         is_stunned2 = now < self.player_stuns.get("player_2", 0.0)
         status_y = p2_box.bottom - 44
         if p2_lives <= 0:
-            pygame.draw.rect(self.pixel_surface, (70, 15, 15), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (70, 15, 15), (p2_box.x + 10, status_y, p2_box.width - 20, 30), border_radius=6)
             self._text_center("3 CAN BİTTİ (ELENDİ)", self.font_tiny, RED_LT, p2_box.centerx, status_y + 9)
         elif is_stunned2:
             rem_stun2 = self.player_stuns.get("player_2", 0.0) - now
-            pygame.draw.rect(self.pixel_surface, (70, 20, 15), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (70, 20, 15), (p2_box.x + 10, status_y, p2_box.width - 20, 30), border_radius=6)
             self._text_center(f"SERSEMLENDİ ({rem_stun2:.1f}s)", self.font_tiny, RED_LT, p2_box.centerx, status_y + 9)
         elif self.player_completed.get("player_2", False):
-            pygame.draw.rect(self.pixel_surface, (20, 60, 30), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (20, 60, 30), (p2_box.x + 10, status_y, p2_box.width - 20, 30), border_radius=6)
             self._text_center("TAMAMLADI! [OK]", self.font_tiny, GREEN_LT, p2_box.centerx, status_y + 9)
         elif self.first_completer and not self.player_completed.get("player_2", False):
-            pygame.draw.rect(self.pixel_surface, (65, 35, 15), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (65, 35, 15), (p2_box.x + 10, status_y, p2_box.width - 20, 30), border_radius=6)
             self._text_center("SON ŞANS! BİTİR!", self.font_tiny, GOLD_LT, p2_box.centerx, status_y + 9)
         elif self.state == GameState.RHAZI_TURN:
-            pygame.draw.rect(self.pixel_surface, (35, 28, 20), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (35, 28, 20), (p2_box.x + 10, status_y, p2_box.width - 20, 30), border_radius=6)
             self._text_center(f"HAZIRLANIYOR... ({self.phase_cursor+1}/{tot_seq2})", self.font_tiny, GOLD, p2_box.centerx, status_y + 9)
         else:
-            pygame.draw.rect(self.pixel_surface, (40, 30, 20), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
+            pygame.draw.rect(self.pixel_surface, (40, 30, 20), (p2_box.x + 10, status_y, p2_box.width - 20, 30), border_radius=6)
             self._text_center("YARIŞIYOR...", self.font_tiny, GOLD, p2_box.centerx, status_y + 9)
 
     def _draw_duel_timer_bar(self, remaining: float) -> None:
