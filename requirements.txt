@@ -6,6 +6,6 @@ qrcode[pil]>=8.0
 websockets>=13.0
 numpy>=1.26          # ses sentezi (pygame.sndarray)
 python-dotenv>=1.0   # .env dosyasından GEMINI_API_KEY okumak için
-google-generativeai>=0.8  # Gemini ipucu motoru
+google-genai>=0.8    # Gemini ipucu motoru (yeni SDK)
 edge-tts>=7.0        # Türkçe TTS (Râzî'nin sesi)
 aiosqlite>=0.20      # Async SQLite (liderlik tablosu)

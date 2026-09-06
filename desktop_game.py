@@ -18,6 +18,12 @@ from pathlib import Path
 import pygame
 import qrcode
 import websockets
+try:
+    import numpy as np  # ses sentezi (pygame.sndarray)
+    _NUMPY_AVAILABLE = True
+except ImportError:
+    np = None  # type: ignore[assignment]
+    _NUMPY_AVAILABLE = False
 
 # .env dosyasından GEMINI_API_KEY vb. yükle (opsiyonel)
 try:
@@ -878,7 +884,7 @@ def _synth_sound(freq: float, duration: float, volume: float = 0.4,
     for s in buf:
         stereo.extend([s, s])
     return pygame.sndarray.make_sound(
-        __import__("numpy").frombuffer(stereo, dtype="int16").reshape(-1, 2)
+        np.frombuffer(stereo, dtype="int16").reshape(-1, 2)
     )
 
 
@@ -886,8 +892,9 @@ class Sounds:
     def __init__(self) -> None:
         self.enabled = False
         try:
+            if not _NUMPY_AVAILABLE:
+                raise ImportError("numpy bulunamadı — ses devre dışı")
             pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
-            import numpy  # noqa — required for sndarray
             self.correct  = _synth_sound(660,  0.18, wave="sine",   decay=1.5)
             self.wrong    = _synth_sound(180,  0.32, wave="square",  decay=0.8)
             self.level_up = _synth_sound(880,  0.25, wave="sine",   decay=1.2)
@@ -921,11 +928,12 @@ class HintEngine:
             print("HintEngine: GEMINI_API_KEY bulunamadı — ipuçları devre dışı.")
             return
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
-            self._model  = genai.GenerativeModel("gemini-3.6-flash")
+            from google import genai as _genai  # google-genai>=0.8
+            client = _genai.Client(api_key=api_key)
+            self._client = client
+            self._model_name = "gemini-2.0-flash-lite"
             self.enabled = True
-            print("HintEngine: Gemini API bağlantısı kuruldu (gemini-3.6-flash).")
+            print(f"HintEngine: Gemini API bağlantısı kuruldu ({self._model_name}).")
         except Exception as e:
             print(f"HintEngine: Gemini başlatılamadı — {e}")
 
@@ -950,18 +958,13 @@ class HintEngine:
             f"Sadece ipucunu yaz, başka hiçbir şey ekleme."
         )
         try:
-            response = self._model.generate_content(prompt)
+            response = self._client.models.generate_content(
+                model=self._model_name, contents=prompt
+            )
             text = response.text.strip().strip('"').strip("'")
             self._result_q.put({"text": text, "correct": correct})
         except Exception as e:
-            try:
-                import google.generativeai as genai
-                fallback = genai.GenerativeModel("gemini-3.5-flash-lite")
-                response = fallback.generate_content(prompt)
-                text = response.text.strip().strip('"').strip("'")
-                self._result_q.put({"text": text, "correct": correct})
-            except Exception as e2:
-                print(f"HintEngine: API hatası — {e} / {e2}")
+            print(f"HintEngine: API hatası — {e}")
 
     # Her frame çağrılır; yeni ipucu varsa (text, material) döndürür
     def poll(self) -> tuple[str, str] | None:

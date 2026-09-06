@@ -44,6 +44,7 @@ async def lifespan(app: FastAPI):
                 level INTEGER NOT NULL,
                 max_combo INTEGER DEFAULT 0,
                 room_id TEXT,
+                ts INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -54,7 +55,10 @@ async def lifespan(app: FastAPI):
             await db.execute("ALTER TABLE scores ADD COLUMN player_name TEXT DEFAULT 'Simyacı'")
         if "max_combo" not in cols:
             await db.execute("ALTER TABLE scores ADD COLUMN max_combo INTEGER DEFAULT 0")
+        if "ts" not in cols:
+            await db.execute("ALTER TABLE scores ADD COLUMN ts INTEGER")
         await db.commit()
+
     log.info("Database ready: %s", DB_PATH)
     yield
 
@@ -70,6 +74,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://www.gstatic.com; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; "
+            "connect-src 'self' ws: wss:; "
+            "font-src 'self' data:; "
+            "frame-ancestors 'none';"
+        )
+        response.headers["X-XSS-Protection"] = "1; mode=block"
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)

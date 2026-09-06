@@ -1903,7 +1903,7 @@
     }
 
     activeIds.forEach(id => {
-      const el = elementsMap[id] || { id: id, name: id, symbol: "🜔", color: [120, 110, 100] };
+      const el = elementsMap[id] || { id: id, name: id, symbol: "\u{1F714}", color: [120, 110, 100] };
       const btn = document.createElement('button');
       btn.className = 'mat-btn';
       btn.dataset.button = el.id;
@@ -1912,10 +1912,17 @@
       const r2 = Math.floor(r * 0.6), g2 = Math.floor(g * 0.6), b2 = Math.floor(b * 0.6);
       btn.style.background = `linear-gradient(140deg, rgb(${r},${g},${b}), rgb(${r2},${g2},${b2}))`;
 
-      btn.innerHTML = `
-        <span class="symbol">${el.symbol}</span>
-        <span class="mat-name">${el.name}</span>
-      `;
+      // XSS koruması: textContent ile güvenli DOM oluştur
+      const symbolSpan = document.createElement('span');
+      symbolSpan.className = 'symbol';
+      symbolSpan.textContent = el.symbol;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'mat-name';
+      nameSpan.textContent = el.name;
+
+      btn.appendChild(symbolSpan);
+      btn.appendChild(nameSpan);
 
       btn.addEventListener('click', () => sendButton(el.id, btn, el.category));
       gridEl.appendChild(btn);
@@ -2011,21 +2018,41 @@
         ? `background: linear-gradient(135deg, rgb(${col[0]},${col[1]},${col[2]}), rgb(${Math.floor(col[0]*0.5)},${Math.floor(col[1]*0.5)},${Math.floor(col[2]*0.5)}));`
         : `background: #251b14; color: #665;`;
 
-      card.innerHTML = `
-        <div class="codex-icon-box" style="${bgStyle}">
-          ${isFound ? el.symbol : '🔒'}
-        </div>
-        <div class="codex-card-content">
-          <div class="codex-card-head">
-            <span class="codex-card-name">${isFound ? el.name : 'Gizli Cevher'}</span>
-            <span class="codex-card-cat">${isFound ? (CAT_LABELS[el.category] || el.category) : 'Kilitli'}</span>
-          </div>
-          <div class="codex-card-fact">
-            ${isFound ? (el.fact || "Kadim simyada arındırıcı ve dönüştürücü bileşen.") : "Bu malzemenin sırrı ilerleyen seviyelerde çözülecektir."}
-          </div>
-        </div>
-      `;
+      // XSS koruması: tüm dinamik değerler textContent ile yazılır
+      const iconBox = document.createElement('div');
+      iconBox.className = 'codex-icon-box';
+      iconBox.setAttribute('style', bgStyle);
+      iconBox.textContent = isFound ? el.symbol : '\uD83D\uDD12';
+
+      const content = document.createElement('div');
+      content.className = 'codex-card-content';
+
+      const head = document.createElement('div');
+      head.className = 'codex-card-head';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'codex-card-name';
+      nameSpan.textContent = isFound ? el.name : 'Gizli Cevher';
+
+      const catSpan = document.createElement('span');
+      catSpan.className = 'codex-card-cat';
+      catSpan.textContent = isFound ? (CAT_LABELS[el.category] || el.category) : 'Kilitli';
+
+      head.appendChild(nameSpan);
+      head.appendChild(catSpan);
+
+      const factDiv = document.createElement('div');
+      factDiv.className = 'codex-card-fact';
+      factDiv.textContent = isFound
+        ? (el.fact || 'Kadim simyada arındırıcı ve dönüştürücü bileşen.')
+        : 'Bu malzemenin sırrı ilerleyen seviyelerde çözülecektir.';
+
+      content.appendChild(head);
+      content.appendChild(factDiv);
+      card.appendChild(iconBox);
+      card.appendChild(content);
       codexElementsList.appendChild(card);
+
     });
   }
 
@@ -2038,16 +2065,36 @@
       const isDone = unlocked.has(ach.id);
       const card = document.createElement('div');
       card.className = 'achievement-card' + (isDone ? ' unlocked' : ' locked');
-      card.innerHTML = `
-        <div class="achievement-icon">${ach.icon}</div>
-        <div class="achievement-info">
-          <div class="achievement-title">${ach.title}</div>
-          <div class="achievement-desc">${ach.desc}</div>
-        </div>
-        <div class="achievement-status">${isDone ? 'Açıldı ✅' : 'Kilitli 🔒'}</div>
-      `;
+
+      // XSS koruması: tüm değerler textContent ile yazılır
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'achievement-icon';
+      iconDiv.textContent = ach.icon;
+
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'achievement-info';
+
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'achievement-title';
+      titleDiv.textContent = ach.title;
+
+      const descDiv = document.createElement('div');
+      descDiv.className = 'achievement-desc';
+      descDiv.textContent = ach.desc;
+
+      infoDiv.appendChild(titleDiv);
+      infoDiv.appendChild(descDiv);
+
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'achievement-status';
+      statusDiv.textContent = isDone ? 'Açıldı' : 'Kilitli';
+
+      card.appendChild(iconDiv);
+      card.appendChild(infoDiv);
+      card.appendChild(statusDiv);
       achievementsList.appendChild(card);
     });
+
   }
 
   // ── Oyun Sonu Modal İşlemleri ──
@@ -2060,6 +2107,11 @@
     const rawName = (playerNickname.value || '').trim();
     const name = rawName || 'Simyacı';
     localStorage.setItem('razi_nickname', name);
+
+    // İstemci tarafı doğrulama: seviye 1-100 arasında olmalı
+    const safeLevel = Math.max(1, Math.min(100, parseInt(lastGameOverLvl, 10) || 1));
+    const safeCombo = Math.max(0, Math.min(200, parseInt(lastGameOverCombo, 10) || 0));
+
     saveStatusMsg.textContent = 'Kaydediliyor…';
     saveScoreBtn.disabled = true;
 
@@ -2068,9 +2120,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          level: lastGameOverLvl,
+          level: safeLevel,
           player_name: name,
-          max_combo: lastGameOverCombo,
+          max_combo: safeCombo,
           room_id: roomId,
         }),
       });
@@ -2350,7 +2402,7 @@
     if (msg.type === 'prologue') {
       if (prologueModal) {
         prologueModal.classList.remove('hidden');
-        if (prologueText) prologueText.innerHTML = msg.text || '';
+        if (prologueText) prologueText.textContent = msg.text || '';
         if (prologueBadge) prologueBadge.textContent = msg.mode === 'duel' ? '⚔️ 1v1 ÇIRAK DÜELLOSU ANLATIMI' : '📜 TEK KİŞİLİK MOD ANLATIMI';
         if (prologueStartBtn) {
           prologueStartBtn.textContent = '▶ BAŞLA';
