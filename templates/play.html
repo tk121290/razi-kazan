@@ -2359,8 +2359,23 @@
       }
     }
 
+    if (msg.type === 'reveal_step') {
+      if (!msg.target || msg.target === myPlayerId) {
+        statusEl.textContent = `Tabîb Ekmeleddin Kazana Ekliyor (${msg.step}/${msg.total}): ${msg.name}`;
+        statusEl.className   = 'status';
+        playTone(350 + (msg.step * 35), 'sine', 0.12, 0.08);
+
+        // İlgili butonu ekranda hafifçe parlat
+        const btn = document.querySelector(`[data-id="${msg.material}"]`);
+        if (btn) {
+          btn.classList.add('flash');
+          setTimeout(() => btn.classList.remove('flash'), 300);
+        }
+      }
+    }
+
     if (msg.type === 'player_turn') {
-      statusEl.textContent = isDuelMode ? '⚔️ Hızlı Ol! Sırayı ilk tamamlayan kazanır!' : 'Sıra Sende! Malzemeleri seç.';
+      statusEl.textContent = isDuelMode ? 'Hızlı Ol! Sırayı ilk tamamlayan kazanır!' : 'Sıra Sende! Malzemeleri seç.';
       statusEl.className   = 'status ready';
       gridEl.classList.remove('disabled');
       timerTotal = msg.total || 0;
