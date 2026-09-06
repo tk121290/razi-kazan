@@ -172,31 +172,134 @@ async def home() -> HTMLResponse:
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <title>Tabîb Ekmeleddin'in Kazanı (Bey Hekim)</title>
           <style>
-            body { margin:0; min-height:100vh; display:grid; place-items:center;
-                   background:#110d0b; color:#f0e4c8; font:18px Georgia,serif; }
-            main { max-width:520px; padding:32px; text-align:center; }
-            h1   { color:#d4a848; margin-bottom:12px; }
-            p    { line-height:1.7; color:#a09278; }
-            a    { color:#d4a848; }
-            code { background:#211810; padding:2px 6px; border-radius:4px; color:#d4a848; }
+            :root {
+              --bg: #110d0b; --panel: #1f140c; --border: #6a4628;
+              --gold: #d4a848; --gold-lt: #f5d060; --ink: #f0e4c8; --muted: #a09278;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+              min-height: 100vh; display: grid; place-items: center;
+              background: var(--bg); color: var(--ink);
+              font-family: Georgia, serif; padding: 24px 16px;
+            }
+            main {
+              max-width: 520px; width: 100%; padding: 32px 24px; text-align: center;
+              background: var(--panel); border: 1.5px solid var(--border);
+              border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            }
+            h1 { font-size: clamp(1.5rem, 5vw, 1.9rem); color: var(--gold); margin-bottom: 6px; }
+            .sub { color: #dfb558; font-style: italic; font-size: .92rem; margin-bottom: 20px; }
+            .room-form {
+              background: #140d08; border: 1px solid var(--border);
+              border-radius: 10px; padding: 18px; margin-bottom: 22px;
+            }
+            .room-form label { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 8px; font-weight: 700; letter-spacing: .05em; }
+            .room-input {
+              width: 100%; max-width: 260px; padding: 10px 14px; font-size: 1.15rem;
+              text-align: center; font-weight: 700; letter-spacing: .15em;
+              text-transform: uppercase; background: #26170e; border: 1.5px solid var(--gold);
+              border-radius: 6px; color: #fff; margin-bottom: 12px; outline: none;
+            }
+            .room-input:focus { border-color: var(--gold-lt); box-shadow: 0 0 10px rgba(212,168,72,0.4); }
+            .btn-join {
+              display: inline-block; width: 100%; max-width: 260px; padding: 11px 18px;
+              background: var(--gold); color: #110d0b; font-weight: 800; font-size: .95rem;
+              border: none; border-radius: 6px; cursor: pointer; text-decoration: none;
+              box-shadow: 0 4px 14px rgba(212,168,72,0.35); transition: background .2s;
+            }
+            .btn-join:hover { background: var(--gold-lt); }
+            .links { display: flex; flex-direction: column; gap: 9px; margin-top: 18px; }
+            .link-card {
+              display: flex; align-items: center; justify-content: center; gap: 8px;
+              padding: 10px 14px; background: #28190f; border: 1px solid var(--border);
+              border-radius: 8px; color: var(--ink); text-decoration: none;
+              font-size: .86rem; font-weight: 600; transition: border-color .2s;
+            }
+            .link-card:hover { border-color: var(--gold); color: var(--gold-lt); }
+            .footer-note { font-size: .72rem; color: var(--muted); margin-top: 22px; line-height: 1.5; }
           </style>
         </head>
-        <body><main>
+        <body>
+        <main>
           <h1>Tabîb Ekmeleddin'in Kazanı</h1>
-          <p style="color:#dfb558; font-style:italic;">Bey Hekim · 13. Yüzyıl Selçuklu Dârüşşifası</p>
-          <p>Sunucu çalışıyor. Oyuna bağlanmak için ekrandaki QR kodunu telefonunla okut.</p>
-          <p><a href="/leaderboard">🏆 Liderlik Tablosu</a></p>
-        </main></body>
+          <div class="sub">Bey Hekim · 13. Yüzyıl Selçuklu Dârüşşifası</div>
+
+          <form class="room-form" onsubmit="var val=document.getElementById('rc').value.trim().toUpperCase(); if(val){location.href='/play/'+encodeURIComponent(val);} return false;">
+            <label for="rc">EKRANDAKİ ODA KODUYLA KATIL</label>
+            <input id="rc" class="room-input" type="text" placeholder="ÖRN: ABC-123" maxlength="12" autocomplete="off" required>
+            <br>
+            <button type="submit" class="btn-join">⚗️ Kazana Bağlan</button>
+          </form>
+
+          <div class="links">
+            <a href="/leaderboard" class="link-card">🏆 Liderlik Tablosu ve Şampiyonlar</a>
+            <a href="/download/tabib_ekmeleddin_kimdir.pdf" download class="link-card">📜 Tabîb Ekmeleddin (Bey Hekim) Risalesi (PDF)</a>
+            <a href="https://kulup.erciyes.edu.tr/uyelik/uyeol" target="_blank" class="link-card">🏛️ ERÜ Anadolu Tıp Tarihi Kulübü Üyeliği</a>
+          </div>
+
+          <p class="footer-note">Erciyes Üniversitesi Anadolu Tıp Tarihi Kulübü Gürgen Ekibi tarafından hazırlanmıştır.<br>Kayseri · 2026</p>
+        </main>
+        </body>
         </html>
     """)
 
 
 @app.get("/play", response_class=HTMLResponse)
 async def play_without_room() -> HTMLResponse:
-    return HTMLResponse(
-        "<h1>Oda kodu eksik</h1><p>Telefonunu Pygame penceresindeki QR koduyla bağlayın.</p>",
-        status_code=400,
-    )
+    return HTMLResponse("""
+        <!doctype html>
+        <html lang="tr">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Oyuna Katıl — Tabîb Ekmeleddin'in Kazanı</title>
+          <style>
+            :root {
+              --bg: #110d0b; --panel: #1f140c; --border: #6a4628;
+              --gold: #d4a848; --gold-lt: #f5d060; --ink: #f0e4c8; --muted: #a09278;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+              min-height: 100vh; display: grid; place-items: center;
+              background: var(--bg); color: var(--ink);
+              font-family: Georgia, serif; padding: 24px 16px;
+            }
+            main {
+              max-width: 440px; width: 100%; padding: 28px 20px; text-align: center;
+              background: var(--panel); border: 1.5px solid var(--border);
+              border-radius: 12px;
+            }
+            h1 { font-size: 1.4rem; color: var(--gold); margin-bottom: 8px; }
+            p { font-size: .88rem; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
+            .room-input {
+              width: 100%; max-width: 240px; padding: 11px; font-size: 1.2rem;
+              text-align: center; font-weight: 700; letter-spacing: .15em;
+              text-transform: uppercase; background: #140d08; border: 1.5px solid var(--gold);
+              border-radius: 6px; color: #fff; margin-bottom: 14px; outline: none;
+            }
+            .btn-join {
+              display: inline-block; width: 100%; max-width: 240px; padding: 11px;
+              background: var(--gold); color: #110d0b; font-weight: 800; font-size: .92rem;
+              border: none; border-radius: 6px; cursor: pointer;
+            }
+            .back-link { display: block; margin-top: 18px; font-size: .82rem; color: var(--gold); text-decoration: none; }
+          </style>
+        </head>
+        <body>
+        <main>
+          <h1>Oda Kodunu Girin</h1>
+          <p>Masaüstü ekranındaki QR kodu okutabilir veya ekranda yazan 6 haneli oda kodunu girerek başlayabilirsiniz.</p>
+          <form onsubmit="var val=document.getElementById('rc').value.trim().toUpperCase(); if(val){location.href='/play/'+encodeURIComponent(val);} return false;">
+            <input id="rc" class="room-input" type="text" placeholder="ABC-123" maxlength="12" autofocus required>
+            <br>
+            <button type="submit" class="btn-join">Oyuna Katıl</button>
+          </form>
+          <a href="/" class="back-link">← Ana Sayfaya Dön</a>
+        </main>
+        </body>
+        </html>
+    """)
+
 
 
 @app.get("/play/{room_id}", response_class=HTMLResponse)
@@ -436,8 +539,15 @@ async def leaderboard() -> HTMLResponse:
     </tbody>
   </table>
 
-  <p class="refresh">Sayfa her 15 saniyede otomatik yenilenir · <a href="/leaderboard">Şimdi yenile</a></p>
+  <p class="refresh">
+    Sayfa her 15 saniyede otomatik yenilenir · 
+    <a href="/leaderboard">Şimdi yenile</a> · 
+    <a href="/">🏠 Ana Sayfa</a> · 
+    <a href="/download/tabib_ekmeleddin_kimdir.pdf" download>📜 Tezhipli Risale (PDF)</a> · 
+    <a href="https://kulup.erciyes.edu.tr/uyelik/uyeol" target="_blank">🏛️ Kulübe Üye Ol</a>
+  </p>
 </div>
+
 </body>
 </html>
 """)

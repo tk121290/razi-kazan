@@ -8,3 +8,4 @@ room_qr.png
 *.db
 scores.json
 cloudflared.exe
+cloudflared.log

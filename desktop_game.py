@@ -55,6 +55,7 @@ NETWORK_HOST = local_network_host()
 # desktop_game.py her zaman yerel WS ile bağlanır; sadece QR kodu/tarayıcı URL'i değişir.
 SERVER_URL = f"ws://localhost:{PORT}"                                           # masaüstü her zaman yerel bağlanır
 PLAY_URL   = os.environ.get("RAZI_PLAY_URL", f"http://{NETWORK_HOST}:{PORT}/play")  # oyuncular
+BASE_URL   = PLAY_URL.rsplit('/play', 1)[0] if '/play' in PLAY_URL else f"http://localhost:{PORT}"
 
 WIDTH, HEIGHT = 1100, 700
 # FLOOR_Y Game.__init__ içinde _make_background çağrısından sonra self.floor_y olarak hesaplanır.
@@ -1339,7 +1340,7 @@ class Game:
             # Tabîb Ekmeleddin PDF İndir Butonu (410 <= x <= 710, 615 <= y <= 670)
             elif 410 <= x <= 710 and 615 <= y <= 670:
                 try:
-                    webbrowser.open(f"http://localhost:{PORT}/download/tabib_ekmeleddin_kimdir.pdf")
+                    webbrowser.open(f"{BASE_URL}/download/tabib_ekmeleddin_kimdir.pdf")
                 except Exception:
                     pass
             # Kapat / Geri Dön Butonu (740 <= x <= 990, 615 <= y <= 670)
