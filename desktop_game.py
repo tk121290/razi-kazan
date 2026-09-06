@@ -731,7 +731,7 @@ class SabuncuogluActor:
         self.mode = "reverse"
 
     def on_round_end(self, success: bool) -> None:
-        if self.state in (SabuncuogluState.TALKING, SabuncuogluState.OVERSEEING, SabuncuogluState.WAVING):
+        if self.state in (SabuncuogluState.TALKING, SabuncuogluState.OVERSEEING, SabuncuogluState.WAVING, SabuncuogluState.WALKING_IN):
             if self.mode == "reverse":
                 if success:
                     self.dialogue_text = "Sabuncuoğlu Şerefeddin: 'Aferin çırak! Tersten dizilimi bihakkın başardın! İşte hakiki hekim dirayeti!'"
