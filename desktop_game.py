@@ -745,6 +745,10 @@ class Game:
         self.duel_match_winner: str | None = None
         self.lobby_countdown_start: float | None = None
 
+        # Sabuncuoğlu Şerefeddin Tersten Yaz Bölümü (Seviye > 12 rastgele meydan okuma)
+        self.is_reverse_round = False
+        self.was_reverse_last_round = False
+
         self.ambient_clock    = time.monotonic()
         self.animation_clock  = time.monotonic()
 
@@ -1093,6 +1097,14 @@ class Game:
     def _start_rhazi_turn(self) -> None:
         self.round_success = False
 
+        # Sabuncuoğlu Şerefeddin Tersten Yaz Bölümü (Seviye > 12 rastgele meydan okuma)
+        current_lvl = self.duel_round if self.mode == GameMode.DUEL else self.level
+        if current_lvl > 12 and not getattr(self, "was_reverse_last_round", False):
+            self.is_reverse_round = (random.random() < 0.28)
+        else:
+            self.is_reverse_round = False
+        self.was_reverse_last_round = self.is_reverse_round
+
         if self.mode == GameMode.DUEL:
             pool = self.duel_material_pool
 
@@ -1135,14 +1147,17 @@ class Game:
             p1_name = self.players.get("player_1", {}).get("name", "Çırak 1")
             p2_name = self.players.get("player_2", {}).get("name", "Çırak 2")
 
-            if self.recipe_name:
+            if self.is_reverse_round:
+                self.last_message = "SABUNCUOĞLU'NUN SINAVI: TERSTEN DOLDUR! (4X SÜRE)"
+                self.speak_bubble("Sabuncuoğlu Şerefeddin: 'Usta hekim ezber bozar! Malzemeleri TERSTEN (sondan başa) kazana atın! (Süre 4 katı)'", duration=5.0)
+            elif self.recipe_name:
                 self.last_message = f"SEVİYE {self.duel_round}: Formül '{self.recipe_name}'"
                 self.speak_bubble(f"Seviye {self.duel_round}: Formül '{self.recipe_name}'! Dikkatle izleyin!", duration=4.0)
             else:
                 self.last_message = f"DÜELLO SEVİYE {self.duel_round}: {p1_name} VS {p2_name}"
                 self.speak_bubble(f"Düello Seviye {self.duel_round}! Malzemeleri dikkatle izleyin!", duration=3.5)
 
-            self._spawn_particles(550, 385, GOLD, 30)
+            self._spawn_particles(550, 385, (230, 160, 255) if self.is_reverse_round else GOLD, 30)
 
             self.network.send({
                 "type": "round_started",
@@ -1153,6 +1168,7 @@ class Game:
                 "player_lives": self.player_lives,
                 "lives": self.player_lives,
                 "recipe": self.recipe_name,
+                "is_reverse": self.is_reverse_round,
             })
 
             # 1. adım malzemesini her iki oyuncunun ekranına hemen gönder
@@ -1195,8 +1211,16 @@ class Game:
         self.phase_cursor  = 0
         self.phase_started = time.monotonic()
         self.state         = GameState.RHAZI_TURN
-        self.last_message  = f"Tarihi Formül: {self.recipe_name}" if self.recipe_name else "Tabîb Ekmeleddin malzemeleri hazırlıyor..."
-        self._spawn_particles(530, 385, GOLD, 22)
+        if self.is_reverse_round:
+            self.last_message = "SABUNCUOĞLU'NUN SINAVI: TERSTEN DOLDUR! (4X SÜRE)"
+            self.speak_bubble("Sabuncuoğlu Şerefeddin: 'Amasya Dârüşşifası'ndan meydan okuma! Malzemeleri TERSTEN (sondan başa) ekle! (Süre 4 katı)'", duration=5.0)
+        elif self.recipe_name:
+            self.last_message = f"Tarihi Formül: {self.recipe_name}"
+            self.speak_bubble(f"Tarihi Formül: '{self.recipe_name}'! Malzemeleri dikkatle izle.", duration=4.0)
+        else:
+            self.last_message = "Tabîb Ekmeleddin malzemeleri hazırlıyor..."
+
+        self._spawn_particles(530, 385, (230, 160, 255) if self.is_reverse_round else GOLD, 22)
 
         # Kilidi açık malzemeleri, canı ve kombo sayısını telefona bildir
         self.network.send({
@@ -1205,6 +1229,7 @@ class Game:
             "lives": self.lives,
             "combo": self.combo,
             "recipe": self.recipe_name,
+            "is_reverse": self.is_reverse_round,
         })
 
         # 1. adımı telefona bildir
@@ -1218,8 +1243,10 @@ class Game:
         })
 
         # Yeni element açıldı mı veya bilgi kartı gösterimi
-        if self.recipe_name:
-            self.speak_bubble(f"Tarihi Formül: '{self.recipe_name}'! Malzemeleri dikkatle izle.", duration=4.0)
+        if self.is_reverse_round:
+            pass
+        elif self.recipe_name:
+            pass
         elif len(unlocked) > getattr(self, "last_unlocked_count", 0):
             new_mat = unlocked[-1]
             self.info_card_mat = new_mat
@@ -1244,6 +1271,8 @@ class Game:
         self.sequence     = []
         self.player_index = 0
         self.phase_cursor = 0
+        self.is_reverse_round = False
+        self.was_reverse_last_round = False
         self.state        = GameState.WAITING_FOR_PLAYER
         self.phase_started = time.monotonic()
         self.last_message  = "Yeni oyun hazırlanıyor..."
@@ -1258,6 +1287,8 @@ class Game:
         self.sequence        = []
         self.player_index    = 0
         self.phase_cursor    = 0
+        self.is_reverse_round = False
+        self.was_reverse_last_round = False
         self.state           = GameState.WAITING_FOR_PLAYER
         self.phase_started   = time.monotonic()
         self.wait_started    = time.monotonic()
@@ -1273,8 +1304,15 @@ class Game:
 
     @property
     def duel_material_pool(self) -> tuple[str, ...]:
-        # Başlangıçta 4 temel element, seviye ilerledikçe kademeli açılır (1: 4, 2: 6, 3: 8...)
-        count = min(len(MATERIALS), 4 + (self.duel_round - 1) * 2)
+        # Düelloda da dengeli element açılışı (1. raunt 4 element, 25. rauntta tüm 30 element)
+        total_mats = len(MATERIALS)
+        base_count = 4
+        if self.duel_round <= 1:
+            count = base_count
+        elif self.duel_round >= 25:
+            count = total_mats
+        else:
+            count = min(total_mats, base_count + int(round((self.duel_round - 1) * ((total_mats - base_count) / 24.0))))
         return tuple(MATERIALS[:count])
 
     @property
@@ -1287,19 +1325,42 @@ class Game:
     def material_pool(self) -> tuple[str, ...]:
         if self.mode == GameMode.DUEL:
             return self.duel_material_pool
-        # 30 simya elementi seviye ilerledikçe kademeli açılır:
-        count = min(len(MATERIALS), 4 + (self.level - 1) * 2)
+        # 50. seviyenin sonunda tüm 30 element açılmış olur (Seviye 1: 4 element -> Seviye 50: 30 element):
+        total_mats = len(MATERIALS)
+        base_count = 4
+        if self.level <= 1:
+            count = base_count
+        elif self.level >= 50:
+            count = total_mats
+        else:
+            # 1 ile 50 arasında 26 element dengeli şekilde kilit açar
+            count = min(total_mats, base_count + int(round((self.level - 1) * ((total_mats - base_count) / 49.0))))
         return tuple(MATERIALS[:count])
 
     @property
     def reveal_duration(self) -> float:
-        if self.mode == GameMode.DUEL:
-            return max(0.75, 1.30 - (self.duel_round - 1) * 0.035)
-        # Râzî'nin fırlatma animasyon ritmine uygun yumuşak geçişli süre (1.4s -> 0.7s)
-        return max(0.70, 1.40 - (self.level - 1) * 0.007)
+        # Seviye ilerledikçe bey hekimin hızı artsın:
+        # - 5. seviyeden sonra hızı artsın (> 5)
+        # - 12. seviyeden sonra hızı artsın (> 12)
+        # - 17. seviyeden sonra hızı artsın (> 17)
+        # - Devamında 5'er 5'er ilerlesin
+        # - Ancak insanın takip edemeyeceği uçuk hızlara çıkmasın (taban 0.50 saniye)
+        lvl = self.duel_round if self.mode == GameMode.DUEL else self.level
+        if lvl <= 5:
+            dur = 1.30
+        elif lvl <= 12:
+            dur = 1.10
+        elif lvl <= 17:
+            dur = 0.92
+        else:
+            steps_after_17 = (lvl - 17) // 5 + 1
+            dur = 0.92 - (steps_after_17 * 0.08)
+
+        return max(0.50, dur)
 
     @property
     def player_duration(self) -> float:
+        # Element sayısı arttıkça süre artışı + Sabuncuoğlu tersten turlarında 4 katı süre!
         if self.mode == GameMode.DUEL:
             seq_len = len(self.sequence) if self.sequence else self.duel_sequence_length
             pool_size = len(self.duel_material_pool)
@@ -1307,15 +1368,21 @@ class Game:
             seq_time = seq_len * 2.2
             seq_bonus = (seq_len // 3) * 2.5
             pool_bonus = max(0, (pool_size - 4) // 3) * 1.0
-            return max(14.0, base_time + seq_time + seq_bonus + pool_bonus)
-        # Her 3 elementte bir orantılı süre artışı (hem dizi uzunluğu hem buton arama desteği):
+            total = max(14.0, base_time + seq_time + seq_bonus + pool_bonus)
+            if getattr(self, "is_reverse_round", False):
+                return total * 4.0
+            return total
+
         seq_len = len(self.sequence) if self.sequence else self.sequence_length
         pool_size = len(self.material_pool)
         base_time = 5.0
         seq_time = seq_len * 2.0
         seq_bonus = (seq_len // 3) * 3.0
         pool_bonus = max(0, (pool_size - 4) // 3) * 1.0
-        return max(12.0, base_time + seq_time + seq_bonus + pool_bonus)
+        total = max(12.0, base_time + seq_time + seq_bonus + pool_bonus)
+        if getattr(self, "is_reverse_round", False):
+            return total * 4.0
+        return total
 
     # ── Güncelleme ───────────────────────────────────────────────────────────
 
@@ -1379,16 +1446,26 @@ class Game:
                         self.player_stuns     = {"player_1": 0.0, "player_2": 0.0}
                     self.phase_started = now
                     self._last_tick   = 0.0
-                    self.last_message  = "Sıra sizde! Malzemeleri doğru ve hızlı girin!" if self.mode == GameMode.DUEL else "Sıra sende!"
-                    self._spawn_particles(550 if self.mode == GameMode.DUEL else 530, 385, GREEN, 36)
+                    is_rev = getattr(self, "is_reverse_round", False)
+                    if is_rev:
+                        self.last_message = "SABUNCUOĞLU'NUN SINAVI: SONDAN BAŞA SEÇ! (4X SÜRE)"
+                    else:
+                        self.last_message  = "Sıra sizde! Malzemeleri doğru ve hızlı girin!" if self.mode == GameMode.DUEL else "Sıra sende!"
+                    self._spawn_particles(550 if self.mode == GameMode.DUEL else 530, 385, (230, 160, 255) if is_rev else GREEN, 36)
                     self.network.send({
                         "type": "player_turn",
                         "mode": self.mode.value,
                         "total": round(self.player_duration, 1),
                         "seq_len": len(self.sequence),
+                        "is_reverse": is_rev,
                     })
                     self.sounds.play("tick")
-                    if self.mode == GameMode.DUEL:
+                    if is_rev:
+                        if self.mode == GameMode.DUEL:
+                            self.speak_bubble("Sabuncuoğlu düelloyu izliyor! SONDAN BAŞA doğru en hızlı kim tamamlayacak?", duration=4.0)
+                        else:
+                            self.speak_bubble("Sabuncuoğlu dikkatle izliyor! Malzemeleri SONDAN BAŞA doğru seç!", duration=4.0)
+                    elif self.mode == GameMode.DUEL:
                         self.speak_bubble("Yarış başladı! Sırayı hatasız tamamlayın!", duration=3.0)
                     else:
                         self.speak_bubble("Sıra sende çırak! Malzemeleri sırayla seç.", duration=3.5)
@@ -1692,6 +1769,8 @@ class Game:
         self.round_winner = None
         self.duel_match_winner = None
         self.lobby_countdown_start = None
+        self.is_reverse_round = False
+        self.was_reverse_last_round = False
         for p in self.players.values():
             p["ready"] = False
         self.state = GameState.DUEL_LOBBY
@@ -1721,10 +1800,11 @@ class Game:
 
         cur_idx = self.player_cursors.get(player_id, 0)
         p_seq = self.player_sequences.get(player_id, self.sequence)
-        if cur_idx >= len(p_seq):
+        target_seq = list(reversed(p_seq)) if getattr(self, "is_reverse_round", False) else p_seq
+        if cur_idx >= len(target_seq):
             return
 
-        correct = p_seq[cur_idx]
+        correct = target_seq[cur_idx]
         p_info = self.players.get(player_id, {})
         p_name = p_info.get("name", player_id)
         other_id = "player_2" if player_id == "player_1" else "player_1"
@@ -1742,11 +1822,12 @@ class Game:
                 "type": "duel_progress",
                 "player_id": player_id,
                 "cursor": cur_idx,
-                "total": len(p_seq),
+                "total": len(target_seq),
+                "is_reverse": getattr(self, "is_reverse_round", False),
             })
 
             # Bu oyuncu diziyi tamamladı mı?
-            if cur_idx == len(p_seq):
+            if cur_idx == len(target_seq):
                 self.player_completed[player_id] = True
 
                 if self.first_completer is None:
@@ -1799,6 +1880,7 @@ class Game:
             self._spawn_particles(px, 340, RED_LT, 30)
 
             rem_lives = self.player_lives[player_id]
+            rev_note = " (Tersten gidiyordun!)" if getattr(self, "is_reverse_round", False) else ""
 
             # Oyuncuya can kaybı ve sersemleme mesajı
             self.network.send({
@@ -1807,7 +1889,8 @@ class Game:
                 "player_id": player_id,
                 "lives": rem_lives,
                 "player_lives": self.player_lives,
-                "message": f"Yanlış malzeme! 1 Can kaybettin ({rem_lives} can kaldı). Sıra başa döndü!",
+                "is_reverse": getattr(self, "is_reverse_round", False),
+                "message": f"Yanlış malzeme! 1 Can kaybettin ({rem_lives} can kaldı). Sıra başa döndü!{rev_note}",
             })
             # Rakibe bildir
             self.network.send({
@@ -1844,8 +1927,9 @@ class Game:
             self._handle_duel_button(button, player_id)
             return
 
-        if button != self.sequence[self.player_index]:
-            correct = self.sequence[self.player_index]
+        target_seq = list(reversed(self.sequence)) if getattr(self, "is_reverse_round", False) else self.sequence
+        if button != target_seq[self.player_index]:
+            correct = target_seq[self.player_index]
             self.lives -= 1
             self.combo = 0
             name = MATERIAL_NAMES.get(button, button or "bilinmiyor")
@@ -1860,17 +1944,19 @@ class Game:
             # Gemini'den Râzî karakteriyle ipucu iste
             self.hint_engine.request(correct, button, self.level)
 
+            rev_note = " (Tersten gidiyordun!)" if getattr(self, "is_reverse_round", False) else ""
             if self.lives > 0:
                 self.last_message  = f"Yanlış! '{name}' seçildi ({self.lives} Can kaldı)"
                 self.player_index = 0
                 self.phase_started = time.monotonic()
                 self._last_tick = 0.0
-                self.speak_bubble(f"Dikkat et çırak! Doğrusu {correct_tr} idi. ({self.lives} can kaldı, sırayı baştan dene!)", duration=4.0)
+                self.speak_bubble(f"Dikkat et çırak! Doğrusu {correct_tr} idi.{rev_note} ({self.lives} can kaldı, baştan dene!)", duration=4.0)
                 self.network.send({
                     "type": "life_lost",
                     "lives": self.lives,
                     "combo": 0,
-                    "message": f"Yanlış seçim! {self.lives} canın kaldı.",
+                    "is_reverse": getattr(self, "is_reverse_round", False),
+                    "message": f"Yanlış seçim! {self.lives} canın kaldı.{rev_note}",
                     "total": round(self.player_duration, 1),
                 })
                 return
@@ -1893,10 +1979,10 @@ class Game:
         self.sounds.play("correct")
 
         # Malzeme notu göster
-        self.note_material = self.sequence[self.player_index - 1]
+        self.note_material = target_seq[self.player_index - 1]
         self.note_started  = time.monotonic()
 
-        if self.player_index == len(self.sequence):
+        if self.player_index == len(target_seq):
             self.state        = GameState.RESOLUTION
             self.round_success = True
             self.combo        += 1
@@ -2188,8 +2274,12 @@ class Game:
             pygame.draw.rect(self.pixel_surface, GOLD, (cx, 22, cw, 28), 1, border_radius=4)
             self._text(f"{self.combo}x SERİ", self.font_small, GOLD_LT, (cx + 10, 31))
 
-        # Mesaj ve Tarihi Reçete — ortada
-        if self.recipe_name:
+        # Mesaj ve Tarihi Reçete veya Sabuncuoğlu tersten modu — ortada
+        is_rev = getattr(self, "is_reverse_round", False)
+        if is_rev:
+            self._text_center("SABUNCUOĞLU ŞEREFEDDİN: TERSTEN DOLDUR! (4X SÜRE)", self.font_small, (245, 185, 255), WIDTH // 2, 16)
+            self._text_center(self.last_message, self.font_medium, (255, 235, 180), WIDTH // 2, 40)
+        elif self.recipe_name:
             self._text_center(f"KADİM REÇETE: {self.recipe_name.upper()}", self.font_small, GOLD_LT, WIDTH // 2, 16)
             self._text_center(self.last_message, self.font_medium, TEXT, WIDTH // 2, 40)
         else:
@@ -2302,18 +2392,28 @@ class Game:
         y     = 556
         pygame.draw.rect(self.pixel_surface, PANEL, (0, y - 4, WIDTH, bar_h))
         pygame.draw.line(self.pixel_surface, BORDER, (0, y - 4), (WIDTH, y - 4), 1)
-        self._text("SIRA SENDE", self.font_tiny, TEXT_DIM, (24, y + 6))
-        self._text_shadow(
-            f"{self.player_index + 1}. MALZEME SEÇİLİYOR",
-            self.font_large, GREEN, (24, y + 22)
-        )
+
+        is_rev = getattr(self, "is_reverse_round", False)
+        if is_rev:
+            self._text("SABUNCUOĞLU MEYDAN OKUMASI (SONDAN BAŞA SEÇ - 4X SÜRE)", self.font_tiny, (245, 185, 255), (24, y + 6))
+            self._text_shadow(
+                f"<- {self.player_index + 1}. MALZEME (TERSTEN)",
+                self.font_large, (230, 160, 255), (24, y + 22)
+            )
+        else:
+            self._text("SIRA SENDE", self.font_tiny, TEXT_DIM, (24, y + 6))
+            self._text_shadow(
+                f"{self.player_index + 1}. MALZEME SEÇİLİYOR",
+                self.font_large, GREEN, (24, y + 22)
+            )
         # Sağda sıra indikatörü
-        dots_x = WIDTH - 24 - len(self.sequence) * 14
-        for i, mat in enumerate(self.sequence):
+        target_seq = list(reversed(self.sequence)) if is_rev else self.sequence
+        dots_x = WIDTH - 24 - len(target_seq) * 14
+        for i, mat in enumerate(target_seq):
             c = COLORS[mat] if i < self.player_index else (PANEL_LT if i == self.player_index else PANEL)
             pygame.draw.rect(self.pixel_surface, c, (dots_x + i * 14, y + 18, 10, 10), border_radius=3)
             if i == self.player_index:
-                pygame.draw.rect(self.pixel_surface, GREEN, (dots_x + i * 14, y + 18, 10, 10), 2, border_radius=3)
+                pygame.draw.rect(self.pixel_surface, (230, 160, 255) if is_rev else GREEN, (dots_x + i * 14, y + 18, 10, 10), 2, border_radius=3)
 
     # ── Timer bar ────────────────────────────────────────────────────────────
 
@@ -2527,10 +2627,16 @@ class Game:
         pygame.draw.line(self.pixel_surface, BORDER, (0, 78), (WIDTH, 78), 2)
 
         now = time.monotonic()
-        top_title = f"1v1 ÇIRAK DÜELLOSU  ·  SEVİYE {self.duel_round}"
+        is_rev = getattr(self, "is_reverse_round", False)
+        if is_rev:
+            top_title = f"SABUNCUOĞLU TERSTEN DÜELLO (4X SÜRE)  ·  SEVİYE {self.duel_round}"
+            title_col = (245, 185, 255)
+        else:
+            top_title = f"1v1 ÇIRAK DÜELLOSU  ·  SEVİYE {self.duel_round}"
+            title_col = GOLD_LT
         if self.recipe_name:
             top_title += f"  ({self.recipe_name})"
-        self._text_center(top_title, self.font_small, GOLD_LT, WIDTH // 2, 14)
+        self._text_center(top_title, self.font_small, title_col, WIDTH // 2, 14)
 
         s1 = self.duel_scores.get("player_1", 0)
         s2 = self.duel_scores.get("player_2", 0)
@@ -2583,9 +2689,11 @@ class Game:
         self._draw_separator(p1_box.x + 14, p1_box.y + 176, p1_box.right - 14)
 
         p1_cur = self.player_cursors.get("player_1", 0)
-        p1_seq = self.player_sequences.get("player_1", self.sequence)
+        p1_orig = self.player_sequences.get("player_1", self.sequence)
+        p1_seq = list(reversed(p1_orig)) if (is_rev and self.state != GameState.RHAZI_TURN) else p1_orig
         tot_seq1 = len(p1_seq) if p1_seq else 1
-        self._text(f"REÇETE: {p1_cur}/{tot_seq1}", self.font_tiny, TEXT, (p1_box.x + 16, p1_box.y + 188))
+        lbl1 = "REÇETE (TERSTEN):" if is_rev else "REÇETE:"
+        self._text(f"{lbl1} {p1_cur}/{tot_seq1}", self.font_tiny, (245, 185, 255) if is_rev else TEXT, (p1_box.x + 16, p1_box.y + 188))
         if p1_seq:
             for i, mat in enumerate(p1_seq):
                 dot_x = p1_box.x + 18 + (i % 6) * 38
@@ -2670,9 +2778,11 @@ class Game:
         self._draw_separator(p2_box.x + 14, p2_box.y + 176, p2_box.right - 14)
 
         p2_cur = self.player_cursors.get("player_2", 0)
-        p2_seq = self.player_sequences.get("player_2", self.sequence)
+        p2_orig = self.player_sequences.get("player_2", self.sequence)
+        p2_seq = list(reversed(p2_orig)) if (is_rev and self.state != GameState.RHAZI_TURN) else p2_orig
         tot_seq2 = len(p2_seq) if p2_seq else 1
-        self._text(f"REÇETE: {p2_cur}/{tot_seq2}", self.font_tiny, TEXT, (p2_box.x + 16, p2_box.y + 188))
+        lbl2 = "REÇETE (TERSTEN):" if is_rev else "REÇETE:"
+        self._text(f"{lbl2} {p2_cur}/{tot_seq2}", self.font_tiny, (245, 185, 255) if is_rev else TEXT, (p2_box.x + 16, p2_box.y + 188))
         if p2_seq:
             for i, mat in enumerate(p2_seq):
                 dot_x = p2_box.x + 18 + (i % 6) * 38

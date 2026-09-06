@@ -213,6 +213,31 @@
     .status.ready::before { background: var(--green); box-shadow: 0 0 10px var(--green); }
     .status.error   { color: var(--red-lt);   border-color: #7a3228; }
     .status.error::before { background: var(--red); box-shadow: 0 0 10px var(--red); }
+    .status.reverse {
+      color: #e0b0ff;
+      border-color: #9b5de5;
+      background: linear-gradient(135deg, #2b1830, #1a0f20);
+      animation: reverse-pulse 2s infinite alternate;
+    }
+    .status.reverse::before {
+      background: #c77dff;
+      box-shadow: 0 0 12px #c77dff;
+    }
+    .status.reverse-ready {
+      color: #ffd166;
+      border-color: #f77f00;
+      background: linear-gradient(135deg, #301824, #1c0e18);
+      font-weight: 700;
+      animation: reverse-pulse 1.4s infinite alternate;
+    }
+    .status.reverse-ready::before {
+      background: #ffb703;
+      box-shadow: 0 0 12px #ffb703;
+    }
+    @keyframes reverse-pulse {
+      0%   { box-shadow: 0 0 6px rgba(199, 125, 255, 0.3); }
+      100% { box-shadow: 0 0 16px rgba(247, 127, 0, 0.5); }
+    }
 
     .timer-wrap {
       width: 100%;
@@ -1576,6 +1601,7 @@
   let oppDuelScore     = 0;
   let myDuelLivesVal   = 3;
   let oppDuelLivesVal  = 3;
+  let isReverseRound   = false;
 
   if (duelNickname) {
     duelNickname.value = myName;
@@ -2306,8 +2332,14 @@
 
     // ── Oyun Turu Mesajları ──
     if (msg.type === 'round_started') {
-      statusEl.textContent = 'Tabîb Ekmeleddin hazırlanıyor… (İzle)';
-      statusEl.className   = 'status';
+      isReverseRound = !!msg.is_reverse;
+      if (isReverseRound) {
+        statusEl.textContent = 'SABUNCUOĞLU ŞEREFEDDİN: "Malzemeleri SONDAN BAŞA (TERSTEN) ekle! (4x Süre)"';
+        statusEl.className   = 'status reverse';
+      } else {
+        statusEl.textContent = 'Tabîb Ekmeleddin hazırlanıyor… (İzle)';
+        statusEl.className   = 'status';
+      }
       gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
       resetBtn.classList.remove('visible');
@@ -2361,8 +2393,13 @@
 
     if (msg.type === 'reveal_step') {
       if (!msg.target || msg.target === myPlayerId) {
-        statusEl.textContent = `Tabîb Ekmeleddin Kazana Ekliyor (${msg.step}/${msg.total}): ${msg.name}`;
-        statusEl.className   = 'status';
+        if (isReverseRound) {
+          statusEl.textContent = `Tabîb Ekmeleddin Ekliyor (${msg.step}/${msg.total}): ${msg.name} [DİKKAT: TERSTEN DOLDUR!]`;
+          statusEl.className   = 'status reverse';
+        } else {
+          statusEl.textContent = `Tabîb Ekmeleddin Kazana Ekliyor (${msg.step}/${msg.total}): ${msg.name}`;
+          statusEl.className   = 'status';
+        }
         playTone(350 + (msg.step * 35), 'sine', 0.12, 0.08);
 
         // İlgili butonu ekranda hafifçe parlat
@@ -2375,8 +2412,16 @@
     }
 
     if (msg.type === 'player_turn') {
-      statusEl.textContent = isDuelMode ? 'Hızlı Ol! Sırayı ilk tamamlayan kazanır!' : 'Sıra Sende! Malzemeleri seç.';
-      statusEl.className   = 'status ready';
+      if (msg.is_reverse || isReverseRound) {
+        isReverseRound = true;
+        statusEl.textContent = isDuelMode
+          ? 'SABUNCUOĞLU DÜELLOSU: SONDAN BAŞA (TERSTEN) DOLDUR! (4x Süre)'
+          : 'SABUNCUOĞLU SINAVI: Malzemeleri SONDAN BAŞA (TERSTEN) seç! (4x Süre)';
+        statusEl.className   = 'status reverse-ready';
+      } else {
+        statusEl.textContent = isDuelMode ? 'Hızlı Ol! Sırayı ilk tamamlayan kazanır!' : 'Sıra Sende! Malzemeleri seç.';
+        statusEl.className   = 'status ready';
+      }
       gridEl.classList.remove('disabled');
       timerTotal = msg.total || 0;
       updateTimer(timerTotal, timerTotal);
@@ -2576,7 +2621,7 @@
       }
       updateCombo(0);
       playFlaskCrack();
-      statusEl.textContent = msg.message || 'Can kaybedildi! Sırayı baştan dene.';
+      statusEl.textContent = msg.message || (isReverseRound ? 'Can kaybedildi! Malzemeleri SONDAN BAŞA sırayla tekrar dene.' : 'Can kaybedildi! Sırayı baştan dene.');
       statusEl.className = 'status error';
       if (navigator.vibrate) navigator.vibrate([120, 60, 160]);
       timerTotal = msg.total || timerTotal;
