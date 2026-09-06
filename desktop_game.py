@@ -722,6 +722,9 @@ class Game:
         self.duel_round = 1
         self.player_cursors = {"player_1": 0, "player_2": 0}
         self.player_lives   = {"player_1": 3, "player_2": 3}
+        self.player_completed = {"player_1": False, "player_2": False}
+        self.first_completer: str | None = None
+        self.grace_period_end: float | None = None
         self.player_stuns   = {"player_1": 0.0, "player_2": 0.0}
         self.round_winner: str | None = None
         self.duel_match_winner: str | None = None
@@ -1074,21 +1077,43 @@ class Game:
         self.round_success = False
 
         if self.mode == GameMode.DUEL:
-            # Düelloda tempolu ve çekişmeli dizi uzunluğu: Raunt 1: 3, Raunt 2: 4, Raunt 3+: 5 element
-            seq_len = min(6, 3 + (self.duel_round - 1) // 2)
-            pool = tuple(MATERIALS[:min(len(MATERIALS), 6 + self.duel_round * 2)])
-            self.sequence = [random.choice(pool) for _ in range(seq_len)]
-            self.recipe_name = ""
-            self.player_cursors = {"player_1": 0, "player_2": 0}
-            self.player_lives   = {"player_1": 3, "player_2": 3}
-            self.player_stuns   = {"player_1": 0.0, "player_2": 0.0}
-            self.round_winner   = None
-            self.phase_cursor   = 0
-            self.phase_started  = time.monotonic()
-            self.state          = GameState.RHAZI_TURN
+            # Tek kişilik oyunun dengeli formülüyle dizi ve malzeme havuzu
+            seq_len = self.duel_sequence_length
+            pool = self.duel_material_pool
+
+            # Tarihi reçete dönüm noktası kontrolü (Tek kişilik oyun mantığıyla uyumlu)
+            if self.duel_round in HISTORICAL_RECIPES:
+                rec_title, rec_elements = HISTORICAL_RECIPES[self.duel_round]
+                if all(m in pool for m in rec_elements):
+                    self.recipe_name = rec_title
+                    self.sequence = list(rec_elements)
+                else:
+                    self.recipe_name = ""
+                    self.sequence = [random.choice(pool) for _ in range(seq_len)]
+            else:
+                self.recipe_name = ""
+                self.sequence = [random.choice(pool) for _ in range(seq_len)]
+
+            self.player_cursors   = {"player_1": 0, "player_2": 0}
+            self.player_completed = {"player_1": False, "player_2": False}
+            self.first_completer  = None
+            self.grace_period_end = None
+            self.player_stuns     = {"player_1": 0.0, "player_2": 0.0}
+            self.round_winner     = None
+            self.phase_cursor     = 0
+            self.phase_started    = time.monotonic()
+            self.state            = GameState.RHAZI_TURN
+
             p1_name = self.players.get("player_1", {}).get("name", "Çırak 1")
             p2_name = self.players.get("player_2", {}).get("name", "Çırak 2")
-            self.last_message   = f"DÜELLO RAUNDU {self.duel_round}: {p1_name} VS {p2_name}"
+
+            if self.recipe_name:
+                self.last_message = f"SEVİYE {self.duel_round}: Tarihi Reçete '{self.recipe_name}'"
+                self.speak_bubble(f"⚔️ Seviye {self.duel_round}: Tarihi Formül '{self.recipe_name}'! Dikkatle izleyin!", duration=4.0)
+            else:
+                self.last_message = f"DÜELLO SEVİYE {self.duel_round}: {p1_name} VS {p2_name}"
+                self.speak_bubble(f"⚔️ Düello Seviye {self.duel_round}! Malzemeleri dikkatle izleyin!", duration=3.5)
+
             self._spawn_particles(550, 385, GOLD, 30)
 
             self.network.send({
@@ -1097,10 +1122,10 @@ class Game:
                 "unlocked": list(pool),
                 "round_num": self.duel_round,
                 "duel_scores": self.duel_scores,
-                "lives": 3,
-                "combo": 0,
+                "player_lives": self.player_lives,
+                "lives": self.player_lives,
+                "recipe": self.recipe_name,
             })
-            self.speak_bubble(f"⚔️ Düello Raundu {self.duel_round}! Malzemeleri dikkatle izleyin!", duration=3.5)
             return
 
         unlocked = list(self.material_pool)
@@ -1184,12 +1209,27 @@ class Game:
     # ── Özellikler ───────────────────────────────────────────────────────────
 
     @property
+    def duel_sequence_length(self) -> int:
+        # Tek kişilik oyunun dengeli formülüyle dizi uzunluğu (1-2: 3, 3-4: 4, 5-6: 5...)
+        return min(10, 3 + int((self.duel_round - 1) ** 0.51))
+
+    @property
+    def duel_material_pool(self) -> tuple[str, ...]:
+        # Başlangıçta 4 temel element, seviye ilerledikçe kademeli açılır (1: 4, 2: 6, 3: 8...)
+        count = min(len(MATERIALS), 4 + (self.duel_round - 1) * 2)
+        return tuple(MATERIALS[:count])
+
+    @property
     def sequence_length(self) -> int:
+        if self.mode == GameMode.DUEL:
+            return self.duel_sequence_length
         # 100 seviyeye yayılan hafıza dengesi: Seviye 1'de 3, Seviye 100'de 13 element
         return min(13, 3 + int((self.level - 1) ** 0.51))
 
     @property
     def material_pool(self) -> tuple[str, ...]:
+        if self.mode == GameMode.DUEL:
+            return self.duel_material_pool
         # 30 simya elementi 100 seviyeye dengeli dağıtılır:
         # Seviye 1: 4 element, Seviye 100: 30 elementin tamamı açılır.
         count = min(len(MATERIALS), 4 + (self.level - 1) * (len(MATERIALS) - 4) // 99)
@@ -1197,11 +1237,21 @@ class Game:
 
     @property
     def reveal_duration(self) -> float:
+        if self.mode == GameMode.DUEL:
+            return max(0.75, 1.30 - (self.duel_round - 1) * 0.035)
         # Râzî'nin fırlatma animasyon ritmine uygun yumuşak geçişli süre (1.4s -> 0.7s)
         return max(0.70, 1.40 - (self.level - 1) * 0.007)
 
     @property
     def player_duration(self) -> float:
+        if self.mode == GameMode.DUEL:
+            seq_len = len(self.sequence) if self.sequence else self.duel_sequence_length
+            pool_size = len(self.duel_material_pool)
+            base_time = 6.0
+            seq_time = seq_len * 2.2
+            seq_bonus = (seq_len // 3) * 2.5
+            pool_bonus = max(0, (pool_size - 4) // 3) * 1.0
+            return max(14.0, base_time + seq_time + seq_bonus + pool_bonus)
         # Her 3 elementte bir orantılı süre artışı (hem dizi uzunluğu hem buton arama desteği):
         seq_len = len(self.sequence) if self.sequence else self.sequence_length
         pool_size = len(self.material_pool)
@@ -1266,12 +1316,14 @@ class Game:
                     self.state        = GameState.PLAYER_TURN
                     self.player_index = 0
                     if self.mode == GameMode.DUEL:
-                        self.player_cursors = {"player_1": 0, "player_2": 0}
-                        self.player_lives   = {"player_1": 3, "player_2": 3}
-                        self.player_stuns   = {"player_1": 0.0, "player_2": 0.0}
+                        self.player_cursors   = {"player_1": 0, "player_2": 0}
+                        self.player_completed = {"player_1": False, "player_2": False}
+                        self.first_completer  = None
+                        self.grace_period_end = None
+                        self.player_stuns     = {"player_1": 0.0, "player_2": 0.0}
                     self.phase_started = now
                     self._last_tick   = 0.0
-                    self.last_message  = "Sıra sizde! Hızlı olan kazanır!" if self.mode == GameMode.DUEL else "Sıra sende!"
+                    self.last_message  = "Sıra sizde! Malzemeleri doğru ve hızlı girin!" if self.mode == GameMode.DUEL else "Sıra sende!"
                     self._spawn_particles(550 if self.mode == GameMode.DUEL else 530, 385, GREEN, 36)
                     self.network.send({
                         "type": "player_turn",
@@ -1281,18 +1333,21 @@ class Game:
                     })
                     self.sounds.play("tick")
                     if self.mode == GameMode.DUEL:
-                        self.speak_bubble("Yarış başladı! Sırayı ilk tamamlayan raundu kazanır!", duration=3.0)
+                        self.speak_bubble("Yarış başladı! Sırayı hatasız tamamlayın!", duration=3.0)
                     else:
                         self.speak_bubble("Sıra sende çırak! Malzemeleri sırayla seç.", duration=3.5)
                 else:
                     mat = self.sequence[self.phase_cursor]
                     self._spawn_particles(550 if self.mode == GameMode.DUEL else 530, 385, COLORS.get(mat, GOLD), 14)
                     self.speak_bubble(f"{MATERIAL_NAMES.get(mat, mat)} ekliyorum...", duration=max(1.0, self.reveal_duration * 0.9))
-        elif self.state == GameState.PLAYER_TURN and now - self.phase_started >= self.player_duration:
-            if self.mode == GameMode.DUEL:
-                self._duel_time_out()
-            else:
-                self._time_out()
+        elif self.state == GameState.PLAYER_TURN:
+            if self.mode == GameMode.DUEL and self.grace_period_end is not None and now >= self.grace_period_end:
+                self._handle_duel_grace_timeout()
+            elif now - self.phase_started >= self.player_duration:
+                if self.mode == GameMode.DUEL:
+                    self._duel_time_out()
+                else:
+                    self._time_out()
         elif self.state == GameState.RESOLUTION and now - self.phase_started >= 2.4:
             if self.mode == GameMode.DUEL:
                 self.duel_round += 1
@@ -1357,54 +1412,170 @@ class Game:
         self.sounds.play("gameover")
         self.speak_bubble(f"Oyun bitti! Seviye {self.final_level}'e kadar gelebildin.", duration=4.0)
 
+    def _handle_duel_grace_timeout(self) -> None:
+        now = time.monotonic()
+        self.grace_period_end = None
+        first_p = self.first_completer or "player_1"
+        second_p = "player_2" if first_p == "player_1" else "player_1"
+        s_name = self.players.get(second_p, {}).get("name", second_p)
+        w_name = self.players.get(first_p, {}).get("name", first_p)
+
+        if not self.player_completed.get(second_p, False):
+            self.player_lives[second_p] -= 1
+            s_lives = self.player_lives[second_p]
+            self.sounds.play("wrong")
+            px = 140 if second_p == "player_1" else 960
+            self._spawn_particles(px, 340, RED_LT, 30)
+
+            self.network.send({
+                "type": "life_lost",
+                "target": second_p,
+                "player_id": second_p,
+                "lives": s_lives,
+                "player_lives": self.player_lives,
+                "message": f"Süre tükendi! 1 Can kaybettin ({s_lives} can kaldı).",
+            })
+            self.network.send({
+                "type": "opponent_mistake",
+                "target": first_p,
+                "player_id": second_p,
+                "opp_lives": s_lives,
+                "player_lives": self.player_lives,
+                "message": f"Rakip {s_name} sürede tamamlayamadı ve 1 can kaybetti! ({s_lives} can kaldı)",
+            })
+
+            if s_lives <= 0:
+                self.duel_match_winner = first_p
+                self.state = GameState.DUEL_MATCH_OVER
+                self.game_over_time = now
+                self.sounds.play("gameover")
+                self.speak_bubble(f"🏆 {s_name}'in canları tükendi! DÜELLO ŞAMPİYONU: {w_name}!", duration=6.5)
+                self.network.send({
+                    "type": "duel_match_over",
+                    "winner_id": first_p,
+                    "winner_name": w_name,
+                    "loser_id": second_p,
+                    "loser_name": s_name,
+                    "scores": self.duel_scores,
+                    "player_lives": self.player_lives,
+                    "level_reached": self.duel_round,
+                })
+                return
+
+        self._finish_duel_round(winner_id=first_p)
+
+    def _finish_duel_round(self, winner_id: str | None) -> None:
+        now = time.monotonic()
+        self.state = GameState.RESOLUTION
+        self.phase_started = now
+        self.grace_period_end = None
+
+        w_name = self.players.get(winner_id, {}).get("name", "Çırak") if winner_id else None
+        if winner_id:
+            self.speak_bubble(f"Seviye {self.duel_round} tamamlandı! En hızlı: {w_name}! ⭐", duration=3.0)
+            self.network.send({
+                "type": "duel_round_won",
+                "winner_id": winner_id,
+                "winner_name": w_name,
+                "scores": self.duel_scores,
+                "player_lives": self.player_lives,
+                "round_num": self.duel_round,
+            })
+        else:
+            self.speak_bubble(f"Seviye {self.duel_round} sona erdi!", duration=3.0)
+            self.network.send({
+                "type": "duel_round_draw",
+                "scores": self.duel_scores,
+                "player_lives": self.player_lives,
+                "round_num": self.duel_round,
+            })
+
     def _duel_time_out(self) -> None:
-        p1_cur = self.player_cursors.get("player_1", 0)
-        p2_cur = self.player_cursors.get("player_2", 0)
         now = time.monotonic()
         self.sounds.play("wrong")
         self.fire_surge_until = now + 2.0
 
-        if p1_cur > p2_cur:
-            winner_id = "player_1"
-        elif p2_cur > p1_cur:
-            winner_id = "player_2"
-        else:
-            winner_id = None
+        p1_done = self.player_completed.get("player_1", False)
+        p2_done = self.player_completed.get("player_2", False)
 
-        if winner_id:
-            winner_name = self.players.get(winner_id, {}).get("name", winner_id)
-            self.round_winner = winner_id
-            self.duel_scores[winner_id] = self.duel_scores.get(winner_id, 0) + 1
-            if self.duel_scores[winner_id] >= 3:
-                self.duel_match_winner = winner_id
-                self.state = GameState.DUEL_MATCH_OVER
-                self.game_over_time = now
-                self.speak_bubble(f"🏆 DÜELLO ŞAMPİYONU: {winner_name}! Kitâbü'l-Esrâr'ın Yeni Vârisi!", duration=7.0)
+        if not p1_done:
+            self.player_lives["player_1"] -= 1
+        if not p2_done:
+            self.player_lives["player_2"] -= 1
+
+        p1_lives = self.player_lives["player_1"]
+        p2_lives = self.player_lives["player_2"]
+        p1_name = self.players.get("player_1", {}).get("name", "Çırak 1")
+        p2_name = self.players.get("player_2", {}).get("name", "Çırak 2")
+
+        for pid, lives in [("player_1", p1_lives), ("player_2", p2_lives)]:
+            if not self.player_completed.get(pid, False):
                 self.network.send({
-                    "type": "duel_match_over",
-                    "winner_id": winner_id,
-                    "winner_name": winner_name,
-                    "scores": self.duel_scores,
+                    "type": "life_lost",
+                    "target": pid,
+                    "player_id": pid,
+                    "lives": lives,
+                    "player_lives": self.player_lives,
+                    "message": f"Süre doldu! 1 Can kaybettin ({lives} can kaldı).",
                 })
-            else:
-                self.state = GameState.RESOLUTION
-                self.phase_started = now
-                self.speak_bubble(f"Süre doldu! Daha önde olan {winner_name} raundu kazandı! ⭐", duration=3.5)
-                self.network.send({
-                    "type": "duel_round_won",
-                    "winner_id": winner_id,
-                    "winner_name": winner_name,
-                    "scores": self.duel_scores,
-                    "first_to": 3,
-                })
+
+        # Can kontrolü
+        if p1_lives <= 0 and p2_lives <= 0:
+            s1 = self.duel_scores.get("player_1", 0)
+            s2 = self.duel_scores.get("player_2", 0)
+            winner_id = "player_1" if s1 >= s2 else "player_2"
+            self.duel_match_winner = winner_id
+            self.state = GameState.DUEL_MATCH_OVER
+            self.game_over_time = now
+            w_name = self.players.get(winner_id, {}).get("name", winner_id)
+            self.speak_bubble(f"🏆 Her iki çırağın da canları tükendi! Skor farkıyla Şampiyon: {w_name}!", duration=6.5)
+            self.network.send({
+                "type": "duel_match_over",
+                "winner_id": winner_id,
+                "winner_name": w_name,
+                "scores": self.duel_scores,
+                "player_lives": self.player_lives,
+                "level_reached": self.duel_round,
+            })
+        elif p1_lives <= 0:
+            self.duel_match_winner = "player_2"
+            self.state = GameState.DUEL_MATCH_OVER
+            self.game_over_time = now
+            self.speak_bubble(f"🏆 {p1_name}'in canları tükendi! DÜELLO ŞAMPİYONU: {p2_name}!", duration=6.5)
+            self.network.send({
+                "type": "duel_match_over",
+                "winner_id": "player_2",
+                "winner_name": p2_name,
+                "loser_id": "player_1",
+                "loser_name": p1_name,
+                "scores": self.duel_scores,
+                "player_lives": self.player_lives,
+                "level_reached": self.duel_round,
+            })
+        elif p2_lives <= 0:
+            self.duel_match_winner = "player_1"
+            self.state = GameState.DUEL_MATCH_OVER
+            self.game_over_time = now
+            self.speak_bubble(f"🏆 {p2_name}'in canları tükendi! DÜELLO ŞAMPİYONU: {p1_name}!", duration=6.5)
+            self.network.send({
+                "type": "duel_match_over",
+                "winner_id": "player_1",
+                "winner_name": p1_name,
+                "loser_id": "player_2",
+                "loser_name": p2_name,
+                "scores": self.duel_scores,
+                "player_lives": self.player_lives,
+                "level_reached": self.duel_round,
+            })
         else:
-            self.round_winner = None
             self.state = GameState.RESOLUTION
             self.phase_started = now
-            self.speak_bubble("Süre doldu ve iki çırak da eşit kaldı! Berabere!", duration=3.5)
+            self.speak_bubble(f"Süre tükendi! Canlar azaldı, Seviye {self.duel_round + 1}'e geçiliyor!", duration=3.5)
             self.network.send({
                 "type": "duel_round_draw",
                 "scores": self.duel_scores,
+                "player_lives": self.player_lives,
+                "round_num": self.duel_round,
             })
 
     def _reset_duel(self) -> None:
@@ -1412,6 +1583,9 @@ class Game:
         self.duel_round = 1
         self.player_cursors = {"player_1": 0, "player_2": 0}
         self.player_lives = {"player_1": 3, "player_2": 3}
+        self.player_completed = {"player_1": False, "player_2": False}
+        self.first_completer = None
+        self.grace_period_end = None
         self.player_stuns = {"player_1": 0.0, "player_2": 0.0}
         self.round_winner = None
         self.duel_match_winner = None
@@ -1422,6 +1596,7 @@ class Game:
         self.network.send({
             "type": "duel_lobby_reset",
             "scores": self.duel_scores,
+            "player_lives": self.player_lives,
         })
         self.speak_bubble("Yeni düello için ambleminizi seçip 'Hazırım' butonuna basın.", duration=4.0)
 
@@ -1434,8 +1609,12 @@ class Game:
         if now < self.player_stuns.get(player_id, 0.0):
             return
 
-        # Can kontrolü
+        # Can kontrolü (3 canı biten elenmiştir)
         if self.player_lives.get(player_id, 3) <= 0:
+            return
+
+        # Bu raundu zaten tamamladıysa fazladan tıklama yapamaz
+        if self.player_completed.get(player_id, False):
             return
 
         cur_idx = self.player_cursors.get(player_id, 0)
@@ -1447,111 +1626,113 @@ class Game:
         p_name = p_info.get("name", player_id)
         other_id = "player_2" if player_id == "player_1" else "player_1"
         other_name = self.players.get(other_id, {}).get("name", other_id)
-
         px = 140 if player_id == "player_1" else 960
 
         if button == correct:
-            self.player_cursors[player_id] = cur_idx + 1
-            new_idx = self.player_cursors[player_id]
+            cur_idx += 1
+            self.player_cursors[player_id] = cur_idx
             self.sounds.play("correct")
             self._spawn_particles(px, 340, GREEN_LT, 14)
 
-            # İlerlemeyi mobil oyunculara bildir
+            # İlerlemeyi bildir
             self.network.send({
                 "type": "duel_progress",
                 "player_id": player_id,
-                "cursor": new_idx,
+                "cursor": cur_idx,
                 "total": len(self.sequence),
             })
 
-            # Bu oyuncu diziyi ilk tamamladı mı?
-            if new_idx == len(self.sequence):
-                self.round_winner = player_id
-                self.duel_scores[player_id] = self.duel_scores.get(player_id, 0) + 1
-                self.sounds.play("level_up")
-                self.flash_color = GREEN_LT
-                self.flash_started = now
-                self.shake_started = now
-                self._spawn_particles(px, 260, GOLD, 50)
+            # Bu oyuncu diziyi tamamladı mı?
+            if cur_idx == len(self.sequence):
+                self.player_completed[player_id] = True
 
-                # Maç zaferi mi (İlk 3 yıldıza ulaşan)?
-                if self.duel_scores[player_id] >= 3:
-                    self.duel_match_winner = player_id
-                    self.state = GameState.DUEL_MATCH_OVER
-                    self.game_over_time = now
-                    self.speak_bubble(f"🏆 DÜELLO ŞAMPİYONU: {p_name}! Kitâbü'l-Esrâr'ın Yeni Vârisi!", duration=7.0)
-                    self.network.send({
-                        "type": "duel_match_over",
-                        "winner_id": player_id,
-                        "winner_name": p_name,
-                        "scores": self.duel_scores,
-                    })
+                if self.first_completer is None:
+                    # İLK TAMAMLAYAN OYUNCU (Raundu kazandı!)
+                    self.first_completer = player_id
+                    self.round_winner = player_id
+                    self.duel_scores[player_id] = self.duel_scores.get(player_id, 0) + 1
+                    self.sounds.play("level_up")
+                    self.flash_color = GREEN_LT
+                    self.flash_started = now
+                    self._spawn_particles(px, 260, GOLD, 45)
+
+                    # Diğer oyuncunun canı varsa ona son şans süresi ver (3.5 saniye)
+                    if self.player_lives.get(other_id, 3) > 0 and not self.player_completed.get(other_id, False):
+                        self.grace_period_end = now + 3.5
+                        self.speak_bubble(f"⭐ {p_name} ilk tamamladı! {other_name} için son 3.5 saniye!", duration=3.5)
+                        self.network.send({
+                            "type": "opponent_finished",
+                            "target": other_id,
+                            "finisher": p_name,
+                            "grace_seconds": 3.5,
+                            "message": f"⚠️ {p_name} tamamladı! Canını korumak için 3.5 saniyede bitir!",
+                        })
+                        self.network.send({
+                            "type": "first_completed",
+                            "target": player_id,
+                            "scores": self.duel_scores,
+                            "message": "⭐ Kazanı ilk sen tamamladın! (+1 Yıldız)",
+                        })
+                    else:
+                        self._finish_duel_round(winner_id=player_id)
                 else:
-                    self.state = GameState.RESOLUTION
-                    self.phase_started = now
-                    self.speak_bubble(f"⭐ Raunt {p_name}'in! (+1 Yıldız)", duration=3.5)
+                    # İKİNCİ TAMAMLAYAN OYUNCU (Süre içinde tamamladı, canı kurtuldu!)
+                    self.sounds.play("level_up")
+                    self._spawn_particles(px, 260, GREEN_LT, 35)
                     self.network.send({
-                        "type": "duel_round_won",
-                        "winner_id": player_id,
-                        "winner_name": p_name,
-                        "scores": self.duel_scores,
-                        "first_to": 3,
+                        "type": "second_completed",
+                        "target": player_id,
+                        "message": "✅ Süre dolmadan tamamladın! Canın korundu.",
                     })
+                    self._finish_duel_round(winner_id=self.first_completer)
 
         else:
-            # Yanlış basım: Can kaybı + Sersemleme + Sıfırlanma
+            # YANLIŞ MALZEME! TEK KİŞİLİK MANTIĞI: 1 CAN KAYBEDİLİR
             self.player_lives[player_id] -= 1
             self.player_cursors[player_id] = 0
             self.player_stuns[player_id] = now + 1.2
             self.sounds.play("wrong")
+            self.shake_started = now
             self._spawn_particles(px, 340, RED_LT, 30)
 
-            # Bu oyuncuya sersemletme mesajı
+            rem_lives = self.player_lives[player_id]
+
+            # Oyuncuya can kaybı ve sersemleme mesajı
             self.network.send({
-                "type": "stunned",
+                "type": "life_lost",
                 "target": player_id,
                 "player_id": player_id,
-                "duration": 1.2,
-                "lives": self.player_lives[player_id],
-                "message": "⚡ Yanlış malzeme! 1.2s Sersemledin ve sıra başa döndü!",
+                "lives": rem_lives,
+                "player_lives": self.player_lives,
+                "message": f"⚡ Yanlış malzeme! 1 Can kaybettin ({rem_lives} can kaldı). Sıra başa döndü!",
             })
-            # Rakibe haber ver
+            # Rakibe bildir
             self.network.send({
                 "type": "opponent_mistake",
                 "target": other_id,
                 "player_id": player_id,
-                "message": f"Rakip {p_name} hata yaptı ve sersemledi!",
+                "opp_lives": rem_lives,
+                "player_lives": self.player_lives,
+                "message": f"Rakip {p_name} hata yaptı ve 1 can kaybetti! ({rem_lives} canı kaldı)",
             })
 
-            # Tüm canlar bitti mi?
-            if self.player_lives[player_id] <= 0:
-                self.round_winner = other_id
-                self.duel_scores[other_id] = self.duel_scores.get(other_id, 0) + 1
-                self.sounds.play("level_up")
-                self._spawn_particles(px, 300, RED, 45)
-
-                if self.duel_scores[other_id] >= 3:
-                    self.duel_match_winner = other_id
-                    self.state = GameState.DUEL_MATCH_OVER
-                    self.game_over_time = now
-                    self.speak_bubble(f"🏆 {p_name} elendi! Şampiyon: {other_name}!", duration=6.0)
-                    self.network.send({
-                        "type": "duel_match_over",
-                        "winner_id": other_id,
-                        "winner_name": other_name,
-                        "scores": self.duel_scores,
-                    })
-                else:
-                    self.state = GameState.RESOLUTION
-                    self.phase_started = now
-                    self.speak_bubble(f"{p_name} elendi! Raundu {other_name} kazandı! ⭐", duration=3.5)
-                    self.network.send({
-                        "type": "duel_round_won",
-                        "winner_id": other_id,
-                        "winner_name": other_name,
-                        "scores": self.duel_scores,
-                        "first_to": 3,
-                    })
+            # CANLARI BİTTİ Mİ? (0 CAN -> ELENME!)
+            if rem_lives <= 0:
+                self.duel_match_winner = other_id
+                self.state = GameState.DUEL_MATCH_OVER
+                self.game_over_time = now
+                self.sounds.play("gameover")
+                self.speak_bubble(f"🏆 {p_name}'in 3 canı tükendi ve elendi! DÜELLO ŞAMPİYONU: {other_name}!", duration=6.5)
+                self.network.send({
+                    "type": "duel_match_over",
+                    "winner_id": other_id,
+                    "winner_name": other_name,
+                    "loser_id": player_id,
+                    "loser_name": p_name,
+                    "scores": self.duel_scores,
+                    "player_lives": self.player_lives,
+                    "level_reached": self.duel_round,
+                })
 
     # ── Buton işleme ─────────────────────────────────────────────────────────
 
@@ -2197,14 +2378,22 @@ class Game:
         pygame.draw.rect(self.pixel_surface, PANEL, (0, 0, WIDTH, 78))
         pygame.draw.line(self.pixel_surface, BORDER, (0, 78), (WIDTH, 78), 2)
 
-        self._text_center(f"⚔️ 1v1 ÇIRAK DÜELLOSU  ·  RAUNT {self.duel_round}", self.font_small, GOLD_LT, WIDTH // 2, 14)
+        now = time.monotonic()
+        top_title = f"⚔️ 1v1 ÇIRAK DÜELLOSU  ·  SEVİYE {self.duel_round}"
+        if self.recipe_name:
+            top_title += f"  (🏺 {self.recipe_name})"
+        self._text_center(top_title, self.font_small, GOLD_LT, WIDTH // 2, 14)
+
         s1 = self.duel_scores.get("player_1", 0)
         s2 = self.duel_scores.get("player_2", 0)
         score_str = f"{s1}  —  {s2}"
         self._text_center(score_str, self.font_large, TEXT, WIDTH // 2, 34)
-        self._text_center(self.last_message, self.font_tiny, TEXT_DIM, WIDTH // 2, 56)
 
-        now = time.monotonic()
+        if self.grace_period_end:
+            rem_grace = max(0.0, self.grace_period_end - now)
+            self._text_center(f"⏳ BİRİ TAMAMLADI! SON ŞANS: {rem_grace:.1f}s", self.font_tiny, RED_LT, WIDTH // 2, 56)
+        else:
+            self._text_center(self.last_message, self.font_tiny, TEXT_DIM, WIDTH // 2, 56)
 
         # ── 1. Çırak Paneli (Sol) ──
         p1 = self.players.get("player_1", {"name": "Çırak 1", "emblem": "☿"})
@@ -2220,38 +2409,38 @@ class Game:
 
         self._draw_separator(p1_box.x + 14, p1_box.y + 60, p1_box.right - 14)
 
-        self._text("RAUNT YILDIZLARI", self.font_tiny, TEXT_DIM, (p1_box.x + 16, p1_box.y + 72))
-        for i in range(3):
-            sx = p1_box.x + 20 + i * 40
-            sy = p1_box.y + 88
-            has_star = i < s1
-            star_col = GOLD_LT if has_star else (60, 44, 34)
-            star_txt = "★" if has_star else "☆"
-            star_s = self.font_symbol_large.render(star_txt, True, star_col)
-            self.pixel_surface.blit(star_s, (sx, sy))
-
-        self._draw_separator(p1_box.x + 14, p1_box.y + 130, p1_box.right - 14)
-
+        # KALAN CANLAR (3 Can Mekaniği)
         p1_lives = self.player_lives.get("player_1", 3)
-        self._text("RAUNT HAKKI", self.font_tiny, TEXT_DIM, (p1_box.x + 16, p1_box.y + 142))
+        self._text("KALAN CAN", self.font_tiny, TEXT_DIM, (p1_box.x + 16, p1_box.y + 70))
         for i in range(3):
-            fx = p1_box.x + 20 + i * 32
-            fy = p1_box.y + 160
+            fx = p1_box.x + 20 + i * 36
+            fy = p1_box.y + 88
             active = i < p1_lives
-            flask_col = GREEN if active else (65, 42, 34)
-            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 8, fy + 12), 7)
-            pygame.draw.rect(self.pixel_surface, flask_col, (fx + 6, fy + 2, 4, 6))
-            pygame.draw.rect(self.pixel_surface, GOLD if active else (50, 32, 24), (fx + 5, fy, 6, 3), border_radius=1)
+            flask_col = (220, 60, 50) if active else (55, 32, 26)
+            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 10, fy + 14), 9)
+            pygame.draw.rect(self.pixel_surface, flask_col, (fx + 7, fy + 4, 6, 7))
+            pygame.draw.rect(self.pixel_surface, GOLD if active else (45, 28, 22), (fx + 5, fy + 1, 10, 4), border_radius=1)
 
-        self._draw_separator(p1_box.x + 14, p1_box.y + 195, p1_box.right - 14)
+        if p1_lives <= 0:
+            self._text("💀 ELENDİ", self.font_small, RED_LT, (p1_box.x + 142, p1_box.y + 92))
+        else:
+            lives_col = GREEN_LT if p1_lives >= 2 else RED_LT
+            self._text(f"{p1_lives}/3 Can", self.font_small, lives_col, (p1_box.x + 142, p1_box.y + 92))
+
+        self._draw_separator(p1_box.x + 14, p1_box.y + 124, p1_box.right - 14)
+
+        self._text("KAZANILAN SEVİYELER", self.font_tiny, TEXT_DIM, (p1_box.x + 16, p1_box.y + 134))
+        self._text(f"★ {s1} Seviye Başarısı", self.font_body_bold, GOLD_LT, (p1_box.x + 16, p1_box.y + 150))
+
+        self._draw_separator(p1_box.x + 14, p1_box.y + 176, p1_box.right - 14)
 
         p1_cur = self.player_cursors.get("player_1", 0)
         tot_seq = len(self.sequence) if self.sequence else 1
-        self._text(f"İLERLEME: {p1_cur}/{tot_seq}", self.font_tiny, TEXT, (p1_box.x + 16, p1_box.y + 210))
+        self._text(f"REÇETE: {p1_cur}/{tot_seq}", self.font_tiny, TEXT, (p1_box.x + 16, p1_box.y + 188))
         if self.sequence:
             for i, mat in enumerate(self.sequence):
                 dot_x = p1_box.x + 18 + (i % 6) * 38
-                dot_y = p1_box.y + 232 + (i // 6) * 30
+                dot_y = p1_box.y + 208 + (i // 6) * 30
                 c = COLORS.get(mat, GOLD) if i < p1_cur else (50, 36, 28)
                 pygame.draw.rect(self.pixel_surface, c, (dot_x, dot_y, 28, 20), border_radius=4)
                 if i < p1_cur:
@@ -2261,13 +2450,19 @@ class Game:
 
         is_stunned = now < self.player_stuns.get("player_1", 0.0)
         status_y = p1_box.bottom - 44
-        if is_stunned:
+        if p1_lives <= 0:
+            pygame.draw.rect(self.pixel_surface, (70, 15, 15), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
+            self._text_center("💀 3 CAN BİTTİ (ELENDİ)", self.font_tiny, RED_LT, p1_box.centerx, status_y + 9)
+        elif is_stunned:
             rem_stun = self.player_stuns.get("player_1", 0.0) - now
             pygame.draw.rect(self.pixel_surface, (70, 20, 15), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
             self._text_center(f"⚡ SERSEMLENDİ ({rem_stun:.1f}s)", self.font_tiny, RED_LT, p1_box.centerx, status_y + 9)
-        elif p1_cur == len(self.sequence) and self.sequence:
+        elif self.player_completed.get("player_1", False):
             pygame.draw.rect(self.pixel_surface, (20, 60, 30), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
-            self._text_center("TAMAMLADI!", self.font_tiny, GREEN_LT, p1_box.centerx, status_y + 9)
+            self._text_center("TAMAMLADI! ✓", self.font_tiny, GREEN_LT, p1_box.centerx, status_y + 9)
+        elif self.first_completer and not self.player_completed.get("player_1", False):
+            pygame.draw.rect(self.pixel_surface, (65, 35, 15), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
+            self._text_center("⏳ SON ŞANS! BİTİR!", self.font_tiny, GOLD_LT, p1_box.centerx, status_y + 9)
         else:
             pygame.draw.rect(self.pixel_surface, (40, 30, 20), (p1_box.x + 14, status_y, p1_box.width - 28, 30), border_radius=6)
             self._text_center("YARIŞIYOR...", self.font_tiny, GOLD, p1_box.centerx, status_y + 9)
@@ -2286,37 +2481,37 @@ class Game:
 
         self._draw_separator(p2_box.x + 14, p2_box.y + 60, p2_box.right - 14)
 
-        self._text("RAUNT YILDIZLARI", self.font_tiny, TEXT_DIM, (p2_box.x + 16, p2_box.y + 72))
-        for i in range(3):
-            sx = p2_box.x + 20 + i * 40
-            sy = p2_box.y + 88
-            has_star = i < s2
-            star_col = GOLD_LT if has_star else (60, 44, 34)
-            star_txt = "★" if has_star else "☆"
-            star_s = self.font_symbol_large.render(star_txt, True, star_col)
-            self.pixel_surface.blit(star_s, (sx, sy))
-
-        self._draw_separator(p2_box.x + 14, p2_box.y + 130, p2_box.right - 14)
-
+        # KALAN CANLAR (3 Can Mekaniği)
         p2_lives = self.player_lives.get("player_2", 3)
-        self._text("RAUNT HAKKI", self.font_tiny, TEXT_DIM, (p2_box.x + 16, p2_box.y + 142))
+        self._text("KALAN CAN", self.font_tiny, TEXT_DIM, (p2_box.x + 16, p2_box.y + 70))
         for i in range(3):
-            fx = p2_box.x + 20 + i * 32
-            fy = p2_box.y + 160
+            fx = p2_box.x + 20 + i * 36
+            fy = p2_box.y + 88
             active = i < p2_lives
-            flask_col = GREEN if active else (65, 42, 34)
-            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 8, fy + 12), 7)
-            pygame.draw.rect(self.pixel_surface, flask_col, (fx + 6, fy + 2, 4, 6))
-            pygame.draw.rect(self.pixel_surface, GOLD if active else (50, 32, 24), (fx + 5, fy, 6, 3), border_radius=1)
+            flask_col = (220, 60, 50) if active else (55, 32, 26)
+            pygame.draw.circle(self.pixel_surface, flask_col, (fx + 10, fy + 14), 9)
+            pygame.draw.rect(self.pixel_surface, flask_col, (fx + 7, fy + 4, 6, 7))
+            pygame.draw.rect(self.pixel_surface, GOLD if active else (45, 28, 22), (fx + 5, fy + 1, 10, 4), border_radius=1)
 
-        self._draw_separator(p2_box.x + 14, p2_box.y + 195, p2_box.right - 14)
+        if p2_lives <= 0:
+            self._text("💀 ELENDİ", self.font_small, RED_LT, (p2_box.x + 142, p2_box.y + 92))
+        else:
+            lives_col2 = GREEN_LT if p2_lives >= 2 else RED_LT
+            self._text(f"{p2_lives}/3 Can", self.font_small, lives_col2, (p2_box.x + 142, p2_box.y + 92))
+
+        self._draw_separator(p2_box.x + 14, p2_box.y + 124, p2_box.right - 14)
+
+        self._text("KAZANILAN SEVİYELER", self.font_tiny, TEXT_DIM, (p2_box.x + 16, p2_box.y + 134))
+        self._text(f"★ {s2} Seviye Başarısı", self.font_body_bold, GOLD_LT, (p2_box.x + 16, p2_box.y + 150))
+
+        self._draw_separator(p2_box.x + 14, p2_box.y + 176, p2_box.right - 14)
 
         p2_cur = self.player_cursors.get("player_2", 0)
-        self._text(f"İLERLEME: {p2_cur}/{tot_seq}", self.font_tiny, TEXT, (p2_box.x + 16, p2_box.y + 210))
+        self._text(f"REÇETE: {p2_cur}/{tot_seq}", self.font_tiny, TEXT, (p2_box.x + 16, p2_box.y + 188))
         if self.sequence:
             for i, mat in enumerate(self.sequence):
                 dot_x = p2_box.x + 18 + (i % 6) * 38
-                dot_y = p2_box.y + 232 + (i // 6) * 30
+                dot_y = p2_box.y + 208 + (i // 6) * 30
                 c = COLORS.get(mat, GOLD) if i < p2_cur else (50, 36, 28)
                 pygame.draw.rect(self.pixel_surface, c, (dot_x, dot_y, 28, 20), border_radius=4)
                 if i < p2_cur:
@@ -2326,13 +2521,19 @@ class Game:
 
         is_stunned2 = now < self.player_stuns.get("player_2", 0.0)
         status_y = p2_box.bottom - 44
-        if is_stunned2:
+        if p2_lives <= 0:
+            pygame.draw.rect(self.pixel_surface, (70, 15, 15), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
+            self._text_center("💀 3 CAN BİTTİ (ELENDİ)", self.font_tiny, RED_LT, p2_box.centerx, status_y + 9)
+        elif is_stunned2:
             rem_stun2 = self.player_stuns.get("player_2", 0.0) - now
             pygame.draw.rect(self.pixel_surface, (70, 20, 15), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
             self._text_center(f"⚡ SERSEMLENDİ ({rem_stun2:.1f}s)", self.font_tiny, RED_LT, p2_box.centerx, status_y + 9)
-        elif p2_cur == len(self.sequence) and self.sequence:
+        elif self.player_completed.get("player_2", False):
             pygame.draw.rect(self.pixel_surface, (20, 60, 30), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
-            self._text_center("TAMAMLADI!", self.font_tiny, GREEN_LT, p2_box.centerx, status_y + 9)
+            self._text_center("TAMAMLADI! ✓", self.font_tiny, GREEN_LT, p2_box.centerx, status_y + 9)
+        elif self.first_completer and not self.player_completed.get("player_2", False):
+            pygame.draw.rect(self.pixel_surface, (65, 35, 15), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
+            self._text_center("⏳ SON ŞANS! BİTİR!", self.font_tiny, GOLD_LT, p2_box.centerx, status_y + 9)
         else:
             pygame.draw.rect(self.pixel_surface, (40, 30, 20), (p2_box.x + 14, status_y, p2_box.width - 28, 30), border_radius=6)
             self._text_center("YARIŞIYOR...", self.font_tiny, GOLD, p2_box.centerx, status_y + 9)
@@ -2359,7 +2560,7 @@ class Game:
 
         cx = WIDTH // 2
         self._text_center("⚔️  1v1 ÇIRAK DÜELLOSU  ⚔️", self.font_title, GOLD_LT, cx, 64)
-        self._text_center("Tabîb Ekmeleddin'in huzurunda 3 raunt kazanan şampiyon olur!", self.font_small, TEXT_DIM, cx, 98)
+        self._text_center("Tabîb Ekmeleddin'in huzurunda 3 canını koruyup rakibini eleyen kazanır!", self.font_small, TEXT_DIM, cx, 98)
 
         p1 = self.players.get("player_1", {"name": "Çırak 1", "emblem": "☿", "ready": False})
         c1 = pygame.Rect(cx - 380, 140, 310, 380)
@@ -2429,28 +2630,33 @@ class Game:
         self._text_center(w_name.upper(), self.font_large, TEXT, cx, box.y + 118)
         self._text_center("Konya Dârüşşifası'nın Yeni Baş Hekimi!", self.font_small, GOLD, cx, box.y + 148)
 
-        self._draw_separator(box.x + 30, box.y + 178, box.right - 30)
+        self._draw_separator(box.x + 30, box.y + 172, box.right - 30)
+
+        loser_id = "player_2" if winner_id == "player_1" else "player_1"
+        loser_name = self.players.get(loser_id, {}).get("name", "Diğer Çırak")
+        self._text_center(f"{loser_name} 3 canını tüketerek elendi.", self.font_small, RED_LT, cx, box.y + 188)
+        self._text_center(f"Toplam {self.duel_round} Seviye Boyunca Mücadele Edildi", self.font_tiny, TEXT_DIM, cx, box.y + 208)
 
         s1 = self.duel_scores.get("player_1", 0)
         s2 = self.duel_scores.get("player_2", 0)
         p1_n = self.players.get("player_1", {}).get("name", "Çırak 1")
         p2_n = self.players.get("player_2", {}).get("name", "Çırak 2")
-        score_text = f"{p1_n}: {s1} ⭐  —  ⭐ {s2} :{p2_n}"
-        self._text_center(score_text, self.font_medium, TEXT_DIM, cx, box.y + 200)
+        score_text = f"{p1_n}: {s1} Seviye  —  {s2} Seviye :{p2_n}"
+        self._text_center(score_text, self.font_medium, GOLD, cx, box.y + 228)
 
         # Buton 1 & 2: Yeni Karşılaşma & Mod Seçimi
-        b_rematch = pygame.Rect(cx - 240, box.y + 250, 220, 42)
+        b_rematch = pygame.Rect(cx - 240, box.y + 260, 220, 42)
         self._draw_panel(b_rematch, radius=8)
         pygame.draw.rect(self.pixel_surface, GREEN, b_rematch, 2, border_radius=8)
         self._text_center("🔄 Yeni Düello (SPACE)", self.font_body_bold, GREEN_LT, b_rematch.centerx, b_rematch.y + 11)
 
-        b_mode = pygame.Rect(cx + 20, box.y + 250, 220, 42)
+        b_mode = pygame.Rect(cx + 20, box.y + 260, 220, 42)
         self._draw_panel(b_mode, radius=8)
         pygame.draw.rect(self.pixel_surface, BORDER, b_mode, 2, border_radius=8)
         self._text_center("◀ Mod Seçimi (M)", self.font_body_bold, TEXT, b_mode.centerx, b_mode.y + 11)
 
         # Buton 3: Kulüp & Künye & Risale
-        b_cred = pygame.Rect(cx - 200, box.y + 308, 400, 42)
+        b_cred = pygame.Rect(cx - 200, box.y + 316, 400, 42)
         self._draw_panel(b_cred, radius=8)
         pygame.draw.rect(self.pixel_surface, GOLD, b_cred, 2, border_radius=8)
         self._text_center("🏛️ Kulüp, Künye & Risale (C)", self.font_body_bold, GOLD_LT, b_cred.centerx, b_cred.y + 11)

@@ -748,7 +748,8 @@
     .duel-player-box.opp { color: #d0a080; }
     .duel-emblem { font-size: 1.1rem; }
     .duel-name { font-weight: 700; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .duel-stars { color: var(--gold); letter-spacing: 2px; font-size: .88rem; }
+    .duel-lives { font-size: .85rem; letter-spacing: 1px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+    .duel-stars { color: var(--gold); letter-spacing: 1px; font-size: .85rem; font-weight: 700; }
     .duel-vs-badge {
       background: #3d2014;
       border: 1px solid var(--gold);
@@ -1054,11 +1055,13 @@
   <div class="duel-player-box you">
     <span class="duel-emblem" id="myDuelEmblem">☿</span>
     <span class="duel-name" id="myDuelName">Sen</span>
-    <span class="duel-stars" id="myDuelStars">☆☆☆</span>
+    <span class="duel-lives" id="myDuelLives" title="Kalan Can">❤️❤️❤️</span>
+    <span class="duel-stars" id="myDuelStars">0 ★</span>
   </div>
   <div class="duel-vs-badge">VS</div>
   <div class="duel-player-box opp">
-    <span class="duel-stars" id="oppDuelStars">☆☆☆</span>
+    <span class="duel-stars" id="oppDuelStars">0 ★</span>
+    <span class="duel-lives" id="oppDuelLives" title="Kalan Can">❤️❤️❤️</span>
     <span class="duel-name" id="oppDuelName">Rakip</span>
     <span class="duel-emblem" id="oppDuelEmblem">🜍</span>
   </div>
@@ -1404,7 +1407,7 @@
       <div>
         <span class="modal-badge">⚔️ 1v1 ÇIRAK DÜELLOSU</span>
         <h2 style="font-size: 1.15rem; color: var(--gold-lt);">Simya Meydanı</h2>
-        <span class="modal-sub">Ebû Bekir er-Râzî'nin huzurunda yarış</span>
+        <span class="modal-sub">Tabîb Ekmeleddin'in (Bey Hekim) huzurunda yarış</span>
       </div>
     </div>
     <div class="modal-body" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
@@ -1517,8 +1520,10 @@
   const duelOpponentBar       = document.getElementById('duelOpponentBar');
   const myDuelEmblem          = document.getElementById('myDuelEmblem');
   const myDuelName            = document.getElementById('myDuelName');
+  const myDuelLives           = document.getElementById('myDuelLives');
   const myDuelStars           = document.getElementById('myDuelStars');
   const oppDuelStars          = document.getElementById('oppDuelStars');
+  const oppDuelLives          = document.getElementById('oppDuelLives');
   const oppDuelName           = document.getElementById('oppDuelName');
   const oppDuelEmblem         = document.getElementById('oppDuelEmblem');
   const duelOppFill           = document.getElementById('duelOppFill');
@@ -1559,16 +1564,18 @@
 
 
   // Düello Durumu
-  let myPlayerId    = 'player_1';
-  let myPlayerNum   = 1;
-  let myEmblem      = '☿';
-  let myName        = localStorage.getItem('razi_nickname') || 'Çırak';
-  let myReady       = false;
-  let isDuelMode    = false;
-  let isStunned     = false;
-  let stunTimeoutId = null;
-  let myDuelScore   = 0;
-  let oppDuelScore  = 0;
+  let myPlayerId       = 'player_1';
+  let myPlayerNum      = 1;
+  let myEmblem         = '☿';
+  let myName           = localStorage.getItem('razi_nickname') || 'Çırak';
+  let myReady          = false;
+  let isDuelMode       = false;
+  let isStunned        = false;
+  let stunTimeoutId    = null;
+  let myDuelScore      = 0;
+  let oppDuelScore     = 0;
+  let myDuelLivesVal   = 3;
+  let oppDuelLivesVal  = 3;
 
   if (duelNickname) {
     duelNickname.value = myName;
@@ -2073,14 +2080,19 @@
   setupModalToggle(openEkmeleddinBioBtnDuel, ekmeleddinBioModal, closeEkmeleddinBioBtn);
   setupModalToggle(openBioModalFromCreditsBtn, ekmeleddinBioModal, closeEkmeleddinBioBtn);
 
-  // ── Düello Lobisi & Yıldız Fonksiyonları ──
+  // ── Düello Lobisi, Can & Seviye Fonksiyonları ──
   function renderDuelStars(mine, opp) {
-    let sMine = '';
-    for (let i = 0; i < 3; i++) sMine += (i < mine ? '★' : '☆');
-    let sOpp = '';
-    for (let i = 0; i < 3; i++) sOpp += (i < opp ? '★' : '☆');
-    if (myDuelStars) myDuelStars.textContent = sMine;
-    if (oppDuelStars) oppDuelStars.textContent = sOpp;
+    if (myDuelStars) myDuelStars.textContent = `${mine} ★`;
+    if (oppDuelStars) oppDuelStars.textContent = `${opp} ★`;
+  }
+
+  function renderDuelLives(mineLives, oppLives) {
+    let mL = '';
+    for (let i = 0; i < 3; i++) mL += (i < mineLives ? '❤️' : '🖤');
+    let oL = '';
+    for (let i = 0; i < 3; i++) oL += (i < oppLives ? '❤️' : '🖤');
+    if (myDuelLives) myDuelLives.textContent = mL;
+    if (oppDuelLives) oppDuelLives.textContent = oL;
   }
 
   // Amblem Seçimi
@@ -2183,7 +2195,7 @@
   const socket   = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
 
   socket.addEventListener('open', () => {
-    statusEl.textContent = 'Ebû Bekir er-Râzî bekleniyor…';
+    statusEl.textContent = 'Tabîb Ekmeleddin bekleniyor…';
     statusEl.className   = 'status';
     sendLobbyUpdate();
   });
@@ -2294,7 +2306,7 @@
 
     // ── Oyun Turu Mesajları ──
     if (msg.type === 'round_started') {
-      statusEl.textContent = 'Ebû Bekir er-Râzî hazırlanıyor… (İzle)';
+      statusEl.textContent = 'Tabîb Ekmeleddin hazırlanıyor… (İzle)';
       statusEl.className   = 'status';
       gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
@@ -2311,6 +2323,12 @@
         const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
         oppDuelScore = (msg.duel_scores && msg.duel_scores[otherId]) || 0;
         renderDuelStars(myDuelScore, oppDuelScore);
+        if (msg.player_lives) {
+          myDuelLivesVal = msg.player_lives[myPlayerId] !== undefined ? msg.player_lives[myPlayerId] : 3;
+          oppDuelLivesVal = msg.player_lives[otherId] !== undefined ? msg.player_lives[otherId] : 3;
+          renderDuelLives(myDuelLivesVal, oppDuelLivesVal);
+          updateLives(myDuelLivesVal);
+        }
         if (duelOppFill) duelOppFill.style.width = '0%';
         if (duelOppStatusText) duelOppStatusText.textContent = 'Rakip: 0';
       } else {
@@ -2318,7 +2336,7 @@
         if (duelOpponentBar) duelOpponentBar.classList.add('hidden');
       }
 
-      if (msg.lives !== undefined) updateLives(msg.lives);
+      if (msg.lives !== undefined && !isDuelMode) updateLives(msg.lives);
       if (msg.combo !== undefined) updateCombo(msg.combo);
 
       // Tarihi reçete banner kontrolü
@@ -2379,9 +2397,42 @@
     }
 
     if (msg.type === 'opponent_mistake') {
-      statusEl.textContent = msg.message || 'Rakip hata yaptı ve sersemledi! Acele et!';
-      statusEl.className = 'status ready';
-      playTone(280, 'sawtooth', 0.15, 0.1);
+      if (!msg.target || msg.target === myPlayerId) {
+        statusEl.textContent = msg.message || 'Rakip hata yaptı ve 1 can kaybetti!';
+        statusEl.className = 'status ready';
+        playTone(280, 'sawtooth', 0.15, 0.1);
+        if (isDuelMode && msg.player_lives) {
+          const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
+          myDuelLivesVal = msg.player_lives[myPlayerId] !== undefined ? msg.player_lives[myPlayerId] : 3;
+          oppDuelLivesVal = msg.player_lives[otherId] !== undefined ? msg.player_lives[otherId] : 3;
+          renderDuelLives(myDuelLivesVal, oppDuelLivesVal);
+        }
+      }
+    }
+
+    if (msg.type === 'opponent_finished') {
+      if (!msg.target || msg.target === myPlayerId) {
+        statusEl.textContent = msg.message || '⚠️ Rakip tamamladı! Canını korumak için acele et!';
+        statusEl.className = 'status error';
+        playFlaskCrack();
+        if (navigator.vibrate) navigator.vibrate([120, 80, 120]);
+      }
+    }
+
+    if (msg.type === 'first_completed') {
+      if (!msg.target || msg.target === myPlayerId) {
+        statusEl.textContent = msg.message || '⭐ Reçeteyi ilk sen tamamladın!';
+        statusEl.className = 'status ready';
+        playVictoryChime();
+      }
+    }
+
+    if (msg.type === 'second_completed') {
+      if (!msg.target || msg.target === myPlayerId) {
+        statusEl.textContent = msg.message || '✅ Zamanında yetiştin! Canın korundu.';
+        statusEl.className = 'status ready';
+        playVictoryChime();
+      }
     }
 
     if (msg.type === 'duel_round_won') {
@@ -2390,12 +2441,12 @@
       const isWinner = msg.winner_id === myPlayerId;
       if (isWinner) {
         playVictoryChime();
-        statusEl.textContent = '⭐ Tebrikler! Bu raundu sen kazandın!';
+        statusEl.textContent = `⭐ Tebrikler! Seviye ${msg.round_num || ''} galibi sensin!`;
         statusEl.className = 'status ready';
         if (navigator.vibrate) navigator.vibrate([80, 40, 120]);
       } else {
         playFlaskCrack();
-        statusEl.textContent = `Rauntu ${msg.winner_name || 'Rakip'} kazandı!`;
+        statusEl.textContent = `Seviye ${msg.round_num || ''} galibi: ${msg.winner_name || 'Rakip'}!`;
         statusEl.className = 'status error';
       }
       if (msg.scores) {
@@ -2404,14 +2455,28 @@
         oppDuelScore = msg.scores[otherId] || 0;
         renderDuelStars(myDuelScore, oppDuelScore);
       }
+      if (msg.player_lives) {
+        const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
+        myDuelLivesVal = msg.player_lives[myPlayerId] !== undefined ? msg.player_lives[myPlayerId] : 3;
+        oppDuelLivesVal = msg.player_lives[otherId] !== undefined ? msg.player_lives[otherId] : 3;
+        renderDuelLives(myDuelLivesVal, oppDuelLivesVal);
+        updateLives(myDuelLivesVal);
+      }
     }
 
     if (msg.type === 'duel_round_draw') {
       gridEl.classList.add('disabled');
       timerWrap.classList.remove('visible');
-      statusEl.textContent = 'Raunt berabere sonuçlandı!';
+      statusEl.textContent = `Seviye ${msg.round_num || ''} berabere sonuçlandı!`;
       statusEl.className = 'status';
       playTone(440, 'triangle', 0.2, 0.1);
+      if (msg.player_lives) {
+        const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
+        myDuelLivesVal = msg.player_lives[myPlayerId] !== undefined ? msg.player_lives[myPlayerId] : 3;
+        oppDuelLivesVal = msg.player_lives[otherId] !== undefined ? msg.player_lives[otherId] : 3;
+        renderDuelLives(myDuelLivesVal, oppDuelLivesVal);
+        updateLives(myDuelLivesVal);
+      }
     }
 
     if (msg.type === 'duel_match_over') {
@@ -2423,13 +2488,19 @@
       if (duelResultTrophy) duelResultTrophy.textContent = isMatchWinner ? '🏆' : '🕯️';
       if (duelMatchSub) {
         duelMatchSub.textContent = isMatchWinner
-          ? 'Muazzam! Ebû Bekir er-Râzî seni Kitâbü\'l-Esrâr\'ın yeni üstadı ilan etti!'
-          : `${msg.winner_name || 'Rakip'} 3 raunt kazanarak şampiyon oldu. Pes etme!`;
+          ? `Muazzam zafer! Rakibin 3 canı tükendi. Tabîb Ekmeleddin seni Konya Dârüşşifası'nın yeni baş hekimi ilan etti!`
+          : `3 canın tükendi ve elendin. Seviye ${msg.level_reached || 1}'e kadar direndin. Dârüşşifayı ${msg.winner_name || 'Rakip'} kazandı!`;
       }
       const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
       const sMine = (msg.scores && msg.scores[myPlayerId]) || 0;
       const sOpp = (msg.scores && msg.scores[otherId]) || 0;
-      if (duelFinalScoreDisplay) duelFinalScoreDisplay.textContent = `${sMine}  —  ${sOpp}`;
+      if (duelFinalScoreDisplay) duelFinalScoreDisplay.textContent = `${sMine} Seviye  —  ${sOpp} Seviye`;
+      if (msg.player_lives) {
+        myDuelLivesVal = msg.player_lives[myPlayerId] !== undefined ? msg.player_lives[myPlayerId] : 0;
+        oppDuelLivesVal = msg.player_lives[otherId] !== undefined ? msg.player_lives[otherId] : 0;
+        renderDuelLives(myDuelLivesVal, oppDuelLivesVal);
+        updateLives(myDuelLivesVal);
+      }
       if (duelMatchOverModal) duelMatchOverModal.classList.remove('hidden');
       if (isMatchWinner) {
         playMilestoneFanfare();
@@ -2449,7 +2520,11 @@
       }
       myDuelScore = 0;
       oppDuelScore = 0;
+      myDuelLivesVal = 3;
+      oppDuelLivesVal = 3;
       renderDuelStars(0, 0);
+      renderDuelLives(3, 3);
+      updateLives(3);
     }
 
     if (msg.type === 'round_success') {
@@ -2472,10 +2547,17 @@
     }
 
     if (msg.type === 'life_lost') {
+      if (msg.target && msg.target !== myPlayerId) return;
       if (msg.lives !== undefined) {
         updateLives(msg.lives);
         const lostFlask = document.getElementById('flask' + (msg.lives + 1));
         if (lostFlask) lostFlask.classList.add('shake');
+      }
+      if (isDuelMode && msg.player_lives) {
+        const otherId = myPlayerId === 'player_1' ? 'player_2' : 'player_1';
+        myDuelLivesVal = msg.player_lives[myPlayerId] !== undefined ? msg.player_lives[myPlayerId] : 3;
+        oppDuelLivesVal = msg.player_lives[otherId] !== undefined ? msg.player_lives[otherId] : 3;
+        renderDuelLives(myDuelLivesVal, oppDuelLivesVal);
       }
       updateCombo(0);
       playFlaskCrack();
