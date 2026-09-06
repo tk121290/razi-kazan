@@ -1289,7 +1289,7 @@
 </div>
 
 <!-- ── Erciyes Kulüp, Künye & Portalı ── -->
-<div class="modal-backdrop hidden" id="creditsModal">
+<div class="modal-backdrop hidden" id="creditsModal" style="z-index: 1200;">
   <div class="modal-card" style="max-width: 560px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
@@ -1300,6 +1300,17 @@
     </div>
     <div class="modal-body" style="padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; max-height: 75vh; overflow-y: auto;">
       
+      <!-- Oyun Bittiğinde Görünen Tebrik/Bilgi Başlığı -->
+      <div id="creditsGameOverBanner" class="hidden" style="background: linear-gradient(135deg, #2e170c, #1a0e08); border: 1px solid var(--gold); border-radius: 8px; padding: 10px 14px; text-align: center;">
+        <span style="font-size: .70rem; color: var(--gold); font-weight: 700; letter-spacing: .08em; display: block;">🏁 OYUN SONA ERDİ</span>
+        <div style="font-size: .92rem; color: #fff; font-weight: 800; margin-top: 2px;">
+          Emek ve Katkılarınız İçin Teşekkür Ederiz!
+        </div>
+        <div style="font-size: .72rem; color: var(--ink); margin-top: 2px;">
+          Anadolu Tıp Tarihi Kulübü & Gürgen Ekibi Künyesi
+        </div>
+      </div>
+
       <!-- Sinematik Film Sonu Kayan Jenerik -->
       <div class="cinema-credits-container" title="Duraklatmak için dokunun veya fareyi üzerine getirin">
         <div class="cinema-credits-crawl">
@@ -1386,12 +1397,22 @@
         </div>
       </div>
 
+      <!-- Oyun Sonu / Skor & Hızlı Başlatma Butonları -->
+      <div style="display: flex; gap: 8px; margin-top: 4px;">
+        <button type="button" id="creditsCloseToScoreBtn" class="leaderboard-link-btn" style="flex: 1; padding: 10px; font-size: .80rem; background: #25160d; border: 1px solid var(--gold); color: var(--gold-lt); text-align: center; cursor: pointer;">
+          📊 Skoru Gör & Kaydet
+        </button>
+        <button type="button" id="creditsResetBtn" class="modal-reset-btn" style="flex: 1; padding: 10px; font-size: .80rem; background: linear-gradient(135deg, #2b7a4b, #194d2e); color: #fff; font-weight: 700; border: none; border-radius: 6px; cursor: pointer;">
+          ↻ Yeni Oyun
+        </button>
+      </div>
+
     </div>
   </div>
 </div>
 
 <!-- ── Tabîb Ekmeleddin (Bey Hekim) Kimdir? Modalı ── -->
-<div class="modal-backdrop hidden" id="ekmeleddinBioModal">
+<div class="modal-backdrop hidden" id="ekmeleddinBioModal" style="z-index: 1300;">
   <div class="modal-card" style="max-width: 520px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
@@ -1610,10 +1631,13 @@
   const prologueBadge         = document.getElementById('prologueBadge');
   const prologueStartBtn      = document.getElementById('prologueStartBtn');
 
-  const creditsModal          = document.getElementById('creditsModal');
-  const closeCreditsBtn       = document.getElementById('closeCreditsBtn');
-  const openCreditsBtn        = document.getElementById('openCreditsBtn');
-  const openCreditsBtnDuel    = document.getElementById('openCreditsBtnDuel');
+  const creditsModal           = document.getElementById('creditsModal');
+  const closeCreditsBtn        = document.getElementById('closeCreditsBtn');
+  const openCreditsBtn         = document.getElementById('openCreditsBtn');
+  const openCreditsBtnDuel     = document.getElementById('openCreditsBtnDuel');
+  const creditsGameOverBanner  = document.getElementById('creditsGameOverBanner');
+  const creditsCloseToScoreBtn = document.getElementById('creditsCloseToScoreBtn');
+  const creditsResetBtn        = document.getElementById('creditsResetBtn');
 
   const ekmeleddinBioModal         = document.getElementById('ekmeleddinBioModal');
   const closeEkmeleddinBioBtn      = document.getElementById('closeEkmeleddinBioBtn');
@@ -2145,6 +2169,7 @@
 
   modalResetBtn.addEventListener('click', () => {
     gameOverModal.classList.add('hidden');
+    if (creditsModal) creditsModal.classList.add('hidden');
     if (navigator.vibrate) navigator.vibrate(22);
     if (socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ button: 'reset', player_id: myPlayerId }));
@@ -2186,8 +2211,66 @@
     }
   }
 
-  setupModalToggle(openCreditsBtn, creditsModal, closeCreditsBtn);
-  setupModalToggle(openCreditsBtnDuel, creditsModal, closeCreditsBtn);
+  function openCredits(fromGameOver = false) {
+    if (!creditsModal) return;
+    if (creditsGameOverBanner) {
+      if (fromGameOver) {
+        creditsGameOverBanner.classList.remove('hidden');
+      } else {
+        creditsGameOverBanner.classList.add('hidden');
+      }
+    }
+    const crawl = creditsModal.querySelector('.cinema-credits-crawl');
+    if (crawl) {
+      crawl.style.animation = 'none';
+      void crawl.offsetWidth;
+      crawl.style.animation = '';
+    }
+    creditsModal.classList.remove('hidden');
+  }
+
+  if (openCreditsBtn) {
+    openCreditsBtn.addEventListener('click', () => {
+      openCredits(false);
+      playTone(580, 'sine', 0.08, 0.08);
+    });
+  }
+  if (openCreditsBtnDuel) {
+    openCreditsBtnDuel.addEventListener('click', () => {
+      openCredits(false);
+      playTone(580, 'sine', 0.08, 0.08);
+    });
+  }
+  if (closeCreditsBtn && creditsModal) {
+    closeCreditsBtn.addEventListener('click', () => creditsModal.classList.add('hidden'));
+  }
+  if (creditsModal) {
+    creditsModal.addEventListener('click', (e) => {
+      if (e.target === creditsModal) creditsModal.classList.add('hidden');
+    });
+  }
+  if (creditsCloseToScoreBtn) {
+    creditsCloseToScoreBtn.addEventListener('click', () => {
+      if (creditsModal) creditsModal.classList.add('hidden');
+      if (isDuelMode) {
+        if (duelMatchOverModal) duelMatchOverModal.classList.remove('hidden');
+      } else {
+        if (gameOverModal) gameOverModal.classList.remove('hidden');
+      }
+    });
+  }
+  if (creditsResetBtn) {
+    creditsResetBtn.addEventListener('click', () => {
+      if (creditsModal) creditsModal.classList.add('hidden');
+      if (gameOverModal) gameOverModal.classList.add('hidden');
+      if (duelMatchOverModal) duelMatchOverModal.classList.add('hidden');
+      if (navigator.vibrate) navigator.vibrate(22);
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ button: 'reset', player_id: myPlayerId }));
+      }
+    });
+  }
+
   setupModalToggle(openEkmeleddinBioBtn, ekmeleddinBioModal, closeEkmeleddinBioBtn);
   setupModalToggle(openEkmeleddinBioBtnDuel, ekmeleddinBioModal, closeEkmeleddinBioBtn);
   setupModalToggle(openBioModalFromCreditsBtn, ekmeleddinBioModal, closeEkmeleddinBioBtn);
@@ -2434,6 +2517,7 @@
       timerWrap.classList.remove('visible');
       resetBtn.classList.remove('visible');
       gameOverModal.classList.add('hidden');
+      if (creditsModal) creditsModal.classList.add('hidden');
       if (prologueModal) prologueModal.classList.add('hidden');
       if (duelLobbyModal) duelLobbyModal.classList.add('hidden');
       if (duelMatchOverModal) duelMatchOverModal.classList.add('hidden');
@@ -2661,6 +2745,9 @@
       } else {
         playFlaskCrack();
       }
+      setTimeout(() => {
+        openCredits(true);
+      }, 1500);
     }
 
     if (msg.type === 'duel_lobby_reset') {
@@ -2753,6 +2840,9 @@
       playerNickname.value = localStorage.getItem('razi_nickname') || '';
       saveStatusMsg.textContent = '';
       gameOverModal.classList.remove('hidden');
+
+      // Oyun bittiğinde doğrudan kulüp & künye modalını aç
+      openCredits(true);
     }
   });
 
@@ -2763,6 +2853,7 @@
     }
     resetBtn.classList.remove('visible');
     gameOverModal.classList.add('hidden');
+    if (creditsModal) creditsModal.classList.add('hidden');
   });
 </script>
 </body>
