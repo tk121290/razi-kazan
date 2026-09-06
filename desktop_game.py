@@ -80,12 +80,12 @@ MATERIALS, MATERIAL_NAMES, MATERIAL_SYMBOLS, MATERIAL_NOTES, COLORS, COLORS_LT =
 
 # ─── Tarihi Ebû Bekir er-Râzî Reçeteleri (Dönüm Noktası Seviyeleri) ───────────
 HISTORICAL_RECIPES = {
-    5:   ("Tuz Ruhu Damıtımı", ("tuz", "kukurt", "tuz")),
+    5:   ("Tuz Asidi Damıtımı", ("tuz", "kukurt", "tuz")),
     10:  ("Zaç & Demir Sentezi", ("tuz", "demir", "bakir", "civa")),
-    25:  ("Sirke Ruhu ", ("sirke", "sap", "tuz", "bakir", "civa")),
+    25:  ("Sirke Özütü", ("sirke", "sap", "tuz", "bakir", "civa")),
     50:  ("El-Kühül Damıtımı", ("sirke", "kukurt", "civa", "nisadir", "altin")),
     75:  ("Tıbbi Panzehir Sentezi", ("altin", "gumus", "civa", "safran", "afyon", "kafur")),
-    100: ("Büyük İksir (İksir-i Âzam)", ("civa", "kukurt", "altin", "gumus", "buyuk_iksir")),
+    100: ("Büyük Bileşim", ("civa", "kukurt", "altin", "gumus", "buyuk_iksir")),
 }
 
 # ─── Renk Paleti ──────────────────────────────────────────────────────────────
@@ -498,9 +498,9 @@ class HintEngine:
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            self._model  = genai.GenerativeModel("gemini-1.5-flash")
+            self._model  = genai.GenerativeModel("gemini-3.6-flash")
             self.enabled = True
-            print("HintEngine: Gemini API bağlantısı kuruldu.")
+            print("HintEngine: Gemini API bağlantısı kuruldu (gemini-3.6-flash).")
         except Exception as e:
             print(f"HintEngine: Gemini başlatılamadı — {e}")
 
@@ -518,7 +518,7 @@ class HintEngine:
         correct_tr = MATERIAL_NAMES.get(correct, correct)
         wrong_tr   = MATERIAL_NAMES.get(wrong,   wrong)
         prompt = (
-            f"Sen Tabîb Ekmeleddin'in (Bey Hekim) ruhusun. 13. yüzyıl Selçuklu başhekimi ve Mevlânâ'nın tabibi.\n"
+            f"Sen Tabîb Ekmeleddin'in (Bey Hekim) temsilcisisin. 13. yüzyıl Selçuklu başhekimi ve Mevlânâ'nın tabibi.\n"
             f"Oyuncu '{wrong_tr}' seçti ama doğrusu '{correct_tr}' idi.\n"
             f"'{correct_tr}' hakkında tek cümle, dönemsel ve hikâyeli, "
             f"maksimum 18 kelime, sade Türkçe ipucu ver.\n"
@@ -529,7 +529,14 @@ class HintEngine:
             text = response.text.strip().strip('"').strip("'")
             self._result_q.put({"text": text, "correct": correct})
         except Exception as e:
-            print(f"HintEngine: API hatası — {e}")
+            try:
+                import google.generativeai as genai
+                fallback = genai.GenerativeModel("gemini-3.5-flash-lite")
+                response = fallback.generate_content(prompt)
+                text = response.text.strip().strip('"').strip("'")
+                self._result_q.put({"text": text, "correct": correct})
+            except Exception as e2:
+                print(f"HintEngine: API hatası — {e} / {e2}")
 
     # Her frame çağrılır; yeni ipucu varsa (text, material) döndürür
     def poll(self) -> tuple[str, str] | None:
@@ -594,14 +601,21 @@ class Game:
 
     def __init__(self, server_url: str = "ws://localhost:8000"):
         pygame.init()
-        # FULLSCREEN | SCALED: 1100×700 mantıksal çözünürlüğü tam ekrana ölçekler,
-        # oran bozulmaz (siyah kenarlık eklenebilir). ESC ile çıkılır.
+        # Gerçek ekran çözünürlüğünde aç; içerik mantıksal yüzeyden taşmadan ölçeklenir.
         self.screen = pygame.display.set_mode(
-            (WIDTH, HEIGHT), pygame.FULLSCREEN | pygame.SCALED
+            (0, 0), pygame.FULLSCREEN
         )
         pygame.display.set_caption("Tabîb Ekmeleddin'in Kazanı (Bey Hekim)")
         self.clock = pygame.time.Clock()
         self.pixel_surface = pygame.Surface((WIDTH, HEIGHT))
+        screen_width, screen_height = self.screen.get_size()
+        self.display_scale = max(screen_width / WIDTH, screen_height / HEIGHT)
+        self.display_width = round(WIDTH * self.display_scale)
+        self.display_height = round(HEIGHT * self.display_scale)
+        self.display_offset = (
+            (screen_width - self.display_width) // 2,
+            (screen_height - self.display_height) // 2,
+        )
 
         # ── Fontlar ──────────────────────────────────────────────────────────
         _fp = os.path.join(os.path.dirname(__file__), "assets", "PressStart2P.ttf")
@@ -806,7 +820,10 @@ class Game:
                         if self.state == GameState.CREDITS_VIEW:
                             self.credits_scroll_y = max(0.0, self.credits_scroll_y - event.y * 35.0)
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        self._handle_mouse_click(event.pos)
+                        ox, oy = self.display_offset
+                        x = round((event.pos[0] - ox) / self.display_scale)
+                        y = round((event.pos[1] - oy) / self.display_scale)
+                        self._handle_mouse_click((x, y))
 
                 self._consume_network_events()
                 self._update()
@@ -1896,9 +1913,16 @@ class Game:
         self._draw_flash()
 
         # Kamera sallanması — final blit
-        ox, oy = self.shake_offset
+        shake_x, shake_y = self.shake_offset
         self.screen.fill(SHADOW)
-        self.screen.blit(self.pixel_surface, (ox, oy))
+        scaled_surface = pygame.transform.smoothscale(
+            self.pixel_surface, (self.display_width, self.display_height)
+        )
+        self.screen.blit(
+            scaled_surface,
+            (self.display_offset[0] + round(shake_x * self.display_scale),
+             self.display_offset[1] + round(shake_y * self.display_scale)),
+        )
 
     def _draw_sprites(self) -> None:
         now = time.monotonic()
@@ -2244,7 +2268,7 @@ class Game:
         pygame.draw.rect(self.pixel_surface, RED, box, 2, border_radius=16)
 
         # Başlık
-        self._text_center("AYİN SONA ERDİ", self.font_title, RED_LT, cx, 120)
+        self._text_center("OTURUM SONA ERDİ", self.font_title, RED_LT, cx, 120)
         self._draw_separator(box.x + 20, 155, box.right - 20)
 
         # Ulaşılan seviye
@@ -3050,7 +3074,7 @@ class Game:
         pygame.draw.rect(self.pixel_surface, GOLD, box, 2, border_radius=16)
 
         # Parşömen Başlığı
-        self._text("📜 KONYA DÂRÜŞŞİFASI VE AYİNİN SIRRI", self.font_medium, GOLD_LT, (box.x + 30, box.y + 22))
+        self._text("📜 KONYA DÂRÜŞŞİFASI VE UYGULAMANIN DETAYLARI", self.font_medium, GOLD_LT, (box.x + 30, box.y + 22))
         self._draw_separator(box.x + 20, box.y + 52, box.right - 20)
 
         # Açıklama Metni (Multiline)
@@ -3061,7 +3085,7 @@ class Game:
         self._draw_separator(box.x + 20, box.bottom - 54, box.right - 20)
         self._text("💡 Hem ekrandan hem de telefonundaki butona basarak başlayabilirsin!", self.font_body, GOLD, (box.x + 24, box.bottom - 40))
 
-        # Ana Başlat Butonu (Kullanıcı kesin kuralı: "ayine başla yazmasın direkt başla yazsın")
+        # Ana Başlat Butonu
         btn_start = pygame.Rect(WIDTH // 2 - 160, 580, 320, 54)
         btn_hover = btn_start.collidepoint(mouse_pos)
         self._draw_panel(btn_start, radius=12)
