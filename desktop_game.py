@@ -1708,11 +1708,13 @@ class Game:
             self.last_message = "Tabîb Ekmeleddin malzemeleri hazırlıyor..."
 
         # Şerefeddin Sabuncuoğlu Ziyareti:
-        # Challenge için değil; her seviyede selam vermek, başarı dilemek ve el sallamak için gelebilir
+        # 1. seviyede gelmez; seviye 2'den itibaren rastgele seviyelerde selam vermeye uğrar
         if hasattr(self, "sabuncuoglu") and not self.sabuncuoglu.is_active:
-            # 1. seviyede oyuncuyla tanışmak için kesin gelir; sonraki turlarda %55 ihtimalle uğrar
-            if self.level == 1 or random.random() < 0.55:
-                self.sabuncuoglu.start_guest_visit(is_duel=False, level=self.level)
+            if self.level > 1:
+                last_lvl = getattr(self.sabuncuoglu, "last_guest_level", 0)
+                # En az 2 seviye arayla ve %32 rastgele ihtimalle selam verir
+                if (self.level - last_lvl >= 2) and (random.random() < 0.32):
+                    self.sabuncuoglu.start_guest_visit(is_duel=False, level=self.level)
 
         self._spawn_particles(530, 385, GOLD, 22)
 
@@ -2606,9 +2608,9 @@ class Game:
         self._draw_speech_bubble()
         self._draw_info_card()
 
-        # Sabuncuoğlu Şerefeddin alt konuşma paneli
+        # Sabuncuoğlu Şerefeddin konuşma balonu (başının üzerinde)
         if hasattr(self, "sabuncuoglu"):
-            self._draw_sabuncuoglu_dialogue()
+            self._draw_sabuncuoglu_bubble()
 
         self._draw_particles()
         self._draw_flash()
@@ -3654,10 +3656,10 @@ class Game:
 
         self.pixel_surface.blit(surf, (box_x, box_y))
 
-    # ── Sabuncuoğlu Şerefeddin Alt Konuşma Paneli ─────────────────────────────
+    # ── Sabuncuoğlu Şerefeddin Konuşma Balonu (Başının Üzerinde) ─────────────
 
-    def _draw_sabuncuoglu_dialogue(self) -> None:
-        """Ekranın alt kısmında Sabuncuoğlu Şerefeddin'in zengin konuşma kutusunu çizer."""
+    def _draw_sabuncuoglu_bubble(self) -> None:
+        """Sabuncuoğlu Şerefeddin'in başı üzerinde konuşma balonu çizer (alt paneli kapatmaz)."""
         if not hasattr(self, "sabuncuoglu") or not self.sabuncuoglu.is_speaking:
             return
 
@@ -3665,42 +3667,7 @@ class Game:
         if not text:
             return
 
-        now = time.monotonic()
-        elapsed = now - self.sabuncuoglu.dialogue_started
-        dur = self.sabuncuoglu.dialogue_duration
-        progress = min(1.0, elapsed / max(0.1, dur))
-
-        box_x = 90
-        box_y = 530
-        box_w = 920
-        box_h = 145
-
-        dialogue_surf = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
-
-        # 1. Koyu parşömen & zümrüt zemin
-        pygame.draw.rect(dialogue_surf, (16, 22, 18, 245), (0, 0, box_w, box_h), border_radius=12)
-        # Çift çerçeve (Altın dış çerçeve, tunç iç çerçeve)
-        pygame.draw.rect(dialogue_surf, (214, 168, 72), (0, 0, box_w, box_h), 2, border_radius=12)
-        pygame.draw.rect(dialogue_surf, (60, 95, 75), (4, 4, box_w - 8, box_h - 8), 1, border_radius=10)
-
-        # 2. Sol köşede Sabuncuoğlu Şerefeddin Portresi
-        if hasattr(self.sabuncuoglu, "portrait") and self.sabuncuoglu.portrait:
-            dialogue_surf.blit(self.sabuncuoglu.portrait, (14, 14))
-
-        # 3. Başlık Şeridi
-        title_ts = self.font_body_bold.render("✦ SABUNCUOĞLU ŞEREFEDDİN", True, (245, 215, 110))
-        dialogue_surf.blit(title_ts, (115, 14))
-
-        sub_ts = self.font_tiny.render(
-            "Amasya Dârüşşifası Başhekimi · Mücerreb-nâme & Cerrahiyyetü'l-Haniyye Müellifi",
-            True, (175, 195, 180)
-        )
-        dialogue_surf.blit(sub_ts, (116, 36))
-
-        # Altın ayraç çizgisi
-        pygame.draw.line(dialogue_surf, (140, 110, 50), (115, 50), (box_w - 20, 50), 1)
-
-        # 4. Diyalog Metni (Satır kaydırmalı word-wrap)
+        # Varsa 'Sabuncuoğlu Şerefeddin:' önekini temizle
         clean_text = text
         if clean_text.startswith("Sabuncuoğlu Şerefeddin:"):
             clean_text = clean_text[len("Sabuncuoğlu Şerefeddin:"):].strip().strip("'\"")
@@ -3708,10 +3675,10 @@ class Game:
         words = clean_text.split()
         lines = []
         cur_line = []
-        max_w = box_w - 145
+        max_line_w = 260
         for w in words:
             test = " ".join(cur_line + [w])
-            if self.font_body.size(test)[0] > max_w:
+            if self.font_small.size(test)[0] > max_line_w:
                 if cur_line:
                     lines.append(" ".join(cur_line))
                 cur_line = [w]
@@ -3719,29 +3686,52 @@ class Game:
                 cur_line.append(w)
         if cur_line:
             lines.append(" ".join(cur_line))
+        if not lines:
+            return
 
-        line_y = 58
-        for line in lines[:3]:
-            s_ts = self.font_body.render(line, True, (10, 10, 10))
-            dialogue_surf.blit(s_ts, (116, line_y + 1))
-            t_ts = self.font_body.render(line, True, (252, 248, 240))
-            dialogue_surf.blit(t_ts, (115, line_y))
-            line_y += 22
+        line_h = 16
+        pad_x, pad_y = 12, 8
+        header_h = 18
+        bw = min(300, max(self.font_small.size(l)[0] for l in lines) + pad_x * 2)
+        bw = max(bw, 180)
+        bh = header_h + len(lines) * line_h + pad_y * 2
 
-        # 5. Rozet & Süre Çubuğu
-        badge_text = "📜 TERS DOLDURMA SINAVI (4X SÜRE)" if self.sabuncuoglu.mode == "reverse" else "🌿 AMASYA DÂRÜŞŞİFASI ZİYARETİ"
-        badge_color = (230, 160, 255) if self.sabuncuoglu.mode == "reverse" else (120, 220, 160)
-        b_ts = self.font_tiny.render(badge_text, True, badge_color)
-        dialogue_surf.blit(b_ts, (box_w - b_ts.get_width() - 20, 16))
+        # Sabuncuoğlu'nun anlık x pozisyonuna göre konumlandır
+        bx = int(self.sabuncuoglu.x)
+        box_x = int(bx - bw // 2)
+        box_x = max(10, min(WIDTH - bw - 10, box_x))
+        # Sabuncuoğlu'nun başı (floor_y - 170 civarı)
+        box_y = int(self.floor_y - 180 - bh)
+        box_y = max(20, box_y)
 
-        # Süre ilerleme çizgisi
-        bar_w = box_w - 135
-        rem_w = int(bar_w * (1.0 - progress))
-        if rem_w > 0:
-            pygame.draw.rect(dialogue_surf, (40, 60, 50), (115, box_h - 12, bar_w, 4), border_radius=2)
-            pygame.draw.rect(dialogue_surf, (212, 168, 72), (115, box_h - 12, rem_w, 4), border_radius=2)
+        surf = pygame.Surface((bw, bh + 12), pygame.SRCALPHA)
+        rect = pygame.Rect(0, 0, bw, bh)
 
-        self.pixel_surface.blit(dialogue_surf, (box_x, box_y))
+        # Açık parşömen gövde (zümrüt/altın kenarlıklı)
+        pygame.draw.rect(surf, (248, 252, 246), rect, border_radius=10)
+        pygame.draw.rect(surf, (35, 80, 55), rect, 2, border_radius=10)
+
+        # Başlık rozeti
+        header_surf = self.font_tiny.render("✦ Sabuncuoğlu Şerefeddin", True, (35, 95, 60))
+        surf.blit(header_surf, (pad_x, pad_y - 1))
+        pygame.draw.line(surf, (180, 205, 190), (pad_x, pad_y + 14), (bw - pad_x, pad_y + 14), 1)
+
+        # Kuyruk (Sabuncuoğlu'nun başına doğru)
+        tail_x = int(bx - box_x)
+        tail_x = max(16, min(bw - 16, tail_x))
+        tail_points = [(tail_x - 7, bh - 1), (tail_x + 7, bh - 1), (tail_x, bh + 10)]
+        pygame.draw.polygon(surf, (248, 252, 246), tail_points)
+        pygame.draw.line(surf, (35, 80, 55), (tail_x - 7, bh - 1), (tail_x, bh + 10), 2)
+        pygame.draw.line(surf, (35, 80, 55), (tail_x + 7, bh - 1), (tail_x, bh + 10), 2)
+
+        # Metin satırları
+        ty = pad_y + header_h
+        for ln in lines:
+            ts = self.font_small.render(ln, True, (25, 20, 15))
+            surf.blit(ts, (pad_x, ty))
+            ty += line_h
+
+        self.pixel_surface.blit(surf, (box_x, box_y))
 
     # ── Tarihi Bilgi Kartı ────────────────────────────────────────────────────
 
