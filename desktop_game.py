@@ -51,11 +51,52 @@ def local_network_host() -> str:
 
 
 NETWORK_HOST = local_network_host()
-# Cloudflare Tunnel aktifken RAZI_PLAY_URL ortam değişkeni tünel URL'ini taşır.
-# desktop_game.py her zaman yerel WS ile bağlanır; sadece QR kodu/tarayıcı URL'i değişir.
+
+
+def resolve_play_url() -> tuple[str, bool]:
+    """
+    Oyuncuların bağlanacağı adresi tespit eder:
+    1. RAZI_PLAY_URL ortam değişkeni (.env veya başlatıcı)
+    2. cloudflared.log dosyasındaki aktif Cloudflare tüneli
+    3. Fallback: Yerel Wi-Fi adresi
+    """
+    # 1. Ortam değişkeni
+    env_url = os.environ.get("RAZI_PLAY_URL", "").strip()
+    if env_url:
+        return env_url, True
+
+    # 2. cloudflared.log dosyasından aktif tünel URL'ini otomatik algıla
+    log_file = Path(__file__).parent / "cloudflared.log"
+    if log_file.exists():
+        try:
+            content = log_file.read_text(encoding="utf-8", errors="ignore")
+            matches = re.findall(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com", content)
+            if matches:
+                latest_url = matches[-1]
+                try:
+                    req = _urllib.Request(f"{latest_url}/health", headers={"User-Agent": "PygameCheck"})
+                    with _urllib.urlopen(req, timeout=1.2) as resp:
+                        if resp.status == 200:
+                            print(f"[AĞ] Aktif Cloudflare Tüneli otomatik algılandı: {latest_url}/play")
+                            return f"{latest_url}/play", True
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    # 3. Fallback: Yerel Wi-Fi
+    return f"http://{NETWORK_HOST}:{PORT}/play", False
+
+
+PLAY_URL, IS_TUNNEL = resolve_play_url()
 SERVER_URL = f"ws://localhost:{PORT}"                                           # masaüstü her zaman yerel bağlanır
-PLAY_URL   = os.environ.get("RAZI_PLAY_URL", f"http://{NETWORK_HOST}:{PORT}/play")  # oyuncular
 BASE_URL   = PLAY_URL.rsplit('/play', 1)[0] if '/play' in PLAY_URL else f"http://localhost:{PORT}"
+
+if IS_TUNNEL:
+    print(f"[AĞ] QR Kod İnternet Yayını (Cloudflare): {PLAY_URL}")
+else:
+    print(f"[AĞ] QR Kod Yerel Wi-Fi: {PLAY_URL}")
+
 
 WIDTH, HEIGHT = 1100, 700
 # FLOOR_Y Game.__init__ içinde _make_background çağrısından sonra self.floor_y olarak hesaplanır.
@@ -2642,7 +2683,10 @@ class Game:
         self.pixel_surface.blit(qr_scaled, (72, 160))
         self._text("ODA KODU", self.font_small, TEXT_DIM, (100, 474))
         self._text(self.room_id, self.font_large, GOLD_LT, (80, 496))
-        self._text(f"Aynı Wi-Fi ağında: {PLAY_URL}/{self.room_id}"[:50], self.font_tiny, TEXT_DIM, (60, 534))
+        if IS_TUNNEL:
+            self._text("İNTERNET YAYINI (4.5G/5G/WiFi)", self.font_tiny, GREEN_LT, (58, 534))
+        else:
+            self._text(f"Aynı Wi-Fi: {PLAY_URL}/{self.room_id}"[:45], self.font_tiny, TEXT_DIM, (60, 534))
         self._text("Kamera ile QR kodu okutun", self.font_body, GOLD, (108, 564))
 
         # Sağ panel
