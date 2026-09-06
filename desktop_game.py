@@ -32,7 +32,7 @@ try:
 except ImportError:
     pass
 
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8000))
 SCORES_FILE = Path(__file__).parent / "scores.json"
 
 
@@ -51,8 +51,11 @@ def local_network_host() -> str:
 
 
 NETWORK_HOST = local_network_host()
-SERVER_URL = f"ws://{NETWORK_HOST}:{PORT}"
-PLAY_URL = f"http://{NETWORK_HOST}:{PORT}/play"
+# Cloudflare Tunnel aktifken RAZI_PLAY_URL ortam değişkeni tünel URL'ini taşır.
+# desktop_game.py her zaman yerel WS ile bağlanır; sadece QR kodu/tarayıcı URL'i değişir.
+SERVER_URL = f"ws://localhost:{PORT}"                                           # masaüstü her zaman yerel bağlanır
+PLAY_URL   = os.environ.get("RAZI_PLAY_URL", f"http://{NETWORK_HOST}:{PORT}/play")  # oyuncular
+
 WIDTH, HEIGHT = 1100, 700
 # FLOOR_Y Game.__init__ içinde _make_background çağrısından sonra self.floor_y olarak hesaplanır.
 # Zemin yüzdesi: piksel analizi → taş zemin y≈90% from top (502/558)
@@ -327,6 +330,8 @@ class NetworkBridge:
                     async def receiver() -> None:
                         while not self.stop_requested.is_set():
                             message = json.loads(await socket.recv())
+                            if isinstance(message, dict) and message.get("type") == "ping":
+                                continue
                             self.events.put(message)
 
                     send_task = asyncio.create_task(sender())

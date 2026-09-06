@@ -7,3 +7,4 @@ room_qr.png
 .vscode/
 *.db
 scores.json
+cloudflared.exe

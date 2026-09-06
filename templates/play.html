@@ -2321,6 +2321,7 @@
 
   socket.addEventListener('message', event => {
     const msg = JSON.parse(event.data);
+    if (msg.type === 'ping') return;
 
     // ── Bağlantı & Lobi Mesajları ──
     if (msg.type === 'connected') {

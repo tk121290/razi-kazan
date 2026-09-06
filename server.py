@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import html
 import logging
+import os
 import re
 import time
 from collections import defaultdict
@@ -11,6 +13,7 @@ from typing import Any
 
 import aiosqlite
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -18,7 +21,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("beyhekim")
 
-DB_PATH = Path(__file__).parent / "leaderboard.db"
+DB_PATH = Path(os.environ.get("DB_DIR", str(Path(__file__).parent))) / "leaderboard.db"
+PORT    = int(os.environ.get("PORT", 8000))
 
 # ── Güvenlik Sabitleri ────────────────────────────────────────────────────────
 ROOM_ID_PATTERN = re.compile(r"^[A-Z0-9_-]{3,12}$")
@@ -29,6 +33,31 @@ SCORE_POST_LIMIT_PER_MIN = 10
 
 # IP bazlı rate-limiter
 score_rate_tracker: dict[str, list[float]] = defaultdict(list)
+
+
+# ── Cloudflare Tünel Keepalive (100s timeout önlemi) ─────────────────────────
+
+async def _ws_keepalive_loop() -> None:
+    """Cloudflare Tunnel ücretsiz katmanında 100 saniye hareketsiz WebSocket
+    kapatılır. Her 50 saniyede tüm bağlı soketlere ping göndererek tüneli
+    canlı tutarız. İstemci tarafı 'ping' mesajını sessizce yutacak şekilde
+    yazılmıştır."""
+    while True:
+        await asyncio.sleep(50)
+        for room in list(rooms.values()):
+            desktop = room.get("desktop")
+            if isinstance(desktop, WebSocket):
+                try:
+                    await desktop.send_json({"type": "ping"})
+                except Exception:
+                    pass
+            for p_info in list(room.get("players", {}).values()):
+                ws = p_info.get("ws")
+                if ws:
+                    try:
+                        await ws.send_json({"type": "ping"})
+                    except Exception:
+                        pass
 
 
 # ── Başlangıç / Kapatma ───────────────────────────────────────────────────────
@@ -60,7 +89,11 @@ async def lifespan(app: FastAPI):
         await db.commit()
 
     log.info("Database ready: %s", DB_PATH)
+    # Cloudflare tünel keepalive görevini başlat
+    keepalive_task = asyncio.create_task(_ws_keepalive_loop())
+    log.info("WebSocket keepalive task started (50s interval).")
     yield
+    keepalive_task.cancel()
 
 
 app = FastAPI(title="Tabîb Ekmeleddin'in Kazanı — Sunucu", lifespan=lifespan)
@@ -87,6 +120,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS — Cloudflare tüneli üzerinden farklı origin'lerden gelen isteklere izin ver
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
@@ -661,5 +702,5 @@ async def room_socket(websocket: WebSocket, room_id: str) -> None:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("server:app", host="0.0.0.0", port=PORT, reload=False)
 
