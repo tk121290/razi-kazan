@@ -20,7 +20,20 @@ py -m pip install -r requirements.txt
 
 ## Çalıştırma
 
-Bir terminalde (telefonun aynı Wi-Fi ağından erişebilmesi için `0.0.0.0` kullanılır):
+### 🌐 Seçenek A — İnternet Üzerinden Oynatma (Aynı WiFi Gerekmez - Önerilen)
+
+Oyuncuların aynı WiFi ağına bağlanması gerekmez; 4.5G/5G mobil veri veya herhangi bir internet bağlantısıyla oynayabilirler:
+
+```powershell
+.\baslat_internetle.bat
+```
+*(Arka planda FastAPI sunucusunu ve ücretsiz, SSL sertifikalı Cloudflare tünelini başlatarak QR koduna küresel linki enjekte eder).*
+
+---
+
+### 🏠 Seçenek B — Yerel Ağda (Aynı WiFi) Çalıştırma
+
+Bir terminalde:
 
 ```powershell
 py -m uvicorn server:app --host 0.0.0.0 --port 8000
@@ -32,7 +45,8 @@ Başka bir terminalde:
 py desktop_game.py
 ```
 
-Pygame penceresindeki QR kodu telefonla okut. Telefon ve masaüstü aynı sunucuya erişebilmeli; Render veya uzak bir sunucuda `SERVER_URL` ve `PLAY_URL` değerlerini dağıtım adresiyle değiştirip WebSocket için `wss://` kullan.
+Pygame penceresindeki QR kodu telefonla okut. Telefon ve masaüstü aynı WiFi ağında olmalıdır.
+
 
 Pygame yerel IP adresini otomatik bulur ve QR koduna örneğin `http://192.168.1.25:8000/play/ABC-123` adresini koyar. Otomatik IP yanlış seçilirse PowerShell'de şu şekilde belirtebilirsin:
 
