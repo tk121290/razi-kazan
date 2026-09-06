@@ -82,7 +82,7 @@ MATERIALS, MATERIAL_NAMES, MATERIAL_SYMBOLS, MATERIAL_NOTES, COLORS, COLORS_LT =
 HISTORICAL_RECIPES = {
     5:   ("Tuz Ruhu Damıtımı", ("tuz", "kukurt", "tuz")),
     10:  ("Zaç & Demir Sentezi", ("tuz", "demir", "bakir", "civa")),
-    25:  ("Sirke Ruhu Ayini", ("sirke", "sap", "tuz", "bakir", "civa")),
+    25:  ("Sirke Ruhu ", ("sirke", "sap", "tuz", "bakir", "civa")),
     50:  ("El-Kühül Damıtımı", ("sirke", "kukurt", "civa", "nisadir", "altin")),
     75:  ("Tıbbi Panzehir Sentezi", ("altin", "gumus", "civa", "safran", "afyon", "kafur")),
     100: ("Büyük İksir (İksir-i Âzam)", ("civa", "kukurt", "altin", "gumus", "buyuk_iksir")),
@@ -142,83 +142,75 @@ BEYHEKIM_PROLOGUE_DUEL = (
 RHAZI_PROLOGUE_SINGLE = BEYHEKIM_PROLOGUE_SINGLE
 RHAZI_PROLOGUE_DUEL = BEYHEKIM_PROLOGUE_DUEL
 
-# ── ERÜ Anadolu Tıp Tarihi Topluluğu — Kayan Jenerik (Film Sonu Credits Roll) ──
+# ── Anadolu Tıp Tarihi Kulübü — Kayan Jenerik (Film Sonu Credits Roll) ──
 CREDITS_ROLL_DATA = [
     {
-        "badge": "🏛️ PROJE SAHİBİ VE ORGANİZASYON",
-        "title": "ERÜ ANADOLU TIP TARİHİ TOPLULUĞU",
-        "desc": "Erciyes Üniversitesi Tıp Fakültesi & Kadim Kültür Mirası",
+        "badge": "🌲 ÖZEL SUNUM 🌲",
+        "title": "GÜRGEN EKİBİ",
+        "desc": "ANADOLU TIP TARİHİ KULÜBÜNÜN GÜRGEN EKİBİ TARAFINDAN HAZIRLANMIŞTIR",
         "names": [
-            "Erciyes Üniversitesi Anadolu Tıp Tarihi Topluluğu",
+            "— ANADOLU TIP TARİHİ KULÜBÜ · GÜRGEN EKİBİ —",
         ]
     },
     {
-        "badge": "👑 TOPLULUK YÖNETİMİ & KOORDİNASYON",
-        "title": "GENEL YÖNETİM HEYETİ",
-        "desc": "Yönetim Kurulu Başkanı ve Temsilciler Heyeti",
+        "badge": "💻 PROJEDE EMEĞİ GEÇENLER",
+        "title": "PROJE GELİŞTİRME KURULU",
+        "desc": "Yazılım Mimarisi, Sunucu, Hosting & Görsel Tasarım",
         "names": [
-            "Topluluk Yönetim Kurulu Başkanı",
-            "Yönetim Kurulu Başkan Yardımcısı",
-            "Genel Sekreter & Organizasyon Sorumlusu",
-            "Denetim ve İdare Kurulu Heyeti",
+            "Proje Yöneticisi: Tahsin Efe KARAKÖSE",
+            "Web Sunucusu, Hosting & Debug: Ahmet Yasin MARŞİL",
+            "Tasarım Destek: Mürsel Musa İLBASMIŞ",
+            "Tasarım Destek: Baran PEKDOĞAN",
         ]
     },
     {
-        "badge": "💻 YAZILIM VE OYUN MİMARİSİ",
-        "title": "OYUN MOTORU & BİLİŞİM KURULU",
-        "desc": "FastAPI WebSockets, Python Pygame & Mobil Kumanda",
+        "badge": "🌟 TEŞEKKÜR",
+        "title": "KATKI VE DESTEKLERİYLE",
+        "desc": "Proje Sürecindeki Kıymetli Katkı ve Destekleri İçin",
         "names": [
-            "Oyun Motoru & Mekanik Geliştiricileri",
-            "WebSockets Ağ Mimarisi & Sunucu Ekibi",
-            "Mobil Web Kumandası & Dokunsal Arayüz Ekibi",
+            "Mustafa Safa ŞENBAK",
+            "Yusuf Efe BAYRAKTAR",
+            "Muhammed Serhat TURSUN",
         ]
     },
     {
-        "badge": "🩺 AKADEMİK TIP TARİHİ & DANIŞMANLIK",
-        "title": "KLİNİK SEMİYOLOJİ VE TARİH TETKİK KURULU",
-        "desc": "Tabîb Ekmeleddin (Bey Hekim) Doktrini & Selçuklu Tıbbı",
+        "badge": "👑 ANADOLU TIP YÖNETİMİ",
+        "title": "KULÜP YÖNETİM KURULU",
+        "desc": "Anadolu Tıp Tarihi Kulübü Genel İdare Heyeti",
         "names": [
-            "Tıp Tarihi & Deontoloji Danışmanları",
-            "Selçuklu Dârüşşifaları ve Tabîb Ekmeleddin Araştırma Ekibi",
-            "Klinik Sfigmoloji, Uroskopi ve Galenik Farmakoloji Masası",
+            "Başkan: Mustafa Safa ŞENBAK",
+            "Başkan Yardımcısı: Elif Sude BOSTANCI",
+            "Akademik Başkan Yardımcısı: Tahsin Efe KARAKÖSE",
+            "Faaliyet Sorumlusu: Banu Ece PÜSKÜLLÜOĞLU",
+            "Eğitim Sorumlusu: Baran PEKDOĞAN",
+            "Gürgen Grubu Yöneticisi: Ahmet Yasin MARŞİL",
         ]
     },
     {
-        "badge": "🎨 SANAT, TASARIM VE TEZHİP GRAFİKLERİ",
-        "title": "GÖRSEL İLETİŞİM & TEZHİP SANATI",
-        "desc": "Selçuklu Altın Varak & Turkuazı, Piksel Çizimler",
+        "badge": "📱 SOSYAL MEDYA EKİBİ",
+        "title": "MEDYA & İLETİŞİM",
+        "desc": "Sosyal Medya Koordinasyonu ve Tanıtım",
         "names": [
-            "Tezhipli Selçuklu Risalesi Sanat Ekibi",
-            "Piksel Çizim, Sprite & Karakter Animatörleri",
-            "Simya Kazanı & Parşömen Arayüz Tasarımcıları",
+            "Mina ALKAÇ",
+            "Muhammet Serhat TURSUN",
         ]
     },
     {
-        "badge": "👥 EMEĞİ GEÇEN ARKADAŞLARIMIZ",
-        "title": "TOPLULUK ÜYELERİ & HEKİM ADAYLARI",
-        "desc": "Test, Geri Bildirim ve Katkı Sağlayan Hekim Adayları",
+        "badge": "⚖️ DENETLEME EKİBİ",
+        "title": "DENETİM KURULU",
+        "desc": "Kulüp Faaliyetleri ve İdari Denetim",
         "names": [
-            "ERÜ Anadolu Tıp Tarihi Topluluğu Aktif Üyeleri",
-            "Erciyes Üniversitesi Tıp Fakültesi Öğrencileri",
-            "Tüm Katkı ve Destek Veren Arkadaşlarımız",
+            "Zişan ÇELİK",
+            "Nehir BÜYÜKDOĞAN",
         ]
     },
     {
-        "badge": "🌟 ÖZEL TEŞEKKÜR",
-        "title": "KADİM İLHAM VE MİRAS",
-        "desc": "Tıbbın, Hikmetin ve Şefkatin Işığında",
+        "badge": "📢 BÜYÜK ÇAĞRI",
+        "title": "KULÜBÜMÜZE ÜYE OLMAYI UNUTMAYIN!",
+        "desc": "Erciyes Üniversitesi Anadolu Tıp Tarihi Ailesine Katılın",
         "names": [
-            "Erciyes Üniversitesi Rektörlüğü ve Tıp Fakültesi Dekanlığı",
-            "Tabîb Ekmeleddin el-Nahcivânî (Bey Hekim) Aziz Ruhuna",
-            "Hz. Mevlânâ Celâleddîn-i Rûmî ve Konya Dârüşşifası Hekimleri",
-        ]
-    },
-    {
-        "badge": "📜 ŞİFA VE HİKMET DÜSTURU",
-        "title": "TABÎB EKMELEDDİN'İN SÖZÜ",
-        "desc": "«Gerçek hekim odur ki hastanın derdine derman, ruhuna ve gönlüne şifa ola...»",
-        "names": [
-            "— ERÜ ANADOLU TIP TARİHİ TOPLULUĞU —",
+            "https://kulup.erciyes.edu.tr/uyelik/uyeol",
+            "— ANADOLU TIP TARİHİ KULÜBÜ · GÜRGEN EKİBİ —",
             "KAYSERİ · 2026",
         ]
     }
@@ -1129,7 +1121,7 @@ class Game:
         self.phase_cursor  = 0
         self.phase_started = time.monotonic()
         self.state         = GameState.RHAZI_TURN
-        self.last_message  = f"Tarihi Ayin: {self.recipe_name}" if self.recipe_name else "Tabîb Ekmeleddin malzemeleri hazırlıyor..."
+        self.last_message  = f"Tarihi Eğlence: {self.recipe_name}" if self.recipe_name else "Tabîb Ekmeleddin malzemeleri hazırlıyor..."
         self._spawn_particles(530, 385, GOLD, 22)
 
         # Kilidi açık malzemeleri, canı ve kombo sayısını telefona bildir
@@ -1609,7 +1601,7 @@ class Game:
                 "level": self.level,
                 "max_combo": self.max_combo,
             })
-            self.speak_bubble(f"Eyvah! Tüm şişeler kırıldı, ayin bozuldu! Doğrusu {correct_tr} idi!", duration=3.5)
+            self.speak_bubble(f"Eyvah! Tüm şişeler kırıldı, oyun bozuldu! Doğrusu {correct_tr} idi!", duration=3.5)
             return
 
         self.player_index += 1
@@ -1779,7 +1771,7 @@ class Game:
         # Başlık
         mode_title = "1v1 ÇIRAK DÜELLOSU" if self.mode == GameMode.DUEL else "TEK KİŞİLİK MACERA"
         self._text_shadow(f"TABÎB EKMELEDDİN'İN KAZANI · {mode_title}", self.font_title, GOLD, (50, 44))
-        self._text("Mobil cihazınızdan QR kodu okutarak ayine bağlanın", self.font_body, TEXT_DIM, (52, 88))
+        self._text("Mobil cihazınızdan QR kodu okutarak oyuna bağlanın", self.font_body, TEXT_DIM, (52, 88))
 
         # QR kutusu (Sol Panel)
         panel_rect = pygame.Rect(48, 140, 368, 470)
@@ -2754,7 +2746,7 @@ class Game:
 
         # Başlık ve Üst Panel
         self._text_shadow("TABÎB EKMELEDDİN'İN KAZANI", self.font_title, GOLD_LT, (WIDTH // 2 - 270, 48))
-        self._text_center("Kadim Tıp ve Simya Mirası · Bir Hafıza ve Dikkat Ayini", self.font_body, TEXT_DIM, WIDTH // 2, 86)
+        self._text_center("Kadim Tıp ve Simya Mirası · Bir Hafıza ve Dikkat Oyunu", self.font_body, TEXT_DIM, WIDTH // 2, 86)
         self._draw_separator(80, 118, WIDTH - 80)
 
         # Kart 1: Tek Kişilik Macera (x=90, y=145, w=430, h=410)
@@ -2891,7 +2883,7 @@ class Game:
         pygame.draw.rect(self.pixel_surface, GOLD, box, 2, border_radius=16)
 
         # Modal Başlık (Sabit Üst Başlık)
-        self._text_center("🏛️  ERÜ ANADOLU TIP TARİHİ TOPLULUĞU  🏛️", self.font_title, GOLD_LT, box.centerx, box.y + 16)
+        self._text_center("🏛️  ANADOLU TIP TARİHİ KULÜBÜ & GÜRGEN EKİBİ  🏛️", self.font_title, GOLD_LT, box.centerx, box.y + 16)
         self._text_center("Tabîb Ekmeleddin (Bey Hekim) Kazanı — Sinematik Kayan Jenerik", self.font_body, (225, 205, 170), box.centerx, box.y + 44)
         self._text_center("[Boşluk / Tıkla]: Duraklat/Devam  •  [↑/↓ veya Fare]: Kaydır  •  [R]: Başa Sar", self.font_tiny, (170, 150, 115), box.centerx, box.y + 66)
         self._draw_separator(box.x + 30, box.y + 84, box.right - 30)
@@ -2919,9 +2911,9 @@ class Game:
         # Başlangıç Tepe Amblemi
         self._text_center("✦ ✦ ✦   B E Y   H E K İ M   ✦ ✦ ✦", self.font_body_bold, GOLD_LT, viewport.centerx, cur_y)
         cur_y += 24
-        self._text_center("ERCİYES ÜNİVERSİTESİ TIP FAKÜLTESİ", self.font_body_bold, (245, 235, 215), viewport.centerx, cur_y)
+        self._text_center("ANADOLU TIP TARİHİ KULÜBÜNÜN GÜRGEN EKİBİ TARAFINDAN HAZIRLANMIŞTIR", self.font_body_bold, (245, 235, 215), viewport.centerx, cur_y)
         cur_y += 20
-        self._text_center("Kadim Tıp Kültürü, Deontoloji ve Bilim Yolculuğu", self.font_tiny, TEXT_DIM, viewport.centerx, cur_y)
+        self._text_center("Erciyes Üniversitesi Tıp Fakültesi · Kadim Tıp Kültürü, Deontoloji ve Bilim Yolculuğu", self.font_tiny, TEXT_DIM, viewport.centerx, cur_y)
         cur_y += 42
 
         # Kategori ve İsimlerin Sırayla Akışı
@@ -2952,13 +2944,13 @@ class Game:
             self._draw_separator(viewport.centerx - 140, cur_y, viewport.centerx + 140)
             cur_y += 30
 
-        # Kapanış Sözü
+        # Kapanış Çağrısı
         cur_y += 10
-        self._text_center("« İlim ile amel birleşince şifa kemâle erer. »", self.font_body_bold, GOLD_LT, viewport.centerx, cur_y)
-        cur_y += 26
-        self._text_center("ERÜ ANADOLU TIP TARİHİ TOPLULUĞU", self.font_body, (220, 205, 175), viewport.centerx, cur_y)
+        self._text_center("« Kulübümüze Üye Olmayı UNUTMAYIN! »", self.font_body_large, GOLD_LT, viewport.centerx, cur_y)
+        cur_y += 28
+        self._text_center("ANADOLU TIP TARİHİ KULÜBÜ — GÜRGEN EKİBİ", self.font_body, (220, 205, 175), viewport.centerx, cur_y)
         cur_y += 22
-        self._text_center("Kayseri · 2026", self.font_tiny, TEXT_DIM, viewport.centerx, cur_y)
+        self._text_center("Erciyes Üniversitesi · Kayseri · 2026", self.font_tiny, TEXT_DIM, viewport.centerx, cur_y)
         cur_y += 80
 
         # Sonsuz akış döngüsü (Başa dönme)
@@ -2999,7 +2991,7 @@ class Game:
         b_reg_hover = btn_reg.collidepoint(mouse_pos)
         self._draw_panel(btn_reg, radius=10)
         pygame.draw.rect(self.pixel_surface, GOLD_LT if b_reg_hover else GOLD, btn_reg, 2, border_radius=10)
-        self._text_center("🌐 ERÜ Topluluk Kayıt", self.font_body_bold, GOLD_LT if b_reg_hover else (255, 235, 175), btn_reg.centerx, btn_reg.y + 10)
+        self._text_center("🌐 Kulübe Üye Ol!", self.font_body_bold, GOLD_LT if b_reg_hover else (255, 235, 175), btn_reg.centerx, btn_reg.y + 10)
         self._text_center("kulup.erciyes.edu.tr/uyelik/uyeol", self.font_tiny, TEXT_DIM, btn_reg.centerx, btn_reg.y + 30)
 
         # Buton 2: Tabîb Ekmeleddin PDF İndir Butonu (410 <= x <= 710, 615 <= y <= 670)

@@ -49,4 +49,30 @@ py desktop_game.py
 - `RHAZI_TURN` (Bey Hekim Sırası): Bey Hekim şifalı cevherleri sırayla kazana atar.
 - `PLAYER_TURN`: Telefon butonları üzerinden aynı sıra kazana eklenir.
 - `RESOLUTION`: Doğru dizi seviyeyi/raundu kazandırır; 3 can hakkı ve kombo sistemi mevcuttur.
-- `CREDITS_VIEW`: ERÜ Anadolu Tıp Tarihi Topluluğu kaydı ve Tabîb Ekmeleddin tezhipli PDF risalesi.
+- `CREDITS_VIEW`: Anadolu Tıp Tarihi Kulübü & Gürgen Ekibi film sonu kayan jenerik ekranı, kulüp üyeliği ve Tabîb Ekmeleddin tezhipli PDF risalesi.
+
+---
+
+## 🏛️ Projede Emeği Geçenler & Yönetim Kurulu
+
+> **"ANADOLU TIP TARİHİ KULÜBÜNÜN GÜRGEN EKİBİ TARAFINDAN HAZIRLANMIŞTIR"**
+
+### 💻 Projede Emeği Geçenler
+- **Proje Yöneticisi:** Tahsin Efe KARAKÖSE
+- **Web Sunucusu, Hosting & Debug:** Ahmet Yasin MARŞİL
+- **Tasarım Destek:** Mürsel Musa İLBASMIŞ, Baran PEKDOĞAN
+- **Teşekkür:** Mustafa Safa ŞENBAK, Yusuf Efe BAYRAKTAR, Muhammed Serhat TURSUN
+
+### 👑 Anadolu Tıp Yönetimi
+- **Başkan:** Mustafa Safa ŞENBAK
+- **Başkan Yardımcısı:** Elif Sude BOSTANCI
+- **Akademik Başkan Yardımcısı:** Tahsin Efe KARAKÖSE
+- **Faaliyet Sorumlusu:** Banu Ece PÜSKÜLLÜOĞLU
+- **Eğitim Sorumlusu:** Baran PEKDOĞAN
+- **Gürgen Grubu Yöneticisi:** Ahmet Yasin MARŞİL
+- **Sosyal Medya Ekibi:** Mina ALKAÇ, Muhammet Serhat TURSUN
+- **Denetleme Ekibi:** Zişan ÇELİK, Nehir BÜYÜKDOĞAN
+
+📢 **Kulübümüze Üye Olmayı UNUTMAYIN!**  
+👉 [kulup.erciyes.edu.tr/uyelik/uyeol](https://kulup.erciyes.edu.tr/uyelik/uyeol)
+
