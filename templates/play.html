@@ -990,57 +990,58 @@
     }
 
     /* Sinematik Film Sonu Kayan Jenerik (Credits Crawl) */
-    .cinema-credits-container {
+    .cinema-credits-wrapper {
       position: relative;
-      background: radial-gradient(ellipse at center, #180f09 0%, #0c0704 100%);
       border: 1.5px solid var(--gold);
       border-radius: 12px;
       overflow: hidden;
       box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 4px 20px rgba(0, 0, 0, 0.6);
+      background: radial-gradient(ellipse at center, #180f09 0%, #0c0704 100%);
       height: 280px;
     }
-    .cinema-credits-crawl {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      padding: 20px 14px 100px 14px;
-      animation: creditsRollAnim 42s linear infinite;
-    }
-    .cinema-credits-container:hover .cinema-credits-crawl,
-    .cinema-credits-container:active .cinema-credits-crawl {
-      animation-play-state: paused;
-    }
-    .cinema-credits-container::before {
+    .cinema-credits-wrapper::before {
       content: "";
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 45px;
-      background: linear-gradient(to bottom, #0c0704 20%, rgba(12, 7, 4, 0));
+      height: 48px;
+      background: linear-gradient(to bottom, #0c0704 25%, rgba(12, 7, 4, 0));
       z-index: 5;
       pointer-events: none;
     }
-    .cinema-credits-container::after {
+    .cinema-credits-wrapper::after {
       content: "";
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 45px;
-      background: linear-gradient(to top, #0c0704 20%, rgba(12, 7, 4, 0));
+      height: 48px;
+      background: linear-gradient(to top, #0c0704 25%, rgba(12, 7, 4, 0));
       z-index: 5;
       pointer-events: none;
     }
-    @keyframes creditsRollAnim {
-      0% {
-        transform: translateY(120px);
-      }
-      100% {
-        transform: translateY(-100%);
-      }
+    .cinema-credits-container {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      scroll-behavior: auto;
+    }
+    .cinema-credits-container::-webkit-scrollbar {
+      display: none;
+    }
+    .cinema-credits-crawl {
+      width: 100%;
+      text-align: center;
+      padding: 24px 14px 260px 14px;
+      box-sizing: border-box;
+      transform: translateZ(0);
+      will-change: transform;
     }
     .cinema-badge {
       font-size: .75rem;
@@ -1312,63 +1313,74 @@
       </div>
 
       <!-- Sinematik Film Sonu Kayan Jenerik -->
-      <div class="cinema-credits-container" title="Duraklatmak için dokunun veya fareyi üzerine getirin">
-        <div class="cinema-credits-crawl">
-          <div style="font-size: .82rem; font-weight: 800; color: var(--gold-lt); margin-bottom: 2px;">✦ ✦ ✦ BEY HEKİM KAZANI ✦ ✦ ✦</div>
-          <div style="font-size: .88rem; font-weight: 800; color: #fff; line-height: 1.35; padding: 0 10px;">ANADOLU TIP TARİHİ KULÜBÜNÜN GÜRGEN EKİBİ TARAFINDAN HAZIRLANMIŞTIR</div>
-          <div style="font-size: .70rem; color: var(--muted); margin-top: 4px; margin-bottom: 16px;">Erciyes Üniversitesi Tıp Fakültesi · Kadim Tıp Mirası</div>
-          <div class="cinema-divider"></div>
+      <div class="cinema-credits-wrapper">
+        <div class="cinema-credits-container" id="cinemaCreditsContainer">
+          <div class="cinema-credits-crawl">
+            <div style="font-size: .82rem; font-weight: 800; color: var(--gold-lt); margin-bottom: 2px;">✦ ✦ ✦ BEY HEKİM KAZANI ✦ ✦ ✦</div>
+            <div style="font-size: .88rem; font-weight: 800; color: #fff; line-height: 1.35; padding: 0 10px;">ANADOLU TIP TARİHİ KULÜBÜNÜN GÜRGEN EKİBİ TARAFINDAN HAZIRLANMIŞTIR</div>
+            <div style="font-size: .70rem; color: var(--muted); margin-top: 4px; margin-bottom: 16px;">Erciyes Üniversitesi Tıp Fakültesi · Kadim Tıp Mirası</div>
+            <div class="cinema-divider"></div>
 
-          <span class="cinema-badge">💻 PROJEDE EMEĞİ GEÇENLER</span>
-          <div class="cinema-role-title">PROJE GELİŞTİRME KURULU</div>
-          <div class="cinema-role-desc">Yazılım Mimarisi, Sunucu, Hosting & Tasarım</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Proje Yöneticisi:</strong> Tahsin Efe KARAKÖSE</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Web Sunucusu, Hosting, Debug:</strong> Ahmet Yasin MARŞİL</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Tasarım Destek:</strong> Mürsel Musa İLBASMIŞ, Baran PEKDOĞAN</div>
-          <div class="cinema-divider"></div>
+            <span class="cinema-badge">💻 PROJEDE EMEĞİ GEÇENLER</span>
+            <div class="cinema-role-title">PROJE GELİŞTİRME KURULU</div>
+            <div class="cinema-role-desc">Yazılım Mimarisi, Sunucu, Hosting & Tasarım</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Proje Yöneticisi:</strong> Tahsin Efe KARAKÖSE</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Web Sunucusu, Hosting, Debug:</strong> Ahmet Yasin MARŞİL</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Tasarım Destek:</strong> Mürsel Musa İLBASMIŞ, Baran PEKDOĞAN</div>
+            <div class="cinema-divider"></div>
 
-          <span class="cinema-badge">🌟 TEŞEKKÜR</span>
-          <div class="cinema-role-title">KATKI VE DESTEKLERİYLE</div>
-          <div class="cinema-role-desc">Proje Sürecindeki Değerli Destekleri İçin</div>
-          <div class="cinema-name">Mustafa Safa ŞENBAK</div>
-          <div class="cinema-name">Yusuf Efe BAYRAKTAR</div>
-          <div class="cinema-name">Muhammed Serhat TURSUN</div>
-          <div class="cinema-divider"></div>
+            <span class="cinema-badge">🌟 TEŞEKKÜR</span>
+            <div class="cinema-role-title">KATKI VE DESTEKLERİYLE</div>
+            <div class="cinema-role-desc">Proje Sürecindeki Değerli Destekleri İçin</div>
+            <div class="cinema-name">Mustafa Safa ŞENBAK</div>
+            <div class="cinema-name">Yusuf Efe BAYRAKTAR</div>
+            <div class="cinema-name">Muhammed Serhat TURSUN</div>
+            <div class="cinema-divider"></div>
 
-          <span class="cinema-badge">👑 ANADOLU TIP YÖNETİMİ</span>
-          <div class="cinema-role-title">KULÜP YÖNETİM KURULU</div>
-          <div class="cinema-role-desc">Anadolu Tıp Tarihi Kulübü İdare Heyeti</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Başkan:</strong> Mustafa Safa ŞENBAK</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Başkan Yardımcısı:</strong> Elif Sude BOSTANCI</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Akademik Başkan Yardımcısı:</strong> Tahsin Efe KARAKÖSE</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Faaliyet Sorumlusu:</strong> Banu Ece PÜSKÜLLÜOĞLU</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Eğitim Sorumlusu:</strong> Baran PEKDOĞAN</div>
-          <div class="cinema-name"><strong style="color: var(--gold-lt);">Gürgen Grubu Yöneticisi:</strong> Ahmet Yasin MARŞİL</div>
-          <div class="cinema-divider"></div>
+            <span class="cinema-badge">👑 ANADOLU TIP YÖNETİMİ</span>
+            <div class="cinema-role-title">KULÜP YÖNETİM KURULU</div>
+            <div class="cinema-role-desc">Anadolu Tıp Tarihi Kulübü İdare Heyeti</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Başkan:</strong> Mustafa Safa ŞENBAK</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Başkan Yardımcısı:</strong> Elif Sude BOSTANCI</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Akademik Başkan Yardımcısı:</strong> Tahsin Efe KARAKÖSE</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Faaliyet Sorumlusu:</strong> Banu Ece PÜSKÜLLÜOĞLU</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Eğitim Sorumlusu:</strong> Baran PEKDOĞAN</div>
+            <div class="cinema-name"><strong style="color: var(--gold-lt);">Gürgen Grubu Yöneticisi:</strong> Ahmet Yasin MARŞİL</div>
+            <div class="cinema-divider"></div>
 
-          <span class="cinema-badge">📱 SOSYAL MEDYA EKİBİ</span>
-          <div class="cinema-role-title">MEDYA & İLETİŞİM</div>
-          <div class="cinema-role-desc">Sosyal Medya Koordinasyonu ve Tanıtım</div>
-          <div class="cinema-name">Mina ALKAÇ</div>
-          <div class="cinema-name">Muhammet Serhat TURSUN</div>
-          <div class="cinema-divider"></div>
+            <span class="cinema-badge">📱 SOSYAL MEDYA EKİBİ</span>
+            <div class="cinema-role-title">MEDYA & İLETİŞİM</div>
+            <div class="cinema-role-desc">Sosyal Medya Koordinasyonu ve Tanıtım</div>
+            <div class="cinema-name">Mina ALKAÇ</div>
+            <div class="cinema-name">Muhammet Serhat TURSUN</div>
+            <div class="cinema-divider"></div>
 
-          <span class="cinema-badge">⚖️ DENETLEME EKİBİ</span>
-          <div class="cinema-role-title">DENETİM KURULU</div>
-          <div class="cinema-role-desc">Kulüp Faaliyetleri ve İdari Denetim</div>
-          <div class="cinema-name">Zişan ÇELİK</div>
-          <div class="cinema-name">Nehir BÜYÜKDOĞAN</div>
-          <div class="cinema-divider"></div>
+            <span class="cinema-badge">⚖️ DENETLEME EKİBİ</span>
+            <div class="cinema-role-title">DENETİM KURULU</div>
+            <div class="cinema-role-desc">Kulüp Faaliyetleri ve İdari Denetim</div>
+            <div class="cinema-name">Zişan ÇELİK</div>
+            <div class="cinema-name">Nehir BÜYÜKDOĞAN</div>
+            <div class="cinema-divider"></div>
 
-          <span class="cinema-badge">📢 BÜYÜK ÇAĞRI</span>
-          <div style="font-size: .95rem; font-weight: 800; color: var(--gold-lt); margin: 10px 0 4px 0;">« Kulübümüze Üye Olmayı UNUTMAYIN! »</div>
-          <div style="font-size: .75rem; color: var(--ink); margin-bottom: 6px;">kulup.erciyes.edu.tr/uyelik/uyeol</div>
-          <div style="font-size: .88rem; font-weight: 800; color: #fff;">— ANADOLU TIP TARİHİ KULÜBÜ · GÜRGEN EKİBİ —</div>
-          <div style="font-size: .75rem; color: var(--muted); margin-top: 4px;">KAYSERİ · 2026</div>
+            <span class="cinema-badge">📢 BÜYÜK ÇAĞRI</span>
+            <div style="font-size: .95rem; font-weight: 800; color: var(--gold-lt); margin: 10px 0 4px 0;">« Kulübümüze Üye Olmayı UNUTMAYIN! »</div>
+            <div style="font-size: .75rem; color: var(--ink); margin-bottom: 6px;">kulup.erciyes.edu.tr/uyelik/uyeol</div>
+            <div style="font-size: .88rem; font-weight: 800; color: #fff;">— ANADOLU TIP TARİHİ KULÜBÜ · GÜRGEN EKİBİ —</div>
+            <div style="font-size: .75rem; color: var(--muted); margin-top: 4px;">KAYSERİ · 2026</div>
+          </div>
         </div>
       </div>
-      <div style="font-size: .68rem; color: var(--muted); text-align: center; margin-top: -6px;">
-        👆 Akışı duraklatmak için parmağınızla basılı tutun veya fareyle üzerine gelin
+      <!-- Akış Kontrol Çubuğu -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: -4px; padding: 0 4px;">
+        <span style="font-size: .68rem; color: var(--muted);">👆 Parmağınızla serbestçe kaydırabilirsiniz</span>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" id="creditsPauseBtn" style="background: #25160d; border: 1px solid var(--border); color: var(--gold-lt); font-size: .72rem; padding: 4px 9px; border-radius: 6px; cursor: pointer;">
+            ⏸ Duraklat
+          </button>
+          <button type="button" id="creditsRewindBtn" style="background: #25160d; border: 1px solid var(--border); color: var(--gold-lt); font-size: .72rem; padding: 4px 9px; border-radius: 6px; cursor: pointer;">
+            ⏮ Başa Sar
+          </button>
+        </div>
       </div>
 
       <!-- ERÜ Topluluk Kayıt Butonu -->
@@ -1638,6 +1650,9 @@
   const creditsGameOverBanner  = document.getElementById('creditsGameOverBanner');
   const creditsCloseToScoreBtn = document.getElementById('creditsCloseToScoreBtn');
   const creditsResetBtn        = document.getElementById('creditsResetBtn');
+  const cinemaCreditsContainer = document.getElementById('cinemaCreditsContainer');
+  const creditsPauseBtn        = document.getElementById('creditsPauseBtn');
+  const creditsRewindBtn       = document.getElementById('creditsRewindBtn');
 
   const ekmeleddinBioModal         = document.getElementById('ekmeleddinBioModal');
   const closeEkmeleddinBioBtn      = document.getElementById('closeEkmeleddinBioBtn');
@@ -2170,6 +2185,7 @@
   modalResetBtn.addEventListener('click', () => {
     gameOverModal.classList.add('hidden');
     if (creditsModal) creditsModal.classList.add('hidden');
+    stopCreditsScroll();
     if (navigator.vibrate) navigator.vibrate(22);
     if (socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ button: 'reset', player_id: myPlayerId }));
@@ -2211,6 +2227,121 @@
     }
   }
 
+  // ── Sinematik Künye Kayan Jenerik Motoru (60 FPS Hardware RAF) ──
+  let creditsScrollRaf = null;
+  let creditsCurrentScroll = 0;
+  let isCreditsPaused = false;
+  let isCreditsUserTouching = false;
+  let creditsTouchResumeTimer = null;
+  let lastScrollTimestamp = null;
+  const CREDITS_SPEED = 38; // Saniyede 38 piksel akıcı ve net okunur hız
+
+  function startCreditsScroll() {
+    const cont = cinemaCreditsContainer || document.getElementById('cinemaCreditsContainer') || document.querySelector('.cinema-credits-container');
+    if (!cont) return;
+
+    if (creditsScrollRaf) {
+      cancelAnimationFrame(creditsScrollRaf);
+      creditsScrollRaf = null;
+    }
+
+    creditsCurrentScroll = 0;
+    cont.scrollTop = 0;
+    isCreditsPaused = false;
+    isCreditsUserTouching = false;
+    lastScrollTimestamp = performance.now();
+    updateCreditsPlayPauseBtn(true);
+
+    function tick(now) {
+      if (!creditsModal || creditsModal.classList.contains('hidden')) {
+        creditsScrollRaf = null;
+        return;
+      }
+
+      if (!lastScrollTimestamp) lastScrollTimestamp = now;
+      const dt = Math.min(0.1, (now - lastScrollTimestamp) / 1000);
+      lastScrollTimestamp = now;
+
+      if (!isCreditsPaused && !isCreditsUserTouching) {
+        creditsCurrentScroll += CREDITS_SPEED * dt;
+        const maxScroll = cont.scrollHeight - cont.clientHeight;
+
+        if (maxScroll > 0 && creditsCurrentScroll >= maxScroll) {
+          creditsCurrentScroll = 0; // Başa dön ve akışa devam et
+        }
+        cont.scrollTop = creditsCurrentScroll;
+      } else {
+        // Kullanıcı elle kaydırdığında konumu eşitle
+        creditsCurrentScroll = cont.scrollTop;
+      }
+
+      creditsScrollRaf = requestAnimationFrame(tick);
+    }
+
+    creditsScrollRaf = requestAnimationFrame(tick);
+  }
+
+  function stopCreditsScroll() {
+    if (creditsScrollRaf) {
+      cancelAnimationFrame(creditsScrollRaf);
+      creditsScrollRaf = null;
+    }
+  }
+
+  function toggleCreditsPause() {
+    isCreditsPaused = !isCreditsPaused;
+    lastScrollTimestamp = performance.now();
+    updateCreditsPlayPauseBtn(!isCreditsPaused);
+  }
+
+  function rewindCredits() {
+    const cont = cinemaCreditsContainer || document.getElementById('cinemaCreditsContainer') || document.querySelector('.cinema-credits-container');
+    creditsCurrentScroll = 0;
+    if (cont) cont.scrollTop = 0;
+    isCreditsPaused = false;
+    lastScrollTimestamp = performance.now();
+    updateCreditsPlayPauseBtn(true);
+  }
+
+  function updateCreditsPlayPauseBtn(isPlaying) {
+    if (creditsPauseBtn) {
+      creditsPauseBtn.textContent = isPlaying ? '⏸ Duraklat' : '▶ Devam Et';
+      creditsPauseBtn.style.color = isPlaying ? 'var(--gold-lt)' : 'var(--green-lt)';
+    }
+  }
+
+  if (creditsPauseBtn) {
+    creditsPauseBtn.addEventListener('click', toggleCreditsPause);
+  }
+  if (creditsRewindBtn) {
+    creditsRewindBtn.addEventListener('click', rewindCredits);
+  }
+
+  const contEl = cinemaCreditsContainer || document.getElementById('cinemaCreditsContainer');
+  if (contEl) {
+    contEl.addEventListener('touchstart', () => {
+      isCreditsUserTouching = true;
+      if (creditsTouchResumeTimer) clearTimeout(creditsTouchResumeTimer);
+    }, { passive: true });
+
+    contEl.addEventListener('touchend', () => {
+      if (creditsTouchResumeTimer) clearTimeout(creditsTouchResumeTimer);
+      creditsTouchResumeTimer = setTimeout(() => {
+        isCreditsUserTouching = false;
+        lastScrollTimestamp = performance.now();
+      }, 1600);
+    }, { passive: true });
+
+    contEl.addEventListener('wheel', () => {
+      isCreditsUserTouching = true;
+      if (creditsTouchResumeTimer) clearTimeout(creditsTouchResumeTimer);
+      creditsTouchResumeTimer = setTimeout(() => {
+        isCreditsUserTouching = false;
+        lastScrollTimestamp = performance.now();
+      }, 1600);
+    }, { passive: true });
+  }
+
   function openCredits(fromGameOver = false) {
     if (!creditsModal) return;
     if (creditsGameOverBanner) {
@@ -2220,13 +2351,11 @@
         creditsGameOverBanner.classList.add('hidden');
       }
     }
-    const crawl = creditsModal.querySelector('.cinema-credits-crawl');
-    if (crawl) {
-      crawl.style.animation = 'none';
-      void crawl.offsetWidth;
-      crawl.style.animation = '';
-    }
     creditsModal.classList.remove('hidden');
+    // Modal görünür olduktan hemen sonra akışı başlat
+    setTimeout(() => {
+      startCreditsScroll();
+    }, 60);
   }
 
   if (openCreditsBtn) {
@@ -2242,15 +2371,22 @@
     });
   }
   if (closeCreditsBtn && creditsModal) {
-    closeCreditsBtn.addEventListener('click', () => creditsModal.classList.add('hidden'));
+    closeCreditsBtn.addEventListener('click', () => {
+      stopCreditsScroll();
+      creditsModal.classList.add('hidden');
+    });
   }
   if (creditsModal) {
     creditsModal.addEventListener('click', (e) => {
-      if (e.target === creditsModal) creditsModal.classList.add('hidden');
+      if (e.target === creditsModal) {
+        stopCreditsScroll();
+        creditsModal.classList.add('hidden');
+      }
     });
   }
   if (creditsCloseToScoreBtn) {
     creditsCloseToScoreBtn.addEventListener('click', () => {
+      stopCreditsScroll();
       if (creditsModal) creditsModal.classList.add('hidden');
       if (isDuelMode) {
         if (duelMatchOverModal) duelMatchOverModal.classList.remove('hidden');
@@ -2261,6 +2397,7 @@
   }
   if (creditsResetBtn) {
     creditsResetBtn.addEventListener('click', () => {
+      stopCreditsScroll();
       if (creditsModal) creditsModal.classList.add('hidden');
       if (gameOverModal) gameOverModal.classList.add('hidden');
       if (duelMatchOverModal) duelMatchOverModal.classList.add('hidden');
@@ -2518,6 +2655,7 @@
       resetBtn.classList.remove('visible');
       gameOverModal.classList.add('hidden');
       if (creditsModal) creditsModal.classList.add('hidden');
+      stopCreditsScroll();
       if (prologueModal) prologueModal.classList.add('hidden');
       if (duelLobbyModal) duelLobbyModal.classList.add('hidden');
       if (duelMatchOverModal) duelMatchOverModal.classList.add('hidden');
@@ -2854,6 +2992,7 @@
     resetBtn.classList.remove('visible');
     gameOverModal.classList.add('hidden');
     if (creditsModal) creditsModal.classList.add('hidden');
+    stopCreditsScroll();
   });
 </script>
 </body>
