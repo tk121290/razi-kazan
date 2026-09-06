@@ -785,13 +785,18 @@ class SabuncuogluActor:
         self.state = SabuncuogluState.WALKING_IN
         self.state_time = 0.0
 
-    def start_guest_visit(self, is_duel: bool = False, level: int = 6) -> None:
+    def start_guest_visit(self, is_duel: bool = False, level: int = 1) -> None:
         self.mode = "guest"
         self.last_guest_level = level
         greetings = [
-            "Sabuncuoğlu Şerefeddin: 'Selam olsun Melikü'l-Hükemâ Tabîb Ekmeleddin'e ve hünerli çıraklarına! Cerrahlıkta el titremez, simyada akıl şaşmaz! Kolay gelsin!'",
-            "Sabuncuoğlu Şerefeddin: 'Amasya Dârüşşifası'ndan Kayseri'ye selam getirdim! Kadim cerrahi ve simya birleşince dertlere derman olur. Gayretiniz daim olsun!'",
-            "Sabuncuoğlu Şerefeddin: 'Mücerreb-nâme der ki: İlm-i tababet sabır ve dikkatle yoğrulur. Devam edin çıraklar, gözüm üzerinizde!'"
+            "Sabuncuoğlu Şerefeddin: 'Amasya Dârüşşifası'ndan Melikü'l-Hükemâ Tabîb Ekmeleddin'e ve hünerli çıraklarına selam olsun! Kolay gelsin!'",
+            "Sabuncuoğlu Şerefeddin: 'Selam olsun dostlar! Cerrahlıkta el titremez, simyada akıl şaşmaz! Gayretiniz daim olsun!'",
+            "Sabuncuoğlu Şerefeddin: 'Amasya'dan geçerken bir uğrayıp selam vereyim dedim. Tabîb Ekmeleddin üstadın kazanı bereketli olsun!'",
+            "Sabuncuoğlu Şerefeddin: 'Mücerreb-nâme'de yazdım: Sabırla pişen iksir şifa dağıtır. Selamlarımı getirdim, muvaffak olasınız!'",
+            "Sabuncuoğlu Şerefeddin: 'Gözüm üzerinizde hünerli çıraklar! Her bir cevher hastaya sıhhat, hekime şereftir. Başarılar dilerim!'",
+            "Sabuncuoğlu Şerefeddin: 'Cerrâhiyyetü'l-İlhâniyye'nin bereketi üzerinize olsun! İlim meclisinde bir arada olmak ne güzel!'",
+            "Sabuncuoğlu Şerefeddin: 'Selamün aleyküm erenler! Şifa arayan gönüllere merhem olasınız. Kazanın ateşi hiç sönmesin!'",
+            "Sabuncuoğlu Şerefeddin: 'Tababet ilmi nezaket ve zarafet ister. Maşallah çıraklar, hüneriniz Amasya'ya kadar nam saldı!'"
         ]
         self.dialogue_text = random.choice(greetings)
         if is_duel:
@@ -823,7 +828,7 @@ class SabuncuogluActor:
         self.dialogue_duration = 0.0
         self.dialogue_started = 0.0
         self.state_time = 0.0
-        self.mode = "reverse"
+        self.mode = "guest"
 
     def on_round_end(self, success: bool) -> None:
         if self.state in (SabuncuogluState.TALKING, SabuncuogluState.OVERSEEING, SabuncuogluState.WAVING, SabuncuogluState.WALKING_IN):
@@ -832,9 +837,23 @@ class SabuncuogluActor:
                     self.dialogue_text = "Sabuncuoğlu Şerefeddin: 'Aferin çırak! Tersten dizilimi bihakkın başardın! İşte hakiki hekim dirayeti!'"
                 else:
                     self.dialogue_text = "Sabuncuoğlu Şerefeddin: 'Sağlık olsun! Düşüş de öğrenmenin bir parçasıdır. Yılma, yeniden dene!'"
-                self.dialogue_started = time.monotonic()
-                self.dialogue_duration = 4.5
+            else:
+                if success:
+                    self.dialogue_text = random.choice([
+                        "Sabuncuoğlu Şerefeddin: 'Aferin çırak! İksir tam kıvamında oldu, ellerin dert görmesin!'",
+                        "Sabuncuoğlu Şerefeddin: 'Maşallah! Amasya ve Kayseri tababeti seninle gurur duyar!'",
+                        "Sabuncuoğlu Şerefeddin: 'Bihakkın başardın! İşte hakiki bir hekim dirayeti!'"
+                    ])
+                else:
+                    self.dialogue_text = random.choice([
+                        "Sabuncuoğlu Şerefeddin: 'Zararı yok çırak! Hekimlikte her hata yeni bir tecrübedir. Yılma, devam et!'",
+                        "Sabuncuoğlu Şerefeddin: 'Sağlık olsun! Tekrar dene, sabırla pişen iksir şifa olur!'"
+                    ])
+            self.dialogue_started = time.monotonic()
+            self.dialogue_duration = 4.5
             self.start_walk_out()
+
+
 
     def update(self, dt: float, now: float) -> None:
         if self.state == SabuncuogluState.INACTIVE:
@@ -1575,13 +1594,9 @@ class Game:
     def _start_rhazi_turn(self) -> None:
         self.round_success = False
 
-        # Sabuncuoğlu Şerefeddin Tersten Yaz Bölümü (Seviye > 12 rastgele meydan okuma)
-        current_lvl = self.duel_round if self.mode == GameMode.DUEL else self.level
-        if current_lvl > 12 and not getattr(self, "was_reverse_last_round", False):
-            self.is_reverse_round = (random.random() < 0.28)
-        else:
-            self.is_reverse_round = False
-        self.was_reverse_last_round = self.is_reverse_round
+        # Sabuncuoğlu Şerefeddin challenge modu kaldırıldı — normal simya dizilimi geçerlidir
+        self.is_reverse_round = False
+        self.was_reverse_last_round = False
 
         if self.mode == GameMode.DUEL:
             pool = self.duel_material_pool
@@ -1625,21 +1640,14 @@ class Game:
             p1_name = self.players.get("player_1", {}).get("name", "Çırak 1")
             p2_name = self.players.get("player_2", {}).get("name", "Çırak 2")
 
-            if self.is_reverse_round:
-                self.last_message = "SABUNCUOĞLU'NUN SINAVI: TERSTEN DOLDUR! (4X SÜRE)"
-                if hasattr(self, "sabuncuoglu"):
-                    self.sabuncuoglu.start_reverse_challenge(is_duel=True, level=self.duel_round)
-            elif self.recipe_name:
+            if self.recipe_name:
                 self.last_message = f"SEVİYE {self.duel_round}: Formül '{self.recipe_name}'"
                 self.speak_bubble(f"Seviye {self.duel_round}: Formül '{self.recipe_name}'! Dikkatle izleyin!", duration=4.0)
             else:
                 self.last_message = f"DÜELLO SEVİYE {self.duel_round}: {p1_name} VS {p2_name}"
                 self.speak_bubble(f"Düello Seviye {self.duel_round}! Malzemeleri dikkatle izleyin!", duration=3.5)
-                if self.duel_round >= 6 and hasattr(self, "sabuncuoglu") and not self.sabuncuoglu.is_active:
-                    if (self.duel_round - getattr(self.sabuncuoglu, "last_guest_level", 0) >= 4) and (random.random() < 0.22):
-                        self.sabuncuoglu.start_guest_visit(is_duel=True, level=self.duel_round)
 
-            self._spawn_particles(550, 385, (230, 160, 255) if self.is_reverse_round else GOLD, 30)
+            self._spawn_particles(550, 385, GOLD, 30)
 
             self.network.send({
                 "type": "round_started",
@@ -1693,20 +1701,20 @@ class Game:
         self.phase_cursor  = 0
         self.phase_started = time.monotonic()
         self.state         = GameState.RHAZI_TURN
-        if self.is_reverse_round:
-            self.last_message = "SABUNCUOĞLU'NUN SINAVI: TERSTEN DOLDUR! (4X SÜRE)"
-            if hasattr(self, "sabuncuoglu"):
-                self.sabuncuoglu.start_reverse_challenge(is_duel=False, level=self.level)
-        elif self.recipe_name:
+        if self.recipe_name:
             self.last_message = f"Tarihi Formül: {self.recipe_name}"
             self.speak_bubble(f"Tarihi Formül: '{self.recipe_name}'! Malzemeleri dikkatle izle.", duration=4.0)
         else:
             self.last_message = "Tabîb Ekmeleddin malzemeleri hazırlıyor..."
-            if self.level >= 6 and hasattr(self, "sabuncuoglu") and not self.sabuncuoglu.is_active:
-                if (self.level - getattr(self.sabuncuoglu, "last_guest_level", 0) >= 4) and (random.random() < 0.22):
-                    self.sabuncuoglu.start_guest_visit(is_duel=False, level=self.level)
 
-        self._spawn_particles(530, 385, (230, 160, 255) if self.is_reverse_round else GOLD, 22)
+        # Şerefeddin Sabuncuoğlu Ziyareti:
+        # Challenge için değil; her seviyede selam vermek, başarı dilemek ve el sallamak için gelebilir
+        if hasattr(self, "sabuncuoglu") and not self.sabuncuoglu.is_active:
+            # 1. seviyede oyuncuyla tanışmak için kesin gelir; sonraki turlarda %55 ihtimalle uğrar
+            if self.level == 1 or random.random() < 0.55:
+                self.sabuncuoglu.start_guest_visit(is_duel=False, level=self.level)
+
+        self._spawn_particles(530, 385, GOLD, 22)
 
         # Kilidi açık malzemeleri, canı ve kombo sayısını telefona bildir
         self.network.send({
